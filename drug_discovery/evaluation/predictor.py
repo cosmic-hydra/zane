@@ -2,14 +2,14 @@
 Molecular Property Prediction and Evaluation
 """
 
-# pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
+from typing import Any
 
+# pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 import numpy as np
 import torch
 from rdkit import Chem
 from rdkit.Chem import QED, Crippen, Descriptors, Lipinski
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from typing import Any
 
 
 class PropertyPredictor:

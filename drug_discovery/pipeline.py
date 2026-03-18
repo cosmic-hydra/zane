@@ -3,10 +3,8 @@ Main Drug Discovery Pipeline
 Orchestrates the entire AI drug discovery process
 """
 
-# pyright: reportOptionalMemberAccess=false, reportOptionalCall=false, reportArgumentType=false, reportAssignmentType=false
-
 import os
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -143,8 +141,8 @@ class DrugDiscoveryPipeline:
 
         # Create dataloaders
         if featurization == "graph":
-            train_loader = GeometricDataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-            test_loader = GeometricDataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+            train_loader = GeometricDataLoader(cast(Any, train_dataset), batch_size=batch_size, shuffle=True)
+            test_loader = GeometricDataLoader(cast(Any, test_dataset), batch_size=batch_size, shuffle=False)
         else:
             train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
             test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
@@ -209,6 +207,8 @@ class DrugDiscoveryPipeline:
         # Build model if not already built
         if self.model is None:
             self.build_model()
+        if self.model is None:
+            raise RuntimeError("Model is not initialized.")
 
         # Initialize trainer
         self.trainer = SelfLearningTrainer(
@@ -338,6 +338,7 @@ class DrugDiscoveryPipeline:
         """
         if is_graph is None:
             is_graph = self.model_type == "gnn"
+        is_graph = bool(is_graph)
 
         print("\n=== Evaluation Phase ===")
 

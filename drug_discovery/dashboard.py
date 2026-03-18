@@ -2,20 +2,19 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
 import random
 import time
+from dataclasses import dataclass
+from datetime import datetime
 
 from rich import box
 from rich.align import Align
-from rich.console import Group
-from rich.console import Console
+from rich.console import Console, Group
 from rich.layout import Layout
+from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich.live import Live
 
 
 @dataclass

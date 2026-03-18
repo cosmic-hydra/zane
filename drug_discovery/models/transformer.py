@@ -2,10 +2,11 @@
 Transformer-based Models for Molecular Property Prediction
 """
 
+from typing import cast
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import cast
 
 
 class MolecularTransformer(nn.Module):
