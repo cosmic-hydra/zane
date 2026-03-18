@@ -8,7 +8,7 @@ import logging
 
 import numpy as np
 
-from drug_discovery.web_scraping import AISynthesisChat, InternetSearchClient
+from drug_discovery.web_scraping import AISynthesisChat, InternetSearchClient, OnlineResourceReader
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ class RetrosynthesisPlanner:
     def __init__(self):
         self.reaction_templates = []
         self.internet_search = InternetSearchClient()
+        self.resource_reader = OnlineResourceReader()
 
     def plan_synthesis(self, target_smiles: str, max_depth: int = 5) -> dict:
         """
@@ -64,6 +65,8 @@ class RetrosynthesisPlanner:
         max_research_results: int = 5,
         use_internet: bool = True,
         use_ai_chat: bool = True,
+        read_online_resources: bool = True,
+        max_resource_reads: int = 3,
     ) -> dict:
         """
         Plan synthesis and enrich output with web research and AI guidance.
@@ -75,6 +78,8 @@ class RetrosynthesisPlanner:
             max_research_results: Number of web results to include
             use_internet: Enable internet research
             use_ai_chat: Enable LLM-generated synthesis brief
+            read_online_resources: Read and summarize fetched resources (HTML/PDF)
+            max_resource_reads: Number of URLs to fetch and parse
 
         Returns:
             Extended synthesis plan dictionary
@@ -90,6 +95,9 @@ class RetrosynthesisPlanner:
 
         if use_internet:
             research_hits = self.internet_search.search_web(query=query, max_results=max_research_results)
+
+        if use_internet and read_online_resources and research_hits:
+            research_hits = self.resource_reader.enrich_search_hits(research_hits, max_reads=max_resource_reads)
 
         plan["research_query"] = query
         plan["research_hits"] = research_hits

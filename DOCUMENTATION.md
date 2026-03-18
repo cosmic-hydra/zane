@@ -1,4 +1,4 @@
-# ZANE Ultra Technical Documentation
+# ZANE Technical Documentation
 
 Comprehensive engineering and scientific documentation for the ZANE autonomous AI drug discovery platform.
 
@@ -260,6 +260,24 @@ Environment variables:
 - `GOOGLE_CSE_ID`
 - `ZANE_GO_SEARCH_BIN`
 
+### 7.3 Resource Reading Layer (URL + PDF)
+
+After search hits are retrieved, ZANE can read actual linked resources:
+
+- HTML URL reader for web pages and articles
+- PDF URL reader for downloadable papers and reports
+
+Implementation notes:
+
+- class: `OnlineResourceReader`
+- HTML extraction: `beautifulsoup4` with regex fallback
+- PDF extraction: `pypdf` with page limits and character limits
+- enrichment output fields on hits:
+    - `resource_type`
+    - `resource_read_success`
+    - `resource_preview`
+    - `resource_error` (if extraction fails)
+
 ### 7.4 Multi-Language Search Backend (Go)
 
 ZANE is no longer Python-only in its runtime strategy.
@@ -351,6 +369,13 @@ Core prediction outputs include:
 
 ```bash
 python -m drug_discovery.cli synthesis-research "CCO" --target EGFR --max-results 5
+```
+
+Resource reading controls:
+
+```bash
+python -m drug_discovery.cli synthesis-research "CCO" --max-resource-reads 3
+python -m drug_discovery.cli synthesis-research "CCO" --no-resource-read
 ```
 
 This command will attempt backend resolution in this order:

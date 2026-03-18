@@ -67,8 +67,10 @@ def main():
     synth_parser.add_argument("--target", default=None, help="Optional target protein")
     synth_parser.add_argument("--max-depth", type=int, default=5)
     synth_parser.add_argument("--max-results", type=int, default=5)
+    synth_parser.add_argument("--max-resource-reads", type=int, default=3)
     synth_parser.add_argument("--no-internet", action="store_true", help="Disable internet research")
     synth_parser.add_argument("--no-ai", action="store_true", help="Disable AI synthesis guidance")
+    synth_parser.add_argument("--no-resource-read", action="store_true", help="Disable URL/PDF reading")
 
     args = parser.parse_args()
 
@@ -211,6 +213,8 @@ def run_synthesis_research(args):
         max_research_results=args.max_results,
         use_internet=not args.no_internet,
         use_ai_chat=not args.no_ai,
+        read_online_resources=not args.no_resource_read,
+        max_resource_reads=args.max_resource_reads,
     )
 
     print("\nSynthesis Research Result:\n")

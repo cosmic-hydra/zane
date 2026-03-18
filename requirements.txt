@@ -38,6 +38,7 @@ scipy>=1.10.0
 # Web Scraping and APIs
 requests>=2.31.0
 beautifulsoup4>=4.12.0
+pypdf>=4.2.0
 selenium>=4.10.0
 pubchempy>=1.0.4
 biopython>=1.81

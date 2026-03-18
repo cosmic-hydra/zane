@@ -195,6 +195,20 @@ python -m drug_discovery.cli dashboard --refresh 1.0 --iterations 60
 python -m drug_discovery.cli synthesis-research "CCO" --target EGFR --max-results 5
 ```
 
+Read linked resources (including PDFs) with controlled depth:
+
+```bash
+python -m drug_discovery.cli synthesis-research "CCO" \
+  --max-results 5 \
+  --max-resource-reads 3
+```
+
+Disable URL/PDF reading if needed:
+
+```bash
+python -m drug_discovery.cli synthesis-research "CCO" --no-resource-read
+```
+
 Offline-safe mode:
 
 ```bash
