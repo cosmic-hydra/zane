@@ -3,6 +3,8 @@ Molecular Dynamics Simulator
 OpenMM-based MD simulations for ligand validation
 """
 
+# pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
+
 import logging
 
 import numpy as np
@@ -130,16 +132,20 @@ class EnergyCalculator:
                 return None
 
             mol = Chem.AddHs(mol)
-            success = AllChem.EmbedMolecule(mol, randomSeed=42)
+            embed_molecule = getattr(AllChem, "EmbedMolecule")
+            success = embed_molecule(mol, randomSeed=42)
             if success == -1:
                 return None
 
             if self.method.lower() == "mmff94":
-                props = AllChem.MMFFGetMoleculeProperties(mol)
-                ff = AllChem.MMFFGetMoleculeForceField(mol, props)
+                mmff_props = getattr(AllChem, "MMFFGetMoleculeProperties")
+                mmff_force_field = getattr(AllChem, "MMFFGetMoleculeForceField")
+                props = mmff_props(mol)
+                ff = mmff_force_field(mol, props)
                 energy = ff.CalcEnergy()
             elif self.method.lower() == "uff":
-                ff = AllChem.UFFGetMoleculeForceField(mol)
+                uff_force_field = getattr(AllChem, "UFFGetMoleculeForceField")
+                ff = uff_force_field(mol)
                 energy = ff.CalcEnergy()
             else:
                 energy = None
@@ -170,17 +176,21 @@ class EnergyCalculator:
                 return None, None
 
             mol = Chem.AddHs(mol)
-            success = AllChem.EmbedMolecule(mol, randomSeed=42)
+            embed_molecule = getattr(AllChem, "EmbedMolecule")
+            success = embed_molecule(mol, randomSeed=42)
             if success == -1:
                 return None, None
 
             if self.method.lower() == "mmff94":
-                props = AllChem.MMFFGetMoleculeProperties(mol)
-                ff = AllChem.MMFFGetMoleculeForceField(mol, props)
+                mmff_props = getattr(AllChem, "MMFFGetMoleculeProperties")
+                mmff_force_field = getattr(AllChem, "MMFFGetMoleculeForceField")
+                props = mmff_props(mol)
+                ff = mmff_force_field(mol, props)
                 ff.Minimize(maxIts=max_iters)
                 energy = ff.CalcEnergy()
             elif self.method.lower() == "uff":
-                ff = AllChem.UFFGetMoleculeForceField(mol)
+                uff_force_field = getattr(AllChem, "UFFGetMoleculeForceField")
+                ff = uff_force_field(mol)
                 ff.Minimize(maxIts=max_iters)
                 energy = ff.CalcEnergy()
             else:

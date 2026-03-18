@@ -4,6 +4,7 @@ Uses Gaussian Processes for exploration-exploitation
 """
 
 import logging
+from typing import Any
 
 import numpy as np
 import torch
@@ -36,8 +37,8 @@ class BayesianOptimizer:
         self.kappa = kappa
         self.xi = xi
 
-        self.X_observed = []
-        self.y_observed = []
+        self.X_observed: list[np.ndarray] = []
+        self.y_observed: list[float] = []
 
     def suggest_next(self, n_suggestions: int = 1) -> list[np.ndarray]:
         """
@@ -72,7 +73,7 @@ class BayesianOptimizer:
 
         logger.info(f"Observed: X={X}, y={y:.4f}")
 
-    def get_best(self) -> tuple[np.ndarray, float]:
+    def get_best(self) -> tuple[np.ndarray, float] | tuple[None, None]:
         """
         Get best observed parameters and value
 
@@ -91,7 +92,7 @@ class UncertaintyEstimator:
     Estimate prediction uncertainty using ensembles or dropout
     """
 
-    def __init__(self, models: list = None, method: str = "ensemble"):  # 'ensemble' or 'mc_dropout'
+    def __init__(self, models: list[Any] | None = None, method: str = "ensemble"):  # 'ensemble' or 'mc_dropout'
         """
         Args:
             models: List of models for ensemble
@@ -123,7 +124,7 @@ class UncertaintyEstimator:
             mean_pred = np.mean(predictions)
             std_pred = np.std(predictions)
 
-            return mean_pred, std_pred
+            return float(mean_pred), float(std_pred)
 
         else:
             # Placeholder for MC Dropout

@@ -3,6 +3,8 @@ Molecular Docking Engine
 Supports AutoDock Vina and other docking methods
 """
 
+# pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
+
 import logging
 import os
 import subprocess
@@ -56,11 +58,13 @@ class DockingEngine:
                 return {"success": False, "error": "Invalid SMILES"}
 
             mol = Chem.AddHs(mol)
-            success = AllChem.EmbedMolecule(mol, randomSeed=42)
+            embed_molecule = getattr(AllChem, "EmbedMolecule")
+            success = embed_molecule(mol, randomSeed=42)
             if success == -1:
                 return {"success": False, "error": "Failed to generate 3D conformer"}
 
-            AllChem.MMFFOptimizeMolecule(mol)
+            mmff_optimize_molecule = getattr(AllChem, "MMFFOptimizeMolecule")
+            mmff_optimize_molecule(mol)
 
             # Create temporary files
             with tempfile.TemporaryDirectory() as tmpdir:

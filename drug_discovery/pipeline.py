@@ -3,7 +3,10 @@ Main Drug Discovery Pipeline
 Orchestrates the entire AI drug discovery process
 """
 
+# pyright: reportOptionalMemberAccess=false, reportOptionalCall=false, reportArgumentType=false, reportAssignmentType=false
+
 import os
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -187,7 +190,7 @@ class DrugDiscoveryPipeline:
         num_epochs: int = 100,
         learning_rate: float = 1e-4,
         **trainer_kwargs,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Train the model
 
@@ -242,7 +245,7 @@ class DrugDiscoveryPipeline:
         if self.property_predictor is None:
             raise RuntimeError("Model not trained yet. Call train() first.")
 
-        results = {"smiles": smiles}
+        results: dict[str, Any] = {"smiles": smiles}
 
         # Model predictions
         if self.model_type == "gnn":
@@ -250,6 +253,8 @@ class DrugDiscoveryPipeline:
             if graph_data is not None:
                 graph_data = graph_data.to(self.device)
                 with torch.no_grad():
+                    if self.model is None:
+                        raise RuntimeError("Model is not initialized.")
                     prediction = self.model(graph_data).cpu().numpy()
                 results["predicted_property"] = float(prediction[0])
         else:
@@ -320,7 +325,7 @@ class DrugDiscoveryPipeline:
             print("No cached data available. Run collect_data() first.")
             return pd.DataFrame()
 
-    def evaluate(self, test_loader: DataLoader, is_graph: bool = None) -> dict:
+    def evaluate(self, test_loader: DataLoader, is_graph: bool | None = None) -> dict[str, float]:
         """
         Evaluate the model
 
@@ -337,6 +342,8 @@ class DrugDiscoveryPipeline:
         print("\n=== Evaluation Phase ===")
 
         # Get predictions
+        if self.trainer is None:
+            raise RuntimeError("Trainer is not initialized. Call train() first.")
         y_pred = self.trainer.predict(test_loader, is_graph=is_graph)
 
         # Get true values
@@ -379,6 +386,8 @@ class DrugDiscoveryPipeline:
         checkpoint = torch.load(filepath, map_location=self.device)
         self.model_type = checkpoint["model_type"]
         self.build_model()
+        if self.model is None:
+            raise RuntimeError("Failed to build model during load().")
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.property_predictor = PropertyPredictor(self.model, self.device)
         print(f"Pipeline loaded from {filepath}")

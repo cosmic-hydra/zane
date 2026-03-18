@@ -1,0 +1,26 @@
+{
+  "include": [
+    "drug_discovery",
+    "tests",
+    "examples"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    ".venv",
+    "build",
+    "dist",
+    "artifacts",
+    "data"
+  ],
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "reportMissingTypeStubs": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownLambdaType": "none",
+  "reportUnknownParameterType": "none",
+  "reportUnknownReturnType": "none",
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none"
+}

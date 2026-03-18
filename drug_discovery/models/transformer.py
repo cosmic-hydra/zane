@@ -5,6 +5,7 @@ Transformer-based Models for Molecular Property Prediction
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import cast
 
 
 class MolecularTransformer(nn.Module):
@@ -112,7 +113,8 @@ class PositionalEncoding(nn.Module):
         Args:
             x: Tensor, shape [batch_size, seq_len, embedding_dim]
         """
-        x = x + self.pe[:, : x.size(1), :]
+        pe = cast(torch.Tensor, self.pe)
+        x = x + pe[:, : x.size(1), :]
         return self.dropout(x)
 
 

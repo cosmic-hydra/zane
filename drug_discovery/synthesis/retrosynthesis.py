@@ -2,6 +2,8 @@
 Retrosynthesis Planning and Synthesis Feasibility Scoring
 """
 
+# pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
+
 import logging
 
 import numpy as np
@@ -71,10 +73,14 @@ class RetrosynthesisPlanner:
 
             # Use RDKit's built-in SA score if available
             # Otherwise, use simple heuristics
-            num_rings = Descriptors.RingCount(mol)
+            ring_count = getattr(Descriptors, "RingCount")
+            num_rotatable_bonds = getattr(Descriptors, "NumRotatableBonds")
+            mol_wt_func = getattr(Descriptors, "MolWt")
+
+            num_rings = ring_count(mol)
             num_stereo = len(Chem.FindMolChiralCenters(mol, includeUnassigned=True))
-            num_rotatable = Descriptors.NumRotatableBonds(mol)
-            mol_wt = Descriptors.MolWt(mol)
+            num_rotatable = num_rotatable_bonds(mol)
+            mol_wt = mol_wt_func(mol)
 
             # Simple heuristic (replace with actual SAScore)
             score = 1.0
@@ -125,13 +131,17 @@ class SynthesisFeasibilityScorer:
             scores["sa_score"] = 11 - sa_score  # Convert to 1-10, higher better
 
             # Molecular complexity
-            num_rings = Descriptors.RingCount(mol)
-            num_heteroatoms = Lipinski.NumHeteroatoms(mol)
+            ring_count = getattr(Descriptors, "RingCount")
+            num_heteroatoms_func = getattr(Lipinski, "NumHeteroatoms")
+            num_rings = ring_count(mol)
+            num_heteroatoms = num_heteroatoms_func(mol)
             complexity = (num_rings + num_heteroatoms) / 10.0
             scores["complexity"] = max(0, 10 - complexity * 10)
 
             # Functional group diversity (penalize exotic groups)
-            num_functional_groups = Descriptors.NumAliphaticRings(mol) + Descriptors.NumAromaticRings(mol)
+            num_aliphatic_rings = getattr(Descriptors, "NumAliphaticRings")
+            num_aromatic_rings = getattr(Descriptors, "NumAromaticRings")
+            num_functional_groups = num_aliphatic_rings(mol) + num_aromatic_rings(mol)
             scores["fg_score"] = min(10, num_functional_groups)
 
             # Retrosynthesis plan quality

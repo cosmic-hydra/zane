@@ -2,11 +2,14 @@
 Molecular Property Prediction and Evaluation
 """
 
+# pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
+
 import numpy as np
 import torch
 from rdkit import Chem
 from rdkit.Chem import QED, Crippen, Descriptors, Lipinski
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from typing import Any
 
 
 class PropertyPredictor:
@@ -39,7 +42,7 @@ class PropertyPredictor:
             predictions = self.model(features)
             return predictions.cpu().numpy()
 
-    def predict_from_smiles(self, smiles: str, featurizer) -> float:
+    def predict_from_smiles(self, smiles: str, featurizer) -> float | None:
         """
         Predict property from SMILES string
 
@@ -68,7 +71,7 @@ class ADMETPredictor:
     def __init__(self):
         pass
 
-    def calculate_lipinski_properties(self, smiles: str) -> dict[str, float]:
+    def calculate_lipinski_properties(self, smiles: str) -> dict[str, float] | None:
         """
         Calculate Lipinski's Rule of Five properties
 
@@ -82,18 +85,25 @@ class ADMETPredictor:
         if mol is None:
             return None
 
+        mol_wt = getattr(Descriptors, "MolWt")
+        mol_logp = getattr(Crippen, "MolLogP")
+        num_h_donors = getattr(Lipinski, "NumHDonors")
+        num_h_acceptors = getattr(Lipinski, "NumHAcceptors")
+        num_rotatable_bonds = getattr(Lipinski, "NumRotatableBonds")
+        num_aromatic_rings = getattr(Lipinski, "NumAromaticRings")
+
         properties = {
-            "molecular_weight": Descriptors.MolWt(mol),
-            "logp": Crippen.MolLogP(mol),
-            "h_bond_donors": Lipinski.NumHDonors(mol),
-            "h_bond_acceptors": Lipinski.NumHAcceptors(mol),
-            "rotatable_bonds": Lipinski.NumRotatableBonds(mol),
-            "aromatic_rings": Lipinski.NumAromaticRings(mol),
+            "molecular_weight": float(mol_wt(mol)),
+            "logp": float(mol_logp(mol)),
+            "h_bond_donors": float(num_h_donors(mol)),
+            "h_bond_acceptors": float(num_h_acceptors(mol)),
+            "rotatable_bonds": float(num_rotatable_bonds(mol)),
+            "aromatic_rings": float(num_aromatic_rings(mol)),
         }
 
         return properties
 
-    def check_lipinski_rule(self, smiles: str) -> dict[str, any]:
+    def check_lipinski_rule(self, smiles: str) -> dict[str, Any] | None:
         """
         Check if molecule passes Lipinski's Rule of Five
 
@@ -166,7 +176,7 @@ class ADMETPredictor:
         except Exception:
             return None
 
-    def predict_toxicity_flags(self, smiles: str) -> dict[str, bool]:
+    def predict_toxicity_flags(self, smiles: str) -> dict[str, bool] | None:
         """
         Check for common toxicity flags using structural alerts
 

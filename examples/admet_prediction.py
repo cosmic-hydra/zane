@@ -5,6 +5,7 @@ Example: ADMET Property Prediction
 from drug_discovery.evaluation import ADMETPredictor
 import pandas as pd
 
+
 def main():
     # Initialize ADMET predictor
     admet = ADMETPredictor()
@@ -27,6 +28,10 @@ def main():
 
         # Lipinski's Rule of Five
         lipinski = admet.check_lipinski_rule(smiles)
+        if lipinski is None:
+            print("\nLipinski's Rule of Five:\n  Could not compute properties")
+            print("\n" + "=" * 50 + "\n")
+            continue
         print(f"\nLipinski's Rule of Five:")
         print(f"  Pass: {lipinski['passes']}")
         print(f"  Violations: {lipinski['num_violations']}")
@@ -35,16 +40,24 @@ def main():
 
         # Drug-likeness
         qed = admet.calculate_qed(smiles)
-        print(f"\nDrug-likeness (QED): {qed:.3f}")
+        if qed is None:
+            print("\nDrug-likeness (QED): N/A")
+            qed = 0.0
+        else:
+            print(f"\nDrug-likeness (QED): {qed:.3f}")
         print(f"  Interpretation: {'Good' if qed > 0.5 else 'Poor'}")
 
         # Synthetic Accessibility
         sa_score = admet.calculate_synthetic_accessibility(smiles)
+        if sa_score is None:
+            sa_score = 10.0
         print(f"\nSynthetic Accessibility: {sa_score:.2f}/10")
         print(f"  Interpretation: {'Easy' if sa_score < 5 else 'Difficult'}")
 
         # Toxicity flags
         toxicity = admet.predict_toxicity_flags(smiles)
+        if toxicity is None:
+            toxicity = {}
         print(f"\nToxicity Flags:")
         for flag, value in toxicity.items():
             print(f"  {flag}: {'Yes' if value else 'No'}")

@@ -17,6 +17,9 @@ def main():
     pipeline.train(train_loader, val_loader, num_epochs=20)
 
     # Setup continuous learning
+    if pipeline.trainer is None:
+        raise RuntimeError("Trainer is not initialized after training.")
+
     continuous_learner = ContinuousLearner(
         trainer=pipeline.trainer,
         data_collector=pipeline.data_collector,

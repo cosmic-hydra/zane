@@ -6,6 +6,7 @@ Automatically trains models with continuous learning capabilities
 import os
 from collections.abc import Callable
 from datetime import datetime
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -52,7 +53,7 @@ class SelfLearningTrainer:
         self.optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, mode="min", factor=0.5, patience=patience // 2, verbose=True
+            self.optimizer, mode="min", factor=0.5, patience=patience // 2
         )
 
         # Training history
@@ -94,9 +95,13 @@ class SelfLearningTrainer:
                     targets = targets.to(self.device)
                     predictions = self.model(features)
                 else:
-                    batch = batch.to(self.device)
-                    predictions = self.model(batch)
-                    targets = batch.y if hasattr(batch, "y") else None
+                    if hasattr(batch, "to"):
+                        batch_obj = cast(Any, batch)
+                        batch_obj = batch_obj.to(self.device)
+                        predictions = self.model(batch_obj)
+                        targets = batch_obj.y if hasattr(batch_obj, "y") else None
+                    else:
+                        continue
 
             if targets is not None:
                 # Filter out missing values
@@ -141,9 +146,13 @@ class SelfLearningTrainer:
                         targets = targets.to(self.device)
                         predictions = self.model(features)
                     else:
-                        batch = batch.to(self.device)
-                        predictions = self.model(batch)
-                        targets = batch.y if hasattr(batch, "y") else None
+                        if hasattr(batch, "to"):
+                            batch_obj = cast(Any, batch)
+                            batch_obj = batch_obj.to(self.device)
+                            predictions = self.model(batch_obj)
+                            targets = batch_obj.y if hasattr(batch_obj, "y") else None
+                        else:
+                            continue
 
                 if targets is not None:
                     mask = targets != -1
@@ -268,8 +277,12 @@ class SelfLearningTrainer:
                         features = features.to(self.device)
                         pred = self.model(features)
                     else:
-                        batch = batch.to(self.device)
-                        pred = self.model(batch)
+                        if hasattr(batch, "to"):
+                            batch_obj = cast(Any, batch)
+                            batch_obj = batch_obj.to(self.device)
+                            pred = self.model(batch_obj)
+                        else:
+                            continue
 
                 predictions.append(pred.cpu().numpy())
 

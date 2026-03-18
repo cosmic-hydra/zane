@@ -1,0 +1,11 @@
+{
+  "keywords": [
+    "drug discovery ai",
+    "molecular docking",
+    "admet prediction"
+  ],
+  "num_articles": 22,
+  "num_texts": 22,
+  "train_runtime_sec": 4.4052,
+  "train_loss": 10.015486717224121
+}
