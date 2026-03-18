@@ -3,7 +3,6 @@ Tests for Data Collection Module
 """
 
 import pandas as pd
-
 from drug_discovery.data import DataCollector
 
 
