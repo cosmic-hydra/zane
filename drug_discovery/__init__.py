@@ -7,7 +7,6 @@ __version__ = "1.0.0"
 __author__ = "AI Drug Discovery Team"
 
 from .ai_support import LlamaSupportAssistant
-from .data import DataCollector, MolecularDataset
 from .models import DrugModeler, MolecularGNN, MolecularTransformer
 from .pipeline import DrugDiscoveryPipeline
 
@@ -16,7 +15,5 @@ __all__ = [
     "MolecularGNN",
     "MolecularTransformer",
     "DrugModeler",
-    "DataCollector",
-    "MolecularDataset",
     "LlamaSupportAssistant",
 ]

@@ -78,7 +78,7 @@ class DrugModeler:
 
     def model_candidate(self, smiles: str) -> DrugModelingResult:
         """Model a candidate and return descriptor + decision outputs."""
-        from rdkit.Chem import Crippen, Descriptors, QED, rdMolDescriptors
+        from rdkit.Chem import QED, Crippen, Descriptors, rdMolDescriptors
 
         mol = self._build_molecule(smiles)
 
