@@ -2,17 +2,26 @@
 
 A production-minded, research-first platform for molecular intelligence workflows, from data acquisition and model training to simulation-aware candidate prioritization and AI-assisted decision support.
 
+**ZANE Features:**
+- **Professional Terminal Interface**: SOTA AI-driver KB721H66 branded dashboard with 7-line ASCII header
+- **Simple-by-Default Design**: Clean default view with click-through access to detailed analysis panels
+- **Simulation-Only Compound Design**: Generate virtual carbon/hydrocarbon candidates from user-defined characteristics
+- **Real-Time Training Monitoring**: Track epochs to 100% completion with live loss metrics and model health
+- **Drug Composition Analysis**: Beta-mode composition tables showing probable active/stabilizer/carrier percentages
+- **Command-Driven Experience**: Guided setup, aliases (`start`, `go`), and on-demand detail panels
+
 ## Executive Summary
 
 ZANE unifies the core layers of computational drug discovery:
 
-- Molecular data ingestion and harmonization
-- Learning pipelines (GNN, Transformer, Ensemble)
-- Property and ADMET assessment
+- Molecular data ingestion and harmonization  
+- Learning pipelines (GNN, Transformer, Ensemble) with 100-epoch completion tracking
+- Property and ADMET assessment with simulation-only composition analysis
+- Custom virtual compound generation (hydrocarbon/carbon compounds from traits)
 - Physics-informed simulation hooks
 - Synthesis feasibility tooling
-- Terminal-native operational dashboard
-- Meta Llama-powered AI support
+- **Professional terminal dashboard** with ZANE branding and simple-by-default view
+- Meta Llama-powered AI support with web/PDF evidence integration
 
 The repository is intended for scientific teams that need a repeatable, extensible, and operator-friendly environment for accelerating discovery iterations.
 
@@ -58,23 +67,31 @@ ZANE is designed to support the full loop of computational triage:
 - Graph Neural Networks for structure-aware learning
 - Transformer pipelines for sequence/fingerprint modeling
 - Ensemble mode for robust aggregate scoring
+- Training with detailed epoch-level progress (100/100 epochs, 100% completion tracking)
 
 ### Evaluation and Ranking
 
 - Property prediction support
 - ADMET and quality indicators (including QED and SA)
+- Simulation-only drug composition analysis for beta testing
+- Custom compound generation from user-defined characteristics (consumability, performance, usage profiles)
 - Candidate-level result aggregation for triage
 
 ### Operations
 
-- Unified CLI command surface
-- Rich terminal dashboard for run visibility
+- Unified CLI command surface with aliases (`start`, `go`)
+- Professional Rich terminal dashboard with ZANE ASCII branding
+- Simple-by-default dashboard with command-driven detail panels (`--detail-panels`)
+- Simulation-only custom hydrocarbon/carbon compound generation (`--custom-characteristics`)
+- Interactive guided setup mode (`--guided`)
 - Artifact-friendly execution model
 
 ### AI Assistance
 
 - Meta Llama-backed assistant for strategy and interpretation support
 - Context-injected prompting for research workflows
+- Query-driven ranking and filtering
+- Web/PDF evidence collection and Cerebras API integration
 
 ## 3. Architecture
 
@@ -113,11 +130,51 @@ Primary modules:
 
 ## 5. Installation
 
+### Fast Clone Bootstrap (Auto Installs + Opens Dashboard)
+
+`git clone` alone cannot safely auto-run installation (Git intentionally blocks this).
+Use the secure one-command bootstrap after clone:
+
+```bash
+git clone https://github.com/cosmic-hydra/zane.git
+cd zane
+bash scripts/bootstrap_and_dashboard.sh
+```
+
+Low-disk environments use lite mode by default and still launch the dashboard.
+For full dependency installation, use:
+
+```bash
+bash scripts/bootstrap_and_dashboard.sh --full
+```
+
+You can also run:
+
+```bash
+make bootstrap-dashboard
+```
+
 ### Standard Setup
 
 ```bash
 pip install -r requirements.txt
 ```
+
+### Install as a Package
+
+Local source install:
+
+```bash
+pip install -e .
+```
+
+Install directly from GitHub:
+
+```bash
+pip install git+https://github.com/cosmic-hydra/zane.git
+```
+
+`pip install zane` from PyPI will work once the project is published to PyPI under the `zane` name.
 
 ### Recommended Virtual Environment
 
@@ -181,6 +238,38 @@ python -m drug_discovery.cli collect --sources pubchem chembl --limit 500
 
 ```bash
 python -m drug_discovery.cli dashboard --static
+```
+
+Human-friendly command (installed package):
+
+```bash
+zane dashboard --static
+```
+
+Beginner guided mode (interactive prompts):
+
+```bash
+zane dashboard --guided
+```
+
+Shortcut aliases (same as dashboard):
+
+```bash
+zane start --static
+zane go --static
+```
+
+**Show Detailed Panels On-Demand:**
+
+```bash
+# Show only analytics and AI panels
+zane dashboard --static --detail-panels analytics ai
+
+# Show all panels (combinations, composition, analytics, AI)
+zane dashboard --static --detail-panels all
+
+# Show with custom compounds
+zane dashboard --static --custom-characteristics "consumable hydrocarbon" --custom-count 4
 ```
 
 ### Dashboard (Live)
@@ -248,15 +337,100 @@ python -m drug_discovery.cli assist "Draft next assay plan" \
 
 ## 9. Dashboard Operations
 
-The terminal dashboard is optimized for operator awareness during active runs.
+The terminal dashboard is optimized for operator awareness during active runs. It features a professional ZANE ASCII banner and operates in **simple-by-default mode** for clean, focused viewing.
 
-Displayed signal groups:
+### Dashboard User Interface
 
-- Run metadata and model mode
-- KPI panel (throughput, hit rate, quality metrics)
-- Training monitor (epoch and loss behavior)
-- Candidate queue preview
-- Alerts and operational status
+- **Professional Header**: 7-line ZANE ASCII banner with run code, model type, and mission query
+- **Operational KPIs Panel**: Throughput, generation count, active jobs, hit rate, QED averages, SA metrics, best binding, latency
+- **Training Monitor**: Real-time epoch progress (e.g., 100/100 epochs = 100% complete), loss curves, model health status
+- **System Alerts**: Operational status and anomaly detection
+- **Simple Overview Panel**: Shows available detail commands (default view)
+
+### Dashboard Views
+
+The dashboard starts in **simple mode** (header + KPI + training + alerts only). Detailed analysis panels are visible only when explicitly requested.
+
+**Default Simple View:**
+```bash
+zane dashboard --static
+```
+
+**Show Specific Detail Panels:**
+```bash
+zane dashboard --static --detail-panels combinations
+zane dashboard --static --detail-panels composition composition
+zane dashboard --static --detail-panels analytics ai
+zane dashboard --static --detail-panels all
+```
+
+**Available Detail Panels:**
+- `combinations`: Top simulated drug combinations ranked by score
+- `composition`: Drug composition table with probable active/stabilizer/carrier % and beta dose index (simulation-only)
+- `analytics`: Visual analytics with score bars, metric histograms, and sparkline trends
+- `ai`: AI copilot recommendations from local LLM, web evidence, and optional Cerebras guidance
+
+### Quick Operator Commands
+
+**Interactive Guided Setup:**
+```bash
+zane dashboard --guided
+```
+This prompts for disease/need, filter preferences, live mode, and optional data/AI sources.
+
+**Shortcut Aliases:**
+```bash
+zane start --static --query "cold congestion"
+zane go --static --query "respiratory support" --detail-panels all
+```
+
+**With Custom Compound Generation (Simulation-Only):**
+```bash
+zane dashboard --static \
+  --query "respiratory support" \
+  --custom-characteristics "consumable hydrocarbon high performance daily usage" \
+  --custom-count 5 \
+  --detail-panels composition combinations
+```
+
+**Live Mode (Continuous Updates):**
+```bash
+zane dashboard --refresh 1.0 --iterations 100 --query "cold relief" --detail-panels analytics
+```
+
+### Drug Composition Panel (Beta Testing Mode)
+
+The composition panel shows top 5 ranked candidates with simulation-only composition estimates:
+- **Probable Composition**: Active ingredient %, stabilizer %, carrier % breakdown
+- **Beta Dose Index**: Scored metric (not real dosage, for screening only)
+- **Usage Profile**: Consumable-screening vs controlled-screening designation
+
+### Custom Compound Generation (Simulation-Only)
+
+Generate virtual carbon/hydrocarbon compounds from user-defined characteristics:
+
+```bash
+zane dashboard --static \
+  --custom-characteristics "aromatic ester carbon consumable" \
+  --custom-count 6
+```
+
+**Supported Characteristic Keywords:**
+- Consumption: `consumable`, `oral`, `food`, `beverage`
+- Performance: `high`, `efficacy`, `potent`, `strong`
+- Usage: `daily`, `chronic`, `routine`, `stable`
+- Safety: `safe`, `low`, `toxicity`, `gentle`
+- Chemistry: `hydrocarbon`, `aromatic`, `ester`, `alkyl`, `carbon`
+
+Generated compounds appear in rankings as `KB721H66-<FOCUS>-<N>` and are included in all scoring and combination analysis.
+
+### Displayed Signal Groups
+
+- **Run Metadata**: SOTA AI-driver KB721H66 designation, run code, model type, operation mode, timestamp
+- **KPI Panel (OPS-CODESET-7)**: KPI-THRPT, KPI-GEN, KPI-HIT, KPI-QED, KPI-SA, KPI-BIND, KPI-LAT
+- **Training Monitor**: Epoch progress bar (e.g., 100/100 = 100%), train/validation loss, model health status
+- **Detail Panels** (on-demand): Combinations, composition, analytics, AI copilot
+- **Alerts and Status**: Operational health, anomaly warnings
 
 ## 10. Workflow Blueprints
 
@@ -305,7 +479,102 @@ This repository is intended for research and decision support.
 - Apply governance and provenance controls for data and results.
 - Ensure expert review before any high-impact downstream use.
 
-## 13. Troubleshooting
+## 13. Dashboard Flags Reference (Comprehensive)
+
+### Core Dashboard Flags
+
+| Flag | Type | Default | Purpose |
+|------|------|---------|---------|
+| `--static` | bool | False | Render one static dashboard frame (no live updates) |
+| `--refresh` | float | 1.0 | Live refresh interval in seconds |
+| `--iterations` | int | 30 | Number of live refresh cycles |
+| `--detail-panels` | choices | none | Show detail panels: combinations, composition, analytics, ai, all |
+| `--guided` | bool | False | Launch with interactive step-by-step prompts |
+| `--query` | string | "" | Natural-language disease/need query for ranking candidates |
+| `--filter-query` | string | "" | Ranking preference (e.g., "safest combos", "highest efficacy") |
+| `--interactive-query` | bool | False | Prompt for disease/need query before rendering |
+
+### AI & Intelligence Flags
+
+| Flag | Type | Default | Purpose |
+|------|------|---------|---------|
+| `--with-ai` | bool | False | Enable local AI copilot insights panel |
+| `--ai-model-id` | string | artifacts/llama/tinyllama-1.1b-chat | Local or HF model for AI suggestions |
+| `--ai-refresh-every` | int | 5 | Refresh AI recomm. every N epochs in live mode |
+| `--intel-refresh-every` | int | 3 | Re-read web/PDF/Cerebras intel every N epochs |
+| `--no-web-intel` | bool | False | Disable web searching/scraping |
+| `--no-pdf-intel` | bool | False | Disable PDF/URL resource reading |
+| `--no-cerebras` | bool | False | Disable Cerebras API guidance |
+
+### Simulation & Custom Compound Flags
+
+| Flag | Type | Default | Purpose |
+|------|------|---------|---------|
+| `--no-sim-combos` | bool | False | Disable simulated combo panel |
+| `--custom-characteristics` | string | "" | Traits for custom compound generation (simulation-only) |
+| `--custom-count` | int | 4 | Number of custom compounds (1-8) |
+
+### Key Feature Combinations
+
+**Simple Dashboard with Guided Setup:**
+```bash
+zane dashboard --guided --static
+```
+
+**Full Analysis with All Details:**
+```bash
+zane dashboard --static --detail-panels all \
+  --query "cold symptoms" \
+  --filter-query "safest combos" \
+  --with-ai
+```
+
+**Custom Compounds + Composition Analysis:**
+```bash
+zane dashboard --static \
+  --custom-characteristics "consumable hydrocarbon daily usage" \
+  --custom-count 5 \
+  --detail-panels composition
+```
+
+**Live Monitoring with Web Evidence:**
+```bash
+zane dashboard --refresh 1.0 --iterations 60 \
+  --query "antiviral" \
+  --detail-panels analytics ai
+```
+
+## 14. Recent Feature Updates (Session Summary)
+
+### Dashboard Visual Enhancements
+- **Professional ZANE Banner**: 7-line ASCII art header with KB721H66 branding
+- **SOTA Designation**: "SOTA AI-driver KB721H66 Drug Discovery Terminal - ZANE"
+- **Codename KPIs**: OPS-CODESET-7 with labels (KPI-THRPT, KPI-GEN, KPI-HIT, KPI-QED, KPI-SA, KPI-BIND, KPI-LAT)
+- **100% Epoch Tracking**: Dashboard shows real epoch progress (e.g., 100/100 = 100.0%)
+
+### Usability Improvements
+- **Simple-by-Default**: Clean default view with on-demand detail panels via `--detail-panels`
+- **Friendly Aliases**: `zane start` and `zane go` as alternatives to `zane dashboard`
+- **Guided Mode**: Interactive setup with `--guided` flag for non-technical operators
+
+### Simulation Features
+- **Custom Compound Generation**: Create virtual carbon/hydrocarbon candidates from user traits
+  - Input: `--custom-characteristics "consumable hydrocarbon high performance"`
+  - Output: KB721H66-branded virtual molecules in ranking results  
+  - Supports: consumability, performance, usage, safety, and chemistry descriptors
+
+- **Drug Composition Analysis Table**: Beta-testing panel showing top 5 candidates with:
+  - Probable composition splits (active %, stabilizer %, carrier %)
+  - Beta dose index (simulation-only metric)
+  - Usage profile tags (consumable-screening vs controlled-screening)
+
+### Intelligence Integration
+- **Web/PDF Evidence**: Automatic collection and ranking awareness
+- **Cerebras API**: Optional structured guidance from external API
+- **Local AI Copilot**: Reasoning and recommendations from LLM
+- **Continuous Intel Refresh**: `--intel-refresh-every` controls update cadence
+
+## 15. Troubleshooting
 
 ### Llama Model Fails to Load
 
@@ -342,5 +611,41 @@ Recommended development flow:
 5. Open PR with validation evidence.
 
 ## 15. License
+
+## 16. PyPI Release Workflows
+
+ZANE includes automated packaging workflows in GitHub Actions:
+
+- `.github/workflows/publish-testpypi.yml`: publishes to TestPyPI (main branch changes + manual dispatch)
+- `.github/workflows/publish-pypi.yml`: publishes to PyPI (GitHub Release publish + manual dispatch)
+
+### Required GitHub Setup
+
+1. Create repository secrets:
+  - `TEST_PYPI_API_TOKEN`
+  - `PYPI_API_TOKEN`
+2. (Recommended) Create protected environments in GitHub:
+  - `testpypi`
+  - `pypi`
+
+### Release Flow
+
+1. Merge packaging updates to `main` and verify TestPyPI publish workflow.
+2. Create a GitHub Release for a new version.
+3. `publish-pypi.yml` triggers and uploads to PyPI.
+
+### Install Examples
+
+After TestPyPI release:
+
+```bash
+pip install --index-url https://test.pypi.org/simple/ zane
+```
+
+After PyPI release:
+
+```bash
+pip install zane
+```
 
 CC0 1.0 Universal

@@ -11,7 +11,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
     requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
 
 setup(
-    name="ai-drug-discovery",
+    name="zane",
     version="1.0.0",
     author="AI Drug Discovery Team",
     description="State-of-the-art AI-powered drug discovery platform with self-learning capabilities",
@@ -34,6 +34,14 @@ setup(
     python_requires=">=3.8",
     install_requires=requirements,
     extras_require={
+        "dashboard": [
+            "rich>=13.7.0",
+            "requests>=2.31.0",
+            "beautifulsoup4>=4.12.0",
+            "pypdf>=4.2.0",
+            "python-dotenv>=1.0.0",
+            "cerebras-cloud-sdk>=1.0.0",
+        ],
         "dev": [
             "pytest>=7.4.0",
             "pytest-cov>=4.1.0",
@@ -44,6 +52,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
+            "zane=drug_discovery.cli:main",
             "drug-discovery=drug_discovery.cli:main",
         ],
     },

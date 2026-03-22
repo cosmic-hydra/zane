@@ -100,13 +100,30 @@ class LlamaSupportAssistant:
         ]
 
         if hasattr(self._tokenizer, "apply_chat_template"):
-            model_input = self._tokenizer.apply_chat_template(
-                messages,
-                tokenize=True,
-                add_generation_prompt=True,
-                return_tensors="pt",
-            )
-            attention_mask = torch.ones_like(model_input)
+            try:
+                templated = self._tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=True,
+                    add_generation_prompt=True,
+                    return_tensors="pt",
+                )
+
+                # Tokenizers may return either a tensor or a BatchEncoding-like mapping.
+                if isinstance(templated, torch.Tensor):
+                    model_input = templated
+                    attention_mask = torch.ones_like(model_input)
+                else:
+                    model_input = templated["input_ids"]
+                    attention_mask = templated.get("attention_mask")
+            except Exception:
+                fallback_text = (
+                    f"System: {self._system_prompt()}\n\n"
+                    f"User: {combined_prompt}\n\n"
+                    "Assistant:"
+                )
+                encoded = self._tokenizer(fallback_text, return_tensors="pt")
+                model_input = encoded["input_ids"]
+                attention_mask = encoded.get("attention_mask")
         else:
             fallback_text = f"System: {self._system_prompt()}\n\n" f"User: {combined_prompt}\n\n" "Assistant:"
             encoded = self._tokenizer(fallback_text, return_tensors="pt")

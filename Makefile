@@ -1,7 +1,7 @@
 PYTHON ?= python
 GO ?= go
 
-.PHONY: test lint format build-go-fastsearch setup-workspace setup-venv test-cerebras
+.PHONY: test lint format build-go-fastsearch setup-workspace setup-venv test-cerebras bootstrap-dashboard
 
 test:
 	$(PYTHON) -m pytest -q
@@ -26,3 +26,6 @@ setup-venv:
 
 test-cerebras:
 	$(PYTHON) scripts/cerebras_chat_test.py
+
+bootstrap-dashboard:
+	bash scripts/bootstrap_and_dashboard.sh

@@ -41,7 +41,11 @@ def main():
     collect_parser.add_argument("--limit", type=int, default=1000)
 
     # Dashboard command
-    dashboard_parser = subparsers.add_parser("dashboard", help="Show professional ZANE terminal dashboard")
+    dashboard_parser = subparsers.add_parser(
+        "dashboard",
+        aliases=["start", "go"],
+        help="Show professional ZANE terminal dashboard",
+    )
     dashboard_parser.add_argument("--static", action="store_true", help="Render one static dashboard frame")
     dashboard_parser.add_argument("--refresh", type=float, default=1.0, help="Live refresh interval in seconds")
     dashboard_parser.add_argument("--iterations", type=int, default=30, help="Number of live refresh cycles")
@@ -56,6 +60,76 @@ def main():
         type=int,
         default=5,
         help="Refresh AI recommendations every N epochs",
+    )
+    dashboard_parser.add_argument(
+        "--intel-refresh-every",
+        type=int,
+        default=3,
+        help="Re-read web/PDF/Cerebras intelligence every N epochs in live mode",
+    )
+    dashboard_parser.add_argument(
+        "--no-sim-combos",
+        action="store_true",
+        help="Disable simulated drug-combination panel in dashboard",
+    )
+    dashboard_parser.add_argument(
+        "--query",
+        default="",
+        help="Natural-language disease/need query used to rank simulated dashboard candidates",
+    )
+    dashboard_parser.add_argument(
+        "--filter-query",
+        default="",
+        help="Natural-language ranking preference (e.g. 'safest combos' or 'highest efficacy single drug')",
+    )
+    dashboard_parser.add_argument(
+        "--interactive-query",
+        action="store_true",
+        help="Prompt for disease/need query before rendering dashboard",
+    )
+    dashboard_parser.add_argument(
+        "--no-web-intel",
+        action="store_true",
+        help="Disable in-dashboard web searching/scraping for query evidence",
+    )
+    dashboard_parser.add_argument(
+        "--no-pdf-intel",
+        action="store_true",
+        help="Disable in-dashboard PDF/URL resource reading",
+    )
+    dashboard_parser.add_argument(
+        "--no-cerebras",
+        action="store_true",
+        help="Disable in-dashboard Cerebras API guidance",
+    )
+    dashboard_parser.add_argument(
+        "--guided",
+        action="store_true",
+        help="Launch dashboard with easy step-by-step prompts",
+    )
+    dashboard_parser.add_argument(
+        "--custom-characteristics",
+        default="",
+        help=(
+            "Simulation-only custom compound characteristics (e.g. 'consumable hydrocarbon high performance'). "
+            "Used to generate virtual carbon/hydrocarbon candidates."
+        ),
+    )
+    dashboard_parser.add_argument(
+        "--custom-count",
+        type=int,
+        default=4,
+        help="Number of custom virtual compounds to generate from characteristics (1-8).",
+    )
+    dashboard_parser.add_argument(
+        "--detail-panels",
+        nargs="+",
+        choices=["combinations", "composition", "analytics", "ai", "all"],
+        default=[],
+        help=(
+            "Show detailed dashboard sections on demand. "
+            "Example: --detail-panels analytics ai (default is simple overview)."
+        ),
     )
 
     # AI support command (Meta Llama)
@@ -94,7 +168,7 @@ def main():
         train_model(args)
     elif args.command == "collect":
         collect_data(args)
-    elif args.command == "dashboard":
+    elif args.command in {"dashboard", "start", "go"}:
         show_dashboard(args)
     elif args.command == "assist":
         run_ai_support(args)
@@ -192,6 +266,73 @@ def collect_data(args):
 
 def show_dashboard(args):
     """Display ZANE terminal dashboard."""
+    query = "" if args.interactive_query else args.query
+
+    if args.guided:
+        print("\nZANE Guided Dashboard Setup")
+        print("Press Enter to accept defaults shown in [brackets].\n")
+
+        need = input("What drug need/disease are you exploring? [cold cough congestion]: ").strip()
+        query = need or "cold cough congestion"
+
+        filt = input(
+            "How should candidates be sorted? [safest combinations with minimal side effects]: "
+        ).strip()
+        filter_query = filt or "safest combinations with minimal side effects"
+
+        live_answer = input("Run live dashboard updates? [Y/n]: ").strip().lower()
+        live_mode = live_answer not in {"n", "no"}
+
+        with_ai_answer = input("Enable local AI copilot (can be heavier)? [y/N]: ").strip().lower()
+        with_ai = with_ai_answer in {"y", "yes"}
+
+        web_answer = input("Enable web search + website reading? [Y/n]: ").strip().lower()
+        web_intel = web_answer not in {"n", "no"}
+
+        pdf_answer = input("Enable PDF reading? [Y/n]: ").strip().lower()
+        pdf_intel = pdf_answer not in {"n", "no"}
+
+        cerebras_answer = input("Enable Cerebras API guidance? [Y/n]: ").strip().lower()
+        cerebras = cerebras_answer not in {"n", "no"}
+
+        custom_characteristics = input(
+            "Custom compound characteristics (optional, simulation-only) []: "
+        ).strip()
+        custom_count_raw = input("How many custom compounds to generate? [4]: ").strip()
+        custom_count = 4
+        if custom_count_raw:
+            try:
+                custom_count = max(1, min(8, int(custom_count_raw)))
+            except ValueError:
+                custom_count = 4
+
+        detail_raw = input(
+            "Detail panels to show (combinations/composition/analytics/ai/all) [none]: "
+        ).strip()
+        detail_sections = {part.strip().lower() for part in detail_raw.split() if part.strip()}
+        valid_sections = {"combinations", "composition", "analytics", "ai", "all"}
+        detail_sections = {item for item in detail_sections if item in valid_sections}
+
+        run_dashboard(
+            live=live_mode,
+            refresh_seconds=args.refresh,
+            iterations=args.iterations,
+            enable_ai=with_ai,
+            ai_model_id=args.ai_model_id,
+            ai_refresh_every=args.ai_refresh_every,
+            include_simulated_combos=not args.no_sim_combos,
+            user_query=query,
+            enable_web_intel=web_intel,
+            enable_pdf_read=pdf_intel,
+            enable_cerebras=cerebras,
+            intel_refresh_every=args.intel_refresh_every,
+            filter_query=filter_query,
+            custom_characteristics=custom_characteristics,
+            custom_count=custom_count,
+            detail_sections=detail_sections,
+        )
+        return
+
     run_dashboard(
         live=not args.static,
         refresh_seconds=args.refresh,
@@ -199,6 +340,16 @@ def show_dashboard(args):
         enable_ai=args.with_ai,
         ai_model_id=args.ai_model_id,
         ai_refresh_every=args.ai_refresh_every,
+        include_simulated_combos=not args.no_sim_combos,
+        user_query=query,
+        enable_web_intel=not args.no_web_intel,
+        enable_pdf_read=not args.no_pdf_intel,
+        enable_cerebras=not args.no_cerebras,
+        intel_refresh_every=args.intel_refresh_every,
+        filter_query=args.filter_query,
+        custom_characteristics=args.custom_characteristics,
+        custom_count=max(1, min(8, args.custom_count)),
+        detail_sections=set(args.detail_panels or []),
     )
 
 
