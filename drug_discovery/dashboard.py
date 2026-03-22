@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import os
 import random
@@ -13,9 +14,12 @@ from datetime import datetime
 from itertools import combinations
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
+from urllib.request import urlopen
 
 from rich import box
 from rich.align import Align
+from rich.columns import Columns
 from rich.console import Console, Group
 from rich.layout import Layout
 from rich.live import Live
@@ -132,6 +136,8 @@ _ZANE_BANNER = r"""
  / /__    \  /  | |____| |\  | | |____
 /_____|    \/   |______|_| \_| |______|
 """.strip("\n")
+
+_DEFAULT_HEADER_LOGO_URL = "https://www.rdkit.org/docs/_static/logo.png"
 
 
 def _get_admet_predictor() -> Any | None:
@@ -369,6 +375,7 @@ def _heuristic_insights(snapshot: DashboardSnapshot) -> str:
 def _build_header(snapshot: DashboardSnapshot) -> Panel:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     banner = Text(_ZANE_BANNER, style="bold bright_cyan")
+    banner_height = _ZANE_BANNER.count("\n") + 1
     subtitle = Text("- SOTA AI-driver KB721H66 Drug Discovery Terminal - ZANE", style="bold white")
     meta = Text(
         (
@@ -379,11 +386,116 @@ def _build_header(snapshot: DashboardSnapshot) -> Panel:
     )
     query = Text(f"- Drug Discovery for - {snapshot.user_query}", style="bright_white")
     filter_query = Text(f"KPI FILTER PROFILE: {snapshot.filter_query}", style="white")
+
+    logo_url = os.getenv("ZANE_DASHBOARD_LOGO_URL", _DEFAULT_HEADER_LOGO_URL).strip()
+    logo_renderable = _build_logo_renderable(logo_url=logo_url, target_height=banner_height)
+
+    # Keep the logo at the left side of ZANE text in all runtime conditions.
+    header_row = Columns([Align.left(logo_renderable), Align.left(banner)], expand=True)
+
     return Panel(
-        Align.center(Group(banner, subtitle, meta, query, filter_query)),
+        Group(header_row, subtitle, meta, query, filter_query),
         border_style="bright_cyan",
         box=box.DOUBLE,
     )
+
+
+def _resolve_header_logo(logo_url: str) -> Path | None:
+    """Fetch and cache a public logo image for terminal rendering."""
+    parsed = urlparse(logo_url)
+    suffix = Path(parsed.path).suffix.lower()
+    if suffix not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
+        suffix = ".png"
+
+    cache_dir = Path("artifacts") / "dashboard" / "logos"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    filename = hashlib.sha256(logo_url.encode("utf-8")).hexdigest()[:16] + suffix
+    local_path = cache_dir / filename
+    if local_path.exists() and local_path.stat().st_size > 0:
+        return local_path
+
+    try:
+        with urlopen(logo_url, timeout=8) as response:
+            data = response.read()
+    except Exception:
+        return None
+
+    if not data:
+        return None
+
+    local_path.write_bytes(data)
+    return local_path
+
+
+def _build_logo_renderable(logo_url: str, target_height: int) -> Any:
+    """Build a header logo renderable with strict fallback sequence.
+
+    Priority:
+      1) Rich native image renderer
+      2) PIL-based ASCII rendering from fetched image
+      3) Fixed placeholder block (keeps left-slot occupied)
+    """
+    local_logo = _resolve_header_logo(logo_url) if logo_url else None
+
+    if local_logo is not None:
+        try:
+            from rich.image import Image as RichImage
+
+            return RichImage.from_path(str(local_logo), width=28)
+        except Exception:
+            pass
+
+    if local_logo is not None:
+        ascii_logo = _logo_ascii_renderable(local_logo, target_height=target_height)
+        if ascii_logo is not None:
+            return ascii_logo
+
+    return _logo_placeholder(target_height=target_height)
+
+
+def _logo_ascii_renderable(image_path: Path, target_height: int) -> Text | None:
+    """Render an image as ASCII blocks so terminals without image protocol still show a logo."""
+    try:
+        from PIL import Image
+    except Exception:
+        return None
+
+    try:
+        img = Image.open(image_path).convert("L")
+    except Exception:
+        return None
+
+    h = max(4, target_height)
+    # Approximate terminal character aspect ratio.
+    w = max(16, int((img.width / max(1, img.height)) * h * 0.6))
+    img = img.resize((w, h))
+
+    chars = " .:-=+*#%@"
+    pixels = list(img.getdata())
+
+    out = Text(style="bold cyan")
+    for y in range(h):
+        row = []
+        for x in range(w):
+            v = pixels[y * w + x]
+            idx = int((v / 255.0) * (len(chars) - 1))
+            row.append(chars[idx])
+        out.append("".join(row).rstrip() + "\n")
+
+    return out
+
+
+def _logo_placeholder(target_height: int) -> Text:
+    """Guaranteed renderable left-side slot when image download/render is unavailable."""
+    h = max(4, target_height)
+    label = "LOGO"
+    out = Text()
+    for i in range(h):
+        if i == h // 2:
+            out.append(f"[{label:^10}]\n", style="bold cyan")
+        else:
+            out.append("[          ]\n", style="cyan")
+    return out
 
 
 def _build_kpi_table(snapshot: DashboardSnapshot) -> Panel:
