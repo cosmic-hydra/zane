@@ -1,0 +1,27 @@
+{
+  "protocol": {
+    "model_type": "gnn",
+    "device": "cpu",
+    "seed": 42,
+    "split_strategy": "scaffold",
+    "epochs": 3,
+    "learning_rate": 0.001,
+    "data_sources": [
+      "approved_drugs"
+    ],
+    "n_records": 3,
+    "train_samples": 2,
+    "test_samples": 1
+  },
+  "training": {
+    "best_val_loss": 0.0037899671588093042,
+    "final_train_loss": 0.028058193624019623,
+    "final_val_loss": 0.0037899671588093042
+  },
+  "evaluation": {
+    "rmse": 0.06156270915748676,
+    "mae": 0.061562709510326385,
+    "r2": NaN,
+    "pearson_r": NaN
+  }
+}

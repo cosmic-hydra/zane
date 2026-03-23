@@ -242,6 +242,59 @@ drug_discovery/
 
 ## 7. Data Ingestion and Web Intelligence
 
+## 27. Revision 2026-03-23 (Scientific Protocol Update)
+
+### 27.1 Data Quality Controls
+
+- Added strict molecular validity filtering before merge output.
+- Added quantitative quality report generation with metrics:
+    - total_rows
+    - valid_smiles_rows
+    - invalid_smiles_rows
+    - duplicate_smiles_rows
+    - unique_smiles
+    - validity_ratio
+
+### 27.2 Split and Benchmarking Controls
+
+- Added seeded random split.
+- Added Bemis-Murcko scaffold split.
+- Added scaffold k-fold split utility for cross-fold benchmarking.
+
+### 27.3 Calibration Controls
+
+- Added regression calibration utilities:
+    - expected calibration error (ECE)
+    - prediction interval coverage
+
+### 27.4 Dashboard Runtime Upgrade (v2)
+
+- Introduced theme presets and motion intensity controls.
+- Added pipeline flow panel with stage-level status.
+- Added protocol compliance panel for KPI gates.
+- Added runtime telemetry panel with CPU/GPU/memory indicators and trend sparklines.
+
+### 27.5 Reproducible Benchmark Record
+
+- Artifact: `outputs/reports/scientific_benchmark_20260323.json`
+- Protocol:
+    - seed=42
+    - split_strategy=scaffold
+    - model_type=transformer
+    - epochs=4
+    - batch_size=16
+- Measured outputs:
+    - best_val_loss=0.2455411255
+    - rmse=0.4955210647
+    - mae=0.4290055037
+    - r2=-0.0410919189
+    - pearson_r=-0.1608690401
+
+### 27.6 Verification Record
+
+- Test command: `pytest -q`
+- Current outcome: 102 passed.
+
 ### 7.1 Biomedical Scraping
 
 The scraper module supports publication and trial data collection with quality filtering and deduplication helpers.

@@ -258,6 +258,30 @@ drug_discovery/training/
 |---------|------------|-------------|---------------|
 | 3D Modeling | ❌ | ✅ | ✅ E(3)-Equivariant |
 | Physics Integration | ❌ | ✅ | ✅ Docking + MD |
+
+## Scientific Protocol Update (2026-03-23)
+
+### Verified Additions
+
+- Scaffold split and scaffold k-fold split are available in `drug_discovery/data/dataset.py`.
+- Calibration metrics (ECE and prediction interval coverage) are available in the evaluation pipeline.
+- Data collector quality checks now include invalid SMILES filtering and quality reporting.
+- Dashboard v2 adds configurable theme and motion controls with protocol and telemetry panels.
+
+### Reproducible Benchmark Evidence
+
+- Artifact: `outputs/reports/scientific_benchmark_20260323.json`
+- Configuration: seed=42, split=scaffold, model=transformer, epochs=4, limit=64
+- Metrics (artifact values):
+   - `best_val_loss`: 0.24554
+   - `rmse`: 0.49552
+   - `mae`: 0.42901
+   - `r2`: -0.04109
+   - `pearson_r`: -0.16087
+
+### Verification Snapshot
+
+- Full test suite status: `pytest -q` -> 102 passed.
 | Multi-Objective | Partial | ✅ | ✅ Pareto + Bayesian |
 | Retrosynthesis | ❌ | ❌ | ✅ Full Planning |
 | Active Learning | ❌ | ❌ | ✅ Closed-Loop |

@@ -157,6 +157,8 @@ class DataNormalizer:
             # Create normalized row
             new_row = row.copy()
             new_row[smiles_column] = canonical_smiles
+            new_row["canonical_smiles"] = canonical_smiles
+            new_row["inchikey"] = self.compute_inchikey(canonical_smiles)
 
             # Add molecular features if requested
             if add_features:
@@ -225,6 +227,13 @@ class DataNormalizer:
             Filtered DataFrame
         """
         filtered = df.copy()
+
+        # Ensure descriptor columns exist before applying rules.
+        required_cols = {"mol_weight", "logp", "num_h_donors", "num_h_acceptors"}
+        if not required_cols.issubset(set(filtered.columns)):
+            filtered = self.normalize_dataframe(filtered, smiles_column=smiles_column, add_features=True)
+            if filtered.empty:
+                return filtered
 
         if lipinski_filter:
             # Lipinski's Rule of Five

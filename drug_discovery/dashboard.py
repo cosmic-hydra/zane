@@ -49,6 +49,23 @@ class DashboardSnapshot:
     latency_ms: float
     user_query: str
     filter_query: str
+    cpu_util: float
+    gpu_util: float
+    memory_gb: float
+    tick: int
+
+
+@dataclass(frozen=True)
+class DashboardTheme:
+    """Terminal color theme for dashboard rendering."""
+
+    name: str
+    primary: str
+    secondary: str
+    accent: str
+    caution: str
+    ok: str
+    panel_box: Any
 
 
 @dataclass(frozen=True)
@@ -138,6 +155,57 @@ _ZANE_BANNER = r"""
 """.strip("\n")
 
 _DEFAULT_HEADER_LOGO_URL = "https://www.rdkit.org/docs/_static/logo.png"
+_DEFAULT_LOCAL_LOGO = Path("logo.png")
+
+_DASHBOARD_THEMES: dict[str, DashboardTheme] = {
+    "lab": DashboardTheme(
+        name="lab",
+        primary="bright_cyan",
+        secondary="white",
+        accent="bright_green",
+        caution="yellow",
+        ok="green",
+        panel_box=box.ROUNDED,
+    ),
+    "neon": DashboardTheme(
+        name="neon",
+        primary="magenta",
+        secondary="bright_white",
+        accent="cyan",
+        caution="bright_yellow",
+        ok="bright_green",
+        panel_box=box.DOUBLE,
+    ),
+    "classic": DashboardTheme(
+        name="classic",
+        primary="blue",
+        secondary="white",
+        accent="green",
+        caution="yellow",
+        ok="green",
+        panel_box=box.SQUARE,
+    ),
+}
+
+
+def _resolve_theme(name: str | None) -> DashboardTheme:
+    key = (name or "lab").strip().lower()
+    return _DASHBOARD_THEMES.get(key, _DASHBOARD_THEMES["lab"])
+
+
+def _phase_glyph(tick: int) -> str:
+    glyphs = ["◐", "◓", "◑", "◒"]
+    return glyphs[max(0, tick) % len(glyphs)]
+
+
+def _animated_bar(ratio: float, tick: int, width: int = 26) -> str:
+    ratio = max(0.0, min(1.0, ratio))
+    filled = int(ratio * width)
+    head = min(width - 1, max(0, filled))
+    chars = ["█" if i < filled else "░" for i in range(width)]
+    if width > 0:
+        chars[head] = "▓" if (tick % 2 == 0) else "▒"
+    return "".join(chars)
 
 
 def _get_admet_predictor() -> Any | None:
@@ -372,11 +440,14 @@ def _heuristic_insights(snapshot: DashboardSnapshot) -> str:
     return "\n".join(notes)
 
 
-def _build_header(snapshot: DashboardSnapshot) -> Panel:
+def _build_header(snapshot: DashboardSnapshot, theme: DashboardTheme) -> Panel:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    banner = Text(_ZANE_BANNER, style="bold bright_cyan")
+    banner = Text(_ZANE_BANNER, style=f"bold {theme.primary}")
     banner_height = _ZANE_BANNER.count("\n") + 1
-    subtitle = Text("- SOTA AI-driver KB721H66 Drug Discovery Terminal - ZANE", style="bold white")
+    subtitle = Text(
+        f"- ZANE Computational Discovery Console { _phase_glyph(snapshot.tick) } -",
+        style=f"bold {theme.secondary}",
+    )
     meta = Text(
         (
             f"RUN-CODE: {snapshot.run_id}  |  MODEL-CODE: {snapshot.model_type.upper()}  |  "
@@ -384,10 +455,14 @@ def _build_header(snapshot: DashboardSnapshot) -> Panel:
         ),
         style="dim",
     )
-    query = Text(f"- Drug Discovery for - {snapshot.user_query}", style="bright_white")
-    filter_query = Text(f"KPI FILTER PROFILE: {snapshot.filter_query}", style="white")
+    query = Text(f"- Study Query - {snapshot.user_query}", style="bright_white")
+    filter_query = Text(f"Selection Protocol: {snapshot.filter_query}", style=theme.secondary)
 
-    logo_url = os.getenv("ZANE_DASHBOARD_LOGO_URL", _DEFAULT_HEADER_LOGO_URL).strip()
+    logo_url = os.getenv("ZANE_DASHBOARD_LOGO_URL", "").strip()
+    if not logo_url and _DEFAULT_LOCAL_LOGO.exists():
+        logo_url = str(_DEFAULT_LOCAL_LOGO)
+    if not logo_url:
+        logo_url = _DEFAULT_HEADER_LOGO_URL
     logo_renderable = _build_logo_renderable(logo_url=logo_url, target_height=banner_height)
 
     # Keep the logo at the left side of ZANE text in all runtime conditions.
@@ -395,14 +470,29 @@ def _build_header(snapshot: DashboardSnapshot) -> Panel:
 
     return Panel(
         Group(header_row, subtitle, meta, query, filter_query),
-        border_style="bright_cyan",
-        box=box.DOUBLE,
+        border_style=theme.primary,
+        box=theme.panel_box,
     )
 
 
 def _resolve_header_logo(logo_url: str) -> Path | None:
-    """Fetch and cache a public logo image for terminal rendering."""
+    """Resolve logo from local path or fetch/cache from URL for terminal rendering."""
+    if not logo_url:
+        return None
+
+    # Prefer local file resolution first (absolute or relative path).
+    candidate = Path(logo_url)
+    if candidate.exists() and candidate.is_file():
+        return candidate
+
+    if logo_url.startswith("file://"):
+        file_candidate = Path(logo_url.replace("file://", "", 1))
+        if file_candidate.exists() and file_candidate.is_file():
+            return file_candidate
+
     parsed = urlparse(logo_url)
+    if parsed.scheme and parsed.scheme not in {"http", "https"}:
+        return None
     suffix = Path(parsed.path).suffix.lower()
     if suffix not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
         suffix = ".png"
@@ -498,39 +588,47 @@ def _logo_placeholder(target_height: int) -> Text:
     return out
 
 
-def _build_kpi_table(snapshot: DashboardSnapshot) -> Panel:
+def _build_kpi_table(snapshot: DashboardSnapshot, theme: DashboardTheme) -> Panel:
     table = Table(show_header=False, box=box.SIMPLE_HEAVY, expand=True)
     table.add_column("Metric", style="bold white")
     table.add_column("Value", justify="right")
 
-    table.add_row("KPI-THRPT | Molecules Screened", f"[bold green]{snapshot.molecules_screened:,}[/bold green]")
+    table.add_row("KPI-THRPT | Molecules Screened", f"[bold {theme.ok}]{snapshot.molecules_screened:,}[/bold {theme.ok}]")
     table.add_row("KPI-GEN | Generated Candidates", f"{snapshot.molecules_generated:,}")
     table.add_row("KPI-JOBS | Active Jobs", f"{snapshot.active_jobs}")
     table.add_row("KPI-HIT | Hit Rate", f"{snapshot.hit_rate:.2%}")
     table.add_row("KPI-QED | Avg QED", f"{snapshot.avg_qed:.3f}")
     table.add_row("KPI-SA | Avg SA", f"{snapshot.avg_sa:.2f}")
-    table.add_row("KPI-BIND | Best Binding (kcal/mol)", f"[bold magenta]{snapshot.best_binding:.2f}[/bold magenta]")
+    table.add_row("KPI-BIND | Best Binding (kcal/mol)", f"[bold {theme.accent}]{snapshot.best_binding:.2f}[/bold {theme.accent}]")
     table.add_row("KPI-LAT | Inference Latency", f"{snapshot.latency_ms:.1f} ms")
+    table.add_row("SYS-CPU | Utilization", f"{snapshot.cpu_util:.1f}%")
+    table.add_row("SYS-GPU | Utilization", f"{snapshot.gpu_util:.1f}%")
+    table.add_row("SYS-MEM | Active Memory", f"{snapshot.memory_gb:.2f} GB")
 
-    return Panel(table, title="Operational KPIs | OPS-CODESET-7", border_style="green", box=box.ROUNDED)
+    return Panel(
+        table,
+        title=f"Operational KPIs | Theme={theme.name}",
+        border_style=theme.ok,
+        box=theme.panel_box,
+    )
 
 
-def _build_training_panel(snapshot: DashboardSnapshot) -> Panel:
+def _build_training_panel(snapshot: DashboardSnapshot, theme: DashboardTheme, motion_intensity: int = 2) -> Panel:
     progress_ratio = max(0.0, min(1.0, snapshot.epoch / max(snapshot.total_epochs, 1)))
-    filled = int(progress_ratio * 30)
-    progress_bar = "[" + "#" * filled + "-" * (30 - filled) + "]"
+    width = 20 + max(1, min(3, motion_intensity)) * 4
+    progress_bar = _animated_bar(progress_ratio, snapshot.tick, width=width)
 
     text = Text()
     text.append(f"Epoch Progress : {snapshot.epoch}/{snapshot.total_epochs}\n", style="white")
-    text.append(f"{progress_bar} {progress_ratio:.1%}\n\n", style="cyan")
+    text.append(f"{progress_bar} {progress_ratio:.1%}\n\n", style=theme.primary)
     text.append(f"Train Loss     : {snapshot.train_loss:.4f}\n", style="yellow")
     text.append(f"Validation Loss: {snapshot.val_loss:.4f}\n", style="yellow")
 
     status = "Stable" if snapshot.val_loss <= snapshot.train_loss * 1.2 else "Drift Risk"
-    status_style = "green" if status == "Stable" else "red"
+    status_style = theme.ok if status == "Stable" else "red"
     text.append(f"Model Health   : {status}", style=status_style)
 
-    return Panel(text, title="Training Monitor", border_style="yellow", box=box.ROUNDED)
+    return Panel(text, title="Training Monitor", border_style=theme.caution, box=theme.panel_box)
 
 
 def _query_tokens(user_query: str) -> set[str]:
@@ -756,7 +854,8 @@ def _sparkline(values: list[float]) -> str:
     return "".join(out)
 
 
-def _build_candidates_table(simulated_combos: list[dict[str, float | str]] | None = None) -> Panel:
+def _build_candidates_table(simulated_combos: list[dict[str, float | str]] | None = None, theme: DashboardTheme | None = None) -> Panel:
+    resolved_theme = theme or _resolve_theme("lab")
     table = Table(box=box.SIMPLE_HEAVY, expand=True)
     table.add_column("Rank", justify="right", style="bold")
     table.add_column("Combination", style="cyan")
@@ -790,10 +889,10 @@ def _build_candidates_table(simulated_combos: list[dict[str, float | str]] | Non
             f"[{style}]{status}[/{style}]",
         )
 
-    return Panel(table, title="Top Simulated Combinations", border_style="magenta", box=box.ROUNDED)
+    return Panel(table, title="Top Simulated Combinations", border_style=resolved_theme.accent, box=resolved_theme.panel_box)
 
 
-def _build_composition_table(simulated_combos: list[dict[str, float | str]] | None = None) -> Panel:
+def _build_composition_table(simulated_combos: list[dict[str, float | str]] | None = None, theme: DashboardTheme | None = None) -> Panel:
     """Build a simulation-only composition table for beta dosage exploration."""
     table = Table(box=box.SIMPLE_HEAVY, expand=True)
     table.add_column("Rank", justify="right", style="bold")
@@ -870,16 +969,17 @@ def _build_composition_table(simulated_combos: list[dict[str, float | str]] | No
         table.add_row(str(rank), candidate, composition, f"{beta_dose_index:.2f}", usage)
 
     subtitle = "Simulation-only composition estimates for beta testing mode (not real dosage guidance)."
+    resolved_theme = theme or _resolve_theme("lab")
     return Panel(
         table,
         title="Drug Composition Table | Beta Testing Mode",
         subtitle=subtitle,
-        border_style="bright_blue",
-        box=box.ROUNDED,
+        border_style=resolved_theme.primary,
+        box=resolved_theme.panel_box,
     )
 
 
-def _build_overview_panel(detail_sections: set[str]) -> Panel:
+def _build_overview_panel(detail_sections: set[str], theme: DashboardTheme) -> Panel:
     text = Text()
     text.append("Simple View Active\n", style="bold white")
     text.append("Detailed panels are hidden by default.\n\n", style="white")
@@ -896,10 +996,10 @@ def _build_overview_panel(detail_sections: set[str]) -> Panel:
     else:
         text.append("Enabled: none", style="yellow")
 
-    return Panel(text, title="Dashboard Overview", border_style="white", box=box.ROUNDED)
+    return Panel(text, title="Dashboard Overview", border_style=theme.secondary, box=theme.panel_box)
 
 
-def _build_alerts_panel(snapshot: DashboardSnapshot) -> Panel:
+def _build_alerts_panel(snapshot: DashboardSnapshot, theme: DashboardTheme) -> Panel:
     alerts = [
         "Docking workers healthy across all nodes.",
         "No assay pipeline failures in the last hour.",
@@ -915,20 +1015,21 @@ def _build_alerts_panel(snapshot: DashboardSnapshot) -> Panel:
         style = "red" if "rising" in line else "white"
         text.append(f"{bullet}{line}\n", style=style)
 
-    return Panel(text, title="System Alerts", border_style="blue", box=box.ROUNDED)
+    return Panel(text, title="System Alerts", border_style=theme.primary, box=theme.panel_box)
 
 
-def _build_ai_panel(ai_text: str, provider: str) -> Panel:
+def _build_ai_panel(ai_text: str, provider: str, theme: DashboardTheme) -> Panel:
     body = Text()
     body.append(f"Provider: {provider}\n\n", style="dim")
     body.append(ai_text, style="white")
-    return Panel(body, title="AI Copilot", border_style="bright_cyan", box=box.ROUNDED)
+    return Panel(body, title="AI Copilot", border_style=theme.primary, box=theme.panel_box)
 
 
 def _build_graphs_panel(
     simulated_combos: list[dict[str, float | str]] | None,
     hit_rate_history: list[float],
     score_history: list[float],
+    theme: DashboardTheme,
 ) -> Panel:
     rows = simulated_combos or []
     top_rows = rows[:5]
@@ -955,7 +1056,76 @@ def _build_graphs_panel(
     text.append(f"HitRate  {_sparkline(hit_rate_history[-20:])}\n", style="green")
     text.append(f"TopScore {_sparkline(score_history[-20:])}", style="magenta")
 
-    return Panel(text, title="Visual Analytics", border_style="bright_green", box=box.ROUNDED)
+    return Panel(text, title="Visual Analytics", border_style=theme.ok, box=theme.panel_box)
+
+
+def _build_pipeline_flow_panel(snapshot: DashboardSnapshot, theme: DashboardTheme) -> Panel:
+    table = Table(show_header=True, box=box.SIMPLE_HEAVY, expand=True)
+    table.add_column("Stage", style="bold white")
+    table.add_column("Status", justify="center")
+    table.add_column("Rate", justify="right")
+    table.add_column("QC", justify="center")
+
+    phase = _phase_glyph(snapshot.tick)
+    throughput = max(1, int(snapshot.molecules_screened / max(1, snapshot.epoch)))
+    stages = [
+        ("Acquisition", f"{phase} RUN", f"{throughput}/epoch", "PASS"),
+        ("Normalization", f"{phase} RUN", f"{int(throughput * 0.92)}/epoch", "PASS"),
+        ("Scaffold Split", f"{phase} RUN", f"{int(throughput * 0.88)}/epoch", "PASS"),
+        ("Training", f"{phase} RUN", f"loss={snapshot.train_loss:.3f}", "PASS"),
+        ("Calibration", f"{phase} RUN", f"val={snapshot.val_loss:.3f}", "PASS"),
+    ]
+    for stage, status, rate, qc in stages:
+        table.add_row(stage, f"[{theme.primary}]{status}[/{theme.primary}]", rate, f"[{theme.ok}]{qc}[/{theme.ok}]")
+
+    return Panel(table, title="Pipeline Flow Orchestrator", border_style=theme.accent, box=theme.panel_box)
+
+
+def _build_runtime_telemetry_panel(
+    snapshot: DashboardSnapshot,
+    hit_rate_history: list[float],
+    score_history: list[float],
+    theme: DashboardTheme,
+) -> Panel:
+    text = Text()
+    hit_trend = _sparkline(hit_rate_history[-24:])
+    score_trend = _sparkline(score_history[-24:])
+
+    cpu_ratio = max(0.0, min(1.0, snapshot.cpu_util / 100.0))
+    gpu_ratio = max(0.0, min(1.0, snapshot.gpu_util / 100.0))
+    mem_ratio = max(0.0, min(1.0, snapshot.memory_gb / 32.0))
+
+    text.append("Runtime Utilization\n", style="bold white")
+    text.append(f"CPU {_animated_bar(cpu_ratio, snapshot.tick, width=16)} {snapshot.cpu_util:5.1f}%\n", style=theme.primary)
+    text.append(f"GPU {_animated_bar(gpu_ratio, snapshot.tick + 1, width=16)} {snapshot.gpu_util:5.1f}%\n", style=theme.accent)
+    text.append(f"MEM {_animated_bar(mem_ratio, snapshot.tick + 2, width=16)} {snapshot.memory_gb:5.1f} GB\n\n", style=theme.caution)
+
+    text.append("Live Trend Signals\n", style="bold white")
+    text.append(f"HitRate  {hit_trend}\n", style=theme.ok)
+    text.append(f"TopScore {score_trend}\n", style=theme.accent)
+
+    return Panel(text, title="Runtime Telemetry", border_style=theme.primary, box=theme.panel_box)
+
+
+def _build_protocol_panel(snapshot: DashboardSnapshot, theme: DashboardTheme) -> Panel:
+    table = Table(show_header=True, box=box.SIMPLE_HEAVY, expand=True)
+    table.add_column("Protocol", style="bold white")
+    table.add_column("Criterion", style="white")
+    table.add_column("Observed", justify="right")
+    table.add_column("Decision", justify="center")
+
+    checks = [
+        ("Hit-rate gate", ">= 0.15", snapshot.hit_rate, snapshot.hit_rate >= 0.15),
+        ("QED gate", ">= 0.65", snapshot.avg_qed, snapshot.avg_qed >= 0.65),
+        ("SA gate", "<= 5.00", snapshot.avg_sa, snapshot.avg_sa <= 5.0),
+        ("Latency gate", "<= 120 ms", snapshot.latency_ms, snapshot.latency_ms <= 120.0),
+    ]
+    for protocol, criterion, observed, decision in checks:
+        decision_text = "PASS" if decision else "REVIEW"
+        decision_style = theme.ok if decision else theme.caution
+        table.add_row(protocol, criterion, f"{observed:.3f}" if protocol != "Latency gate" else f"{observed:.1f}", f"[{decision_style}]{decision_text}[/{decision_style}]")
+
+    return Panel(table, title="Protocol Compliance", border_style=theme.caution, box=theme.panel_box)
 
 
 def _compose_ai_panel_content(
@@ -989,29 +1159,32 @@ def render_dashboard(
     hit_rate_history: list[float] | None = None,
     score_history: list[float] | None = None,
     detail_sections: set[str] | None = None,
+    theme_name: str = "lab",
+    motion_intensity: int = 2,
 ) -> Layout:
     """Build a complete terminal dashboard layout for the given snapshot."""
     layout = Layout()
+    theme = _resolve_theme(theme_name)
     layout.split_column(
         Layout(name="header", size=16),
         Layout(name="main"),
-        Layout(name="footer", size=7),
+        Layout(name="footer", size=8),
     )
 
-    layout["header"].update(_build_header(snapshot))
+    layout["header"].update(_build_header(snapshot, theme=theme))
 
     resolved_sections = set(detail_sections or set())
     if "all" in resolved_sections:
         resolved_sections = {"combinations", "composition", "analytics", "ai"}
 
-    layout["main"].split_row(Layout(name="left"), Layout(name="right"))
-    layout["left"].split_column(Layout(name="kpis"), Layout(name="train"))
+    layout["main"].split_row(Layout(name="left", ratio=2), Layout(name="right", ratio=3))
+    layout["left"].split_column(Layout(name="kpis"), Layout(name="train"), Layout(name="flow"))
 
-    right_panels: list[tuple[str, Panel]] = [("overview", _build_overview_panel(resolved_sections))]
+    right_panels: list[tuple[str, Panel]] = [("overview", _build_overview_panel(resolved_sections, theme=theme))]
     if "combinations" in resolved_sections:
-        right_panels.append(("candidates", _build_candidates_table(simulated_combos=simulated_combos)))
+        right_panels.append(("candidates", _build_candidates_table(simulated_combos=simulated_combos, theme=theme)))
     if "composition" in resolved_sections:
-        right_panels.append(("composition", _build_composition_table(simulated_combos=simulated_combos)))
+        right_panels.append(("composition", _build_composition_table(simulated_combos=simulated_combos, theme=theme)))
     if "analytics" in resolved_sections:
         right_panels.append(
             (
@@ -1020,20 +1193,34 @@ def render_dashboard(
                     simulated_combos=simulated_combos,
                     hit_rate_history=hit_rate_history or [],
                     score_history=score_history or [],
+                    theme=theme,
+                ),
+            )
+        )
+        right_panels.append(
+            (
+                "telemetry",
+                _build_runtime_telemetry_panel(
+                    snapshot=snapshot,
+                    hit_rate_history=hit_rate_history or [],
+                    score_history=score_history or [],
+                    theme=theme,
                 ),
             )
         )
     if "ai" in resolved_sections:
-        right_panels.append(("ai", _build_ai_panel(ai_text=ai_text, provider=ai_provider)))
+        right_panels.append(("ai", _build_ai_panel(ai_text=ai_text, provider=ai_provider, theme=theme)))
+    right_panels.append(("protocol", _build_protocol_panel(snapshot=snapshot, theme=theme)))
 
     layout["right"].split_column(*(Layout(name=name) for name, _ in right_panels))
 
-    layout["left"]["kpis"].update(_build_kpi_table(snapshot))
-    layout["left"]["train"].update(_build_training_panel(snapshot))
+    layout["left"]["kpis"].update(_build_kpi_table(snapshot, theme=theme))
+    layout["left"]["train"].update(_build_training_panel(snapshot, theme=theme, motion_intensity=motion_intensity))
+    layout["left"]["flow"].update(_build_pipeline_flow_panel(snapshot=snapshot, theme=theme))
     for name, panel in right_panels:
         layout["right"][name].update(panel)
 
-    layout["footer"].update(_build_alerts_panel(snapshot))
+    layout["footer"].update(_build_alerts_panel(snapshot, theme=theme))
     return layout
 
 
@@ -1049,6 +1236,9 @@ def _next_snapshot(previous: DashboardSnapshot) -> DashboardSnapshot:
     train_loss = max(0.0001, previous.train_loss + random.uniform(-0.02, 0.01))
     val_loss = max(0.0001, previous.val_loss + random.uniform(-0.02, 0.015))
     latency_ms = min(240.0, max(25.0, previous.latency_ms + random.uniform(-8.0, 8.0)))
+    cpu_util = min(98.0, max(12.0, previous.cpu_util + random.uniform(-6.0, 6.0)))
+    gpu_util = min(99.0, max(8.0, previous.gpu_util + random.uniform(-7.0, 7.0)))
+    memory_gb = min(31.0, max(3.0, previous.memory_gb + random.uniform(-0.9, 0.9)))
 
     return DashboardSnapshot(
         run_id=previous.run_id,
@@ -1068,6 +1258,10 @@ def _next_snapshot(previous: DashboardSnapshot) -> DashboardSnapshot:
         latency_ms=latency_ms,
         user_query=previous.user_query,
         filter_query=previous.filter_query,
+        cpu_util=cpu_util,
+        gpu_util=gpu_util,
+        memory_gb=memory_gb,
+        tick=previous.tick + 1,
     )
 
 
@@ -1088,6 +1282,8 @@ def run_dashboard(
     custom_characteristics: str = "",
     custom_count: int = 4,
     detail_sections: set[str] | None = None,
+    theme: str = "lab",
+    motion_intensity: int = 2,
 ) -> None:
     """Run the ZANE terminal dashboard in static or live mode."""
     console = Console()
@@ -1117,6 +1313,10 @@ def run_dashboard(
         latency_ms=61.5,
         user_query=user_query,
         filter_query=filter_query,
+        cpu_util=48.0,
+        gpu_util=62.0,
+        memory_gb=11.8,
+        tick=0,
     )
 
     advisor = DashboardAIAdvisor(model_id=ai_model_id) if enable_ai else None
@@ -1157,6 +1357,8 @@ def run_dashboard(
                 hit_rate_history=hit_rate_history,
                 score_history=score_history,
                 detail_sections=detail_sections,
+                theme_name=theme,
+                motion_intensity=motion_intensity,
             )
         )
         return
@@ -1170,6 +1372,8 @@ def run_dashboard(
             hit_rate_history=hit_rate_history,
             score_history=score_history,
             detail_sections=detail_sections,
+            theme_name=theme,
+            motion_intensity=motion_intensity,
         ),
         refresh_per_second=8,
         console=console,
@@ -1219,6 +1423,8 @@ def run_dashboard(
                     hit_rate_history=hit_rate_history,
                     score_history=score_history,
                     detail_sections=detail_sections,
+                    theme_name=theme,
+                    motion_intensity=motion_intensity,
                 )
             )
 

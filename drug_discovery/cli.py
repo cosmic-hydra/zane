@@ -36,6 +36,8 @@ def main():
     train_parser.add_argument("--epochs", type=int, default=100)
     train_parser.add_argument("--batch-size", type=int, default=32)
     train_parser.add_argument("--seed", type=int, default=42)
+    train_parser.add_argument("--split-strategy", default="random", choices=["random", "scaffold"])
+    train_parser.add_argument("--num-workers", type=int, default=None, help="DataLoader workers (default: auto)")
 
     # Collect data command
     collect_parser = subparsers.add_parser("collect", help="Collect molecular data")
@@ -139,6 +141,18 @@ def main():
             "Example: --detail-panels analytics ai (default is simple overview)."
         ),
     )
+    dashboard_parser.add_argument(
+        "--theme",
+        default="lab",
+        choices=["lab", "neon", "classic"],
+        help="Dashboard color theme preset.",
+    )
+    dashboard_parser.add_argument(
+        "--motion-intensity",
+        type=int,
+        default=2,
+        help="Animation intensity level (1-3).",
+    )
 
     # AI support command (Meta Llama)
     support_parser = subparsers.add_parser("assist", help="Use Meta Llama for AI support")
@@ -238,7 +252,13 @@ def train_model(args):
     data = pipeline.collect_data()
 
     # Prepare datasets
-    train_loader, test_loader = pipeline.prepare_datasets(data, batch_size=args.batch_size, seed=args.seed)
+    train_loader, test_loader = pipeline.prepare_datasets(
+        data,
+        batch_size=args.batch_size,
+        seed=args.seed,
+        split_strategy=args.split_strategy,
+        num_workers=args.num_workers,
+    )
 
     # Train
     pipeline.train(train_loader, test_loader, num_epochs=args.epochs)
@@ -344,6 +364,8 @@ def show_dashboard(args):
             custom_characteristics=custom_characteristics,
             custom_count=custom_count,
             detail_sections=detail_sections,
+            theme=args.theme,
+            motion_intensity=max(1, min(3, args.motion_intensity)),
         )
         return
 
@@ -364,6 +386,8 @@ def show_dashboard(args):
         custom_characteristics=args.custom_characteristics,
         custom_count=max(1, min(8, args.custom_count)),
         detail_sections=set(args.detail_panels or []),
+        theme=args.theme,
+        motion_intensity=max(1, min(3, args.motion_intensity)),
     )
 
 

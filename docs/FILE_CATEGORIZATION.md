@@ -21,3 +21,9 @@ make setup-venv
 
 - The setup script is non-destructive: it creates missing folders only.
 - Existing source file paths are preserved to avoid breaking imports and test references.
+
+## 2026-03-23 Addendum
+
+- Benchmark report outputs are tracked under `outputs/reports/`.
+- Current reference artifact: `outputs/reports/scientific_benchmark_20260323.json`.
+- Dashboard runtime controls are exposed via CLI options in `drug_discovery/cli.py` and rendered in `drug_discovery/dashboard.py`.

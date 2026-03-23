@@ -238,6 +238,45 @@ python -m drug_discovery.cli admet "CC(=O)OC1=CC=CC=C1C(=O)O"
 
 ## 7. Operations Guide
 
+## 16. Scientific Revision Log (2026-03-23)
+
+The following protocol upgrades were applied and validated:
+
+- Data protocol:
+  - Invalid SMILES rejection at collection and merge time.
+  - Data quality report generation with validity ratio and duplicate counts.
+  - DrugBank CSV/TSV ingestion with schema normalization (`smiles`, `name`, `source`).
+- Evaluation protocol:
+  - Seeded random split and Bemis-Murcko scaffold split.
+  - Scaffold k-fold split utility for robust molecular benchmarking.
+  - Regression calibration utilities (expected calibration error and interval coverage).
+- Dashboard protocol:
+  - Theme presets (`lab`, `neon`, `classic`) and motion intensity controls.
+  - Runtime telemetry panel (CPU/GPU/memory traces, live trends).
+  - Pipeline flow orchestrator panel and protocol compliance panel.
+
+### Reproducible Benchmark Artifact
+
+- Artifact path: `outputs/reports/scientific_benchmark_20260323.json`
+- Protocol:
+  - seed=42
+  - split=scaffold
+  - model=transformer
+  - epochs=4
+  - batch_size=16
+  - samples=64 (synthetic benchmark set)
+- Result snapshot:
+  - best_val_loss=0.2455411255
+  - rmse=0.4955210647
+  - mae=0.4290055037
+  - r2=-0.0410919189
+  - pearson_r=-0.1608690401
+
+### Verification Status
+
+- Test command: `pytest -q`
+- Outcome: 102 passed, 0 failed in default run.
+
 ### Data Collection
 
 ```bash

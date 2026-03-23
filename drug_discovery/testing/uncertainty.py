@@ -10,7 +10,7 @@ Implements multiple uncertainty quantification methods:
 """
 
 import logging
-from typing import Dict, List, Optional, Callable, Tuple
+from typing import Any, Dict, List, Optional, Callable, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier

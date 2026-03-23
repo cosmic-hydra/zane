@@ -143,3 +143,12 @@ python -m drug_discovery.cli train --model gnn --epochs 100
 # Collect data
 python -m drug_discovery.cli collect --sources pubchem chembl --limit 1000
 ```
+
+## 2026-03-23 Structure Addendum
+
+- Dashboard runtime upgrades are implemented in `drug_discovery/dashboard.py`.
+- Dashboard CLI controls are exposed in `drug_discovery/cli.py` with:
+    - `--theme` (`lab`, `neon`, `classic`)
+    - `--motion-intensity` (1-3)
+- Reproducible benchmark reports are stored in `outputs/reports/`.
+- Latest benchmark artifact: `outputs/reports/scientific_benchmark_20260323.json`.

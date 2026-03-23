@@ -337,14 +337,14 @@ class CellularResponseSimulator:
             mol_weight = Descriptors.MolWt(mol)
 
             # Cell viability (decreases with dose and lipophilicity)
-            toxicity_factor = (logp / 5.0) * (dose / 10.0)
+            toxicity_factor = max(0.0, (logp / 5.0) * (dose / 10.0))
             cell_viability = max(0.0, 1.0 - toxicity_factor)
 
             # Proliferation rate (inversely correlated with viability)
             proliferation_rate = cell_viability * 0.8
 
             # Apoptosis rate
-            apoptosis_rate = min(1.0, toxicity_factor * 1.5)
+            apoptosis_rate = max(0.0, min(1.0, toxicity_factor * 1.5))
 
             # Gene expression changes (placeholder)
             gene_expression_changes = {}

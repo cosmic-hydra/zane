@@ -12,7 +12,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch_geometric.loader import DataLoader as GeometricDataLoader
 
-from .data import DataCollector, MolecularDataset, MolecularFeaturizer, train_test_split_molecular
+from .data import DataCollector, MolecularDataset, MolecularFeaturizer, murcko_scaffold_split_molecular, train_test_split_molecular
 from .evaluation import ADMETPredictor, ModelEvaluator, PropertyPredictor
 from .models import EnsembleModel, MolecularGNN, MolecularTransformer
 from .training import SelfLearningTrainer
@@ -107,7 +107,14 @@ class DrugDiscoveryPipeline:
         # Merge datasets
         if datasets:
             merged_data = self.data_collector.merge_datasets(datasets)
+            quality = self.data_collector.generate_data_quality_report(merged_data)
             print(f"\nTotal unique molecules collected: {len(merged_data)}")
+            print(
+                "Data quality: "
+                f"valid={quality['valid_smiles_rows']}/{quality['total_rows']} "
+                f"({quality['validity_ratio']:.2%}), "
+                f"duplicates_removed={quality['duplicate_smiles_rows']}"
+            )
             return merged_data
         else:
             print("No data collected!")
@@ -121,6 +128,8 @@ class DrugDiscoveryPipeline:
         test_size: float = 0.2,
         batch_size: int = 32,
         seed: int | None = None,
+        split_strategy: str = "random",
+        num_workers: int | None = None,
     ) -> tuple[DataLoader, DataLoader]:
         """
         Prepare train and test dataloaders
@@ -147,18 +156,36 @@ class DrugDiscoveryPipeline:
         dataset = MolecularDataset(data=data, smiles_col=smiles_col, target_col=target_col, featurization=featurization)
 
         # Split dataset
-        train_dataset, test_dataset = train_test_split_molecular(dataset, test_size=test_size, seed=seed)
+        if split_strategy == "scaffold":
+            train_dataset, test_dataset = murcko_scaffold_split_molecular(dataset, test_size=test_size, seed=seed)
+        else:
+            train_dataset, test_dataset = train_test_split_molecular(dataset, test_size=test_size, seed=seed)
 
         print(f"Train samples: {len(train_dataset)}")
         print(f"Test samples: {len(test_dataset)}")
 
+        resolved_workers = num_workers
+        if resolved_workers is None:
+            cpu = os.cpu_count() or 2
+            resolved_workers = max(0, min(6, cpu // 2))
+        resolved_workers = int(max(0, resolved_workers))
+        use_pin_memory = self.device.startswith("cuda")
+
+        loader_kwargs: dict[str, Any] = {
+            "batch_size": batch_size,
+            "num_workers": resolved_workers,
+            "pin_memory": use_pin_memory,
+        }
+        if resolved_workers > 0:
+            loader_kwargs["persistent_workers"] = True
+
         # Create dataloaders
         if featurization == "graph":
-            train_loader = GeometricDataLoader(cast(Any, train_dataset), batch_size=batch_size, shuffle=True)
-            test_loader = GeometricDataLoader(cast(Any, test_dataset), batch_size=batch_size, shuffle=False)
+            train_loader = GeometricDataLoader(cast(Any, train_dataset), shuffle=True, **loader_kwargs)
+            test_loader = GeometricDataLoader(cast(Any, test_dataset), shuffle=False, **loader_kwargs)
         else:
-            train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-            test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+            train_loader = DataLoader(train_dataset, shuffle=True, **loader_kwargs)
+            test_loader = DataLoader(test_dataset, shuffle=False, **loader_kwargs)
 
         return train_loader, test_loader
 

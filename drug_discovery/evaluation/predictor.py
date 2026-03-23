@@ -287,6 +287,64 @@ class ModelEvaluator:
         self.metrics = metrics
         return metrics
 
+    def expected_calibration_error_regression(
+        self,
+        y_true: np.ndarray,
+        y_pred: np.ndarray,
+        y_uncertainty: np.ndarray,
+        n_bins: int = 10,
+    ) -> float:
+        """Compute regression ECE by comparing uncertainty and absolute error."""
+        true_v = np.asarray(y_true).reshape(-1)
+        pred_v = np.asarray(y_pred).reshape(-1)
+        unc_v = np.asarray(y_uncertainty).reshape(-1)
+        if len(true_v) == 0:
+            return 0.0
+
+        # Normalize uncertainty to [0, 1] for comparability across scales.
+        unc_min = float(np.min(unc_v))
+        unc_max = float(np.max(unc_v))
+        if unc_max - unc_min > 1e-12:
+            unc_norm = (unc_v - unc_min) / (unc_max - unc_min)
+        else:
+            unc_norm = np.zeros_like(unc_v)
+
+        abs_err = np.abs(true_v - pred_v)
+        err_max = float(np.max(abs_err))
+        err_norm = abs_err / err_max if err_max > 1e-12 else np.zeros_like(abs_err)
+
+        bins = np.linspace(0.0, 1.0, max(2, int(n_bins)) + 1)
+        ece = 0.0
+        for i in range(len(bins) - 1):
+            left, right = bins[i], bins[i + 1]
+            mask = (unc_norm >= left) & (unc_norm < right if i < len(bins) - 2 else unc_norm <= right)
+            count = int(np.sum(mask))
+            if count == 0:
+                continue
+            bin_unc = float(np.mean(unc_norm[mask]))
+            bin_err = float(np.mean(err_norm[mask]))
+            ece += (count / len(unc_norm)) * abs(bin_unc - bin_err)
+        return float(ece)
+
+    def prediction_interval_coverage(
+        self,
+        y_true: np.ndarray,
+        y_pred: np.ndarray,
+        y_std: np.ndarray,
+        z_score: float = 1.96,
+    ) -> float:
+        """Fraction of labels that fall inside Gaussian prediction intervals."""
+        true_v = np.asarray(y_true).reshape(-1)
+        pred_v = np.asarray(y_pred).reshape(-1)
+        std_v = np.maximum(np.asarray(y_std).reshape(-1), 0.0)
+        if len(true_v) == 0:
+            return 0.0
+
+        lower = pred_v - z_score * std_v
+        upper = pred_v + z_score * std_v
+        covered = (true_v >= lower) & (true_v <= upper)
+        return float(np.mean(covered))
+
     def print_metrics(self):
         """Print evaluation metrics"""
         print("\n=== Model Evaluation Metrics ===")

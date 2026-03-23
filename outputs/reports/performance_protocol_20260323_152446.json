@@ -1,0 +1,29 @@
+{
+  "protocol": {
+    "model_type": "gnn",
+    "split_strategy": "scaffold",
+    "epochs": 140,
+    "seed": 42,
+    "batch_size": 16,
+    "learning_rate": 0.0002,
+    "num_workers": 0
+  },
+  "dataset": {
+    "rows": 3,
+    "sources": [
+      "approved_drugs",
+      "pubchem"
+    ]
+  },
+  "metrics": {
+    "rmse": 0.5351765204161714,
+    "mae": 0.5351765155792236,
+    "r2": NaN,
+    "pearson_r": NaN
+  },
+  "history_tail": {
+    "train_loss_last": 0.15852025151252747,
+    "val_loss_last": 0.28641390800476074
+  },
+  "checkpoint": "./checkpoints/gnn_protocol_20260323_152446.pt"
+}

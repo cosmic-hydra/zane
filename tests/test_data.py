@@ -65,3 +65,30 @@ class TestDataCollector:
         df = self.collector.collect_from_drugbank(file_path=missing_file, limit=10)
         assert isinstance(df, pd.DataFrame)
         assert df.empty
+
+    def test_data_quality_report_metrics(self):
+        """Quality report should summarize validity and duplicate metrics."""
+        df = pd.DataFrame(
+            {
+                "smiles": ["CCO", "CCO", "INVALID_SMILES", "CC(=O)O"],
+                "name": ["a", "b", "c", "d"],
+                "source": ["x", "x", "x", "x"],
+            }
+        )
+
+        report = self.collector.generate_data_quality_report(df)
+
+        assert report["total_rows"] == 4
+        assert report["invalid_smiles_rows"] >= 1
+        assert report["duplicate_smiles_rows"] >= 1
+        assert 0.0 <= report["validity_ratio"] <= 1.0
+
+    def test_merge_filters_invalid_smiles(self):
+        """Merged datasets should not keep invalid SMILES rows."""
+        df1 = pd.DataFrame({"smiles": ["CCO", "INVALID_SMILES"], "name": ["a", "b"], "source": ["s", "s"]})
+        df2 = pd.DataFrame({"smiles": ["CC(=O)O"], "name": ["c"], "source": ["s"]})
+
+        merged = self.collector.merge_datasets([df1, df2])
+
+        assert isinstance(merged, pd.DataFrame)
+        assert "INVALID_SMILES" not in set(merged["smiles"].tolist())

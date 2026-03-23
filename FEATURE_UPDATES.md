@@ -237,6 +237,40 @@ Model Health   : Stable
 
 ## 10. Updated CLI Argument Parsing
 
+## 11. Scientific Upgrade Addendum (2026-03-23)
+
+### 11.1 Data Integrity
+
+- Collector now performs strict SMILES validity checks before merge output.
+- PubChem extraction updated to use non-deprecated field priority.
+- Data quality report API added for validity and duplicate diagnostics.
+
+### 11.2 Evaluation Protocol
+
+- Added scaffold-based split protocol and scaffold k-fold utility.
+- Added regression calibration metrics:
+  - expected calibration error (ECE)
+  - prediction interval coverage
+
+### 11.3 Dashboard v2 Runtime UX
+
+- Added theme presets: `lab`, `neon`, `classic`.
+- Added motion intensity control: `--motion-intensity` (1-3).
+- Added panels:
+  - pipeline flow orchestrator
+  - runtime telemetry
+  - protocol compliance
+
+### 11.4 Benchmark Artifact
+
+- Generated benchmark: `outputs/reports/scientific_benchmark_20260323.json`.
+- Protocol: seed 42, scaffold split, transformer, 4 epochs.
+- Validation metrics recorded in artifact and synchronized with docs.
+
+### 11.5 Validation Status
+
+- `pytest -q` currently reports 102 passed.
+
 ### Changes to `drug_discovery/cli.py`
 
 **Enhanced `show_dashboard()` Function:**

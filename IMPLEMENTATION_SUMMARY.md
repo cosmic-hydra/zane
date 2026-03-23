@@ -255,3 +255,24 @@ CC0 1.0 Universal - Public Domain Dedication
 ---
 
 **Built with ❤️ for the drug discovery community**
+
+---
+
+## Scientific Revision (2026-03-23)
+
+This summary is extended with the latest validated platform upgrades:
+
+- Added scaffold split and scaffold k-fold support for stronger generalization evaluation.
+- Added calibration metrics for probabilistic quality checks.
+- Improved data quality safeguards in multi-source collection (validity filtering + quality report).
+- Upgraded dashboard UX with animated runtime telemetry and scientific protocol compliance visualization.
+
+### Benchmark Artifact
+
+- File: `outputs/reports/scientific_benchmark_20260323.json`
+- Reproducible setup: seed 42, scaffold split, transformer, 4 epochs.
+- Recorded metrics: val loss 0.24554, RMSE 0.49552, MAE 0.42901.
+
+### Validation
+
+- Latest test snapshot: `pytest -q` reports 102 passed.

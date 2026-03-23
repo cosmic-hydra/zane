@@ -72,7 +72,7 @@ class ToxicityPredictor:
                 Descriptors.NumAromaticRings(mol),
                 Descriptors.NumAliphaticRings(mol),
                 Descriptors.NumSaturatedRings(mol),
-                Descriptors.FractionCSSP3(mol),
+                Descriptors.FractionCSP3(mol),
                 Descriptors.NumHeteroatoms(mol),
                 Descriptors.RingCount(mol),
                 rdMolDescriptors.CalcNumSpiroAtoms(mol),
@@ -102,7 +102,7 @@ class ToxicityPredictor:
         """
         descriptors = self._compute_molecular_descriptors(smiles)
         if descriptors is None:
-            return {"toxic": 0.5, "confidence": 0.0}
+            return {"toxic": 0.5, "toxic_class": "non-hepatotoxic", "confidence": 0.0}
 
         # Placeholder prediction - would use trained model
         # Using simple heuristics for demonstration
@@ -189,7 +189,13 @@ class ToxicityPredictor:
         """
         descriptors = self._compute_molecular_descriptors(smiles)
         if descriptors is None:
-            return {"toxic": 0.5, "herg_inhibitor": 0.5, "confidence": 0.0}
+            return {
+                "toxic": 0.5,
+                "cardiotoxic_class": "non-cardiotoxic",
+                "herg_inhibitor": 0.5,
+                "herg_risk": "medium",
+                "confidence": 0.0,
+            }
 
         # Placeholder - hERG inhibition often related to lipophilicity and basic nitrogen
         logp = descriptors[1]
@@ -234,13 +240,23 @@ class ToxicityPredictor:
         """
         descriptors = self._compute_molecular_descriptors(smiles)
         if descriptors is None:
-            return {"mutagenic": 0.5, "confidence": 0.0}
+            return {
+                "mutagenic": 0.5,
+                "mutagenic_class": "non-mutagenic",
+                "ames_positive": False,
+                "confidence": 0.0,
+            }
 
         # Placeholder - would use structural alerts and trained model
         # Check for common mutagenic substructures
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
-            return {"mutagenic": 0.5, "confidence": 0.0}
+            return {
+                "mutagenic": 0.5,
+                "mutagenic_class": "non-mutagenic",
+                "ames_positive": False,
+                "confidence": 0.0,
+            }
 
         # Simple structural alerts (placeholder)
         mutagenic_prob = 0.1  # Base probability

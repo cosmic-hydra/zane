@@ -4,7 +4,13 @@ Tests for Molecular Dataset and Featurization
 
 import pandas as pd
 import torch
-from drug_discovery.data import MolecularDataset, MolecularFeaturizer, train_test_split_molecular
+from drug_discovery.data import (
+    MolecularDataset,
+    MolecularFeaturizer,
+    murcko_scaffold_kfold_split_molecular,
+    murcko_scaffold_split_molecular,
+    train_test_split_molecular,
+)
 
 
 class TestMolecularFeaturizer:
@@ -93,3 +99,34 @@ class TestMolecularDataset:
 
         assert list(train_a.indices) == list(train_b.indices)
         assert list(test_a.indices) == list(test_b.indices)
+
+    def test_scaffold_split_is_reproducible(self):
+        """Scaffold split should be stable for the same seed."""
+        dataset = MolecularDataset(self.data, smiles_col="smiles", target_col="property", featurization="fingerprint")
+        train_a, test_a = murcko_scaffold_split_molecular(dataset, test_size=0.34, seed=123)
+        train_b, test_b = murcko_scaffold_split_molecular(dataset, test_size=0.34, seed=123)
+
+        assert list(train_a.indices) == list(train_b.indices)
+        assert list(test_a.indices) == list(test_b.indices)
+
+    def test_scaffold_kfold_reproducible(self):
+        """Scaffold k-fold splits should be reproducible for the same seed."""
+        dataset = MolecularDataset(self.data, smiles_col="smiles", target_col="property", featurization="fingerprint")
+        folds_a = murcko_scaffold_kfold_split_molecular(dataset, n_splits=3, seed=7)
+        folds_b = murcko_scaffold_kfold_split_molecular(dataset, n_splits=3, seed=7)
+
+        assert len(folds_a) == len(folds_b)
+        for (tr_a, te_a), (tr_b, te_b) in zip(folds_a, folds_b):
+            assert list(tr_a.indices) == list(tr_b.indices)
+            assert list(te_a.indices) == list(te_b.indices)
+
+    def test_scaffold_kfold_covers_all_samples(self):
+        """Across k folds, each sample should appear in a test fold exactly once."""
+        dataset = MolecularDataset(self.data, smiles_col="smiles", target_col="property", featurization="fingerprint")
+        folds = murcko_scaffold_kfold_split_molecular(dataset, n_splits=3, seed=9)
+
+        seen_test = []
+        for _, test_fold in folds:
+            seen_test.extend(list(test_fold.indices))
+
+        assert sorted(seen_test) == list(range(len(dataset)))

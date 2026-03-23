@@ -1,5 +1,18 @@
 # Ultra-SOTA AI Drug Discovery Platform
 
+## 2026-03-23 Scientific Update
+
+- Added scaffold split and scaffold k-fold utilities for stronger split protocol control.
+- Added calibration metrics for uncertainty quality checks.
+- Added stricter data quality reporting and invalid SMILES filtering in collection workflows.
+- Upgraded runtime dashboard with configurable themes, motion intensity, protocol compliance, and telemetry panels.
+
+### Reproducible Benchmark
+
+- Artifact: `outputs/reports/scientific_benchmark_20260323.json`
+- Protocol: seed=42, split=scaffold, model=transformer, epochs=4
+- Recorded metrics include `best_val_loss`, `rmse`, `mae`, `r2`, and `pearson_r`.
+
 ## Overview
 
 This repository implements an **ultra-state-of-the-art, production-grade, closed-loop AI drug discovery platform** that integrates:
