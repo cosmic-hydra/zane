@@ -4,7 +4,7 @@ Tests for Molecular Dataset and Featurization
 
 import pandas as pd
 import torch
-from drug_discovery.data import MolecularDataset, MolecularFeaturizer
+from drug_discovery.data import MolecularDataset, MolecularFeaturizer, train_test_split_molecular
 
 
 class TestMolecularFeaturizer:
@@ -84,3 +84,12 @@ class TestMolecularDataset:
 
         item = dataset[0]
         assert item is not None
+
+    def test_seeded_split_is_reproducible(self):
+        """Train/test splits should be stable for the same seed."""
+        dataset = MolecularDataset(self.data, smiles_col="smiles", target_col="property", featurization="fingerprint")
+        train_a, test_a = train_test_split_molecular(dataset, test_size=0.34, seed=123)
+        train_b, test_b = train_test_split_molecular(dataset, test_size=0.34, seed=123)
+
+        assert list(train_a.indices) == list(train_b.indices)
+        assert list(test_a.indices) == list(test_b.indices)

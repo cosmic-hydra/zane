@@ -42,6 +42,9 @@ class DrugDiscoveryPipeline:
         self.cache_dir = cache_dir
         self.checkpoint_dir = checkpoint_dir
 
+        os.makedirs(self.cache_dir, exist_ok=True)
+        os.makedirs(self.checkpoint_dir, exist_ok=True)
+
         # Initialize components
         self.data_collector = DataCollector(cache_dir=cache_dir)
         self.featurizer = MolecularFeaturizer()
@@ -58,7 +61,10 @@ class DrugDiscoveryPipeline:
         print(f"Device: {device}")
 
     def collect_data(
-        self, sources: list[str] = ["pubchem", "chembl", "approved_drugs"], limit_per_source: int = 1000
+        self,
+        sources: list[str] = ["pubchem", "chembl", "approved_drugs"],
+        limit_per_source: int = 1000,
+        drugbank_file: str | None = None,
     ) -> pd.DataFrame:
         """
         Collect molecular data from multiple sources
@@ -92,6 +98,12 @@ class DrugDiscoveryPipeline:
             if not df.empty:
                 datasets.append(df)
 
+        if "drugbank" in sources:
+            print("\nCollecting from DrugBank...")
+            df = self.data_collector.collect_from_drugbank(file_path=drugbank_file, limit=limit_per_source)
+            if not df.empty:
+                datasets.append(df)
+
         # Merge datasets
         if datasets:
             merged_data = self.data_collector.merge_datasets(datasets)
@@ -108,6 +120,7 @@ class DrugDiscoveryPipeline:
         target_col: str | None = None,
         test_size: float = 0.2,
         batch_size: int = 32,
+        seed: int | None = None,
     ) -> tuple[DataLoader, DataLoader]:
         """
         Prepare train and test dataloaders
@@ -134,7 +147,7 @@ class DrugDiscoveryPipeline:
         dataset = MolecularDataset(data=data, smiles_col=smiles_col, target_col=target_col, featurization=featurization)
 
         # Split dataset
-        train_dataset, test_dataset = train_test_split_molecular(dataset, test_size=test_size)
+        train_dataset, test_dataset = train_test_split_molecular(dataset, test_size=test_size, seed=seed)
 
         print(f"Train samples: {len(train_dataset)}")
         print(f"Test samples: {len(test_dataset)}")
@@ -373,17 +386,22 @@ class DrugDiscoveryPipeline:
     def save(self, filepath: str):
         """Save the pipeline"""
         if self.model is not None:
+            save_path = os.path.abspath(filepath)
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
             torch.save(
                 {
                     "model_state_dict": self.model.state_dict(),
                     "model_type": self.model_type,
+                    "checkpoint_version": 2,
                 },
-                filepath,
+                save_path,
             )
-            print(f"Pipeline saved to {filepath}")
+            print(f"Pipeline saved to {save_path}")
 
     def load(self, filepath: str):
         """Load the pipeline"""
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Checkpoint not found: {filepath}")
         checkpoint = torch.load(filepath, map_location=self.device)
         self.model_type = checkpoint["model_type"]
         self.build_model()

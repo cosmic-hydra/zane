@@ -191,6 +191,16 @@ pip install -r requirements.txt
 python -c "import torch; print(torch.cuda.is_available())"
 ```
 
+### Environment Variables
+
+Create a local env file from the template and keep secrets out of source control:
+
+```bash
+cp .env.example .env
+```
+
+Common optional settings include `GOOGLE_CSE_API_KEY`, `GOOGLE_CSE_ID`, `NCBI_API_KEY`, and `CEREBRAS_API_KEY`.
+
 ### Optional Multi-Language Accelerator (Go)
 
 ZANE includes an optional Go backend for faster web search retrieval in synthesis workflows.

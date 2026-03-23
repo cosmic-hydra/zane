@@ -11,6 +11,7 @@ from drug_discovery.ai_support import AISupportConfig, LlamaSupportAssistant
 from drug_discovery.dashboard import run_dashboard
 from drug_discovery.evaluation import ADMETPredictor
 from drug_discovery.synthesis import RetrosynthesisPlanner
+from drug_discovery.utils import set_seed
 
 
 def main():
@@ -34,11 +35,18 @@ def main():
     train_parser.add_argument("--model", default="gnn", choices=["gnn", "transformer", "ensemble"])
     train_parser.add_argument("--epochs", type=int, default=100)
     train_parser.add_argument("--batch-size", type=int, default=32)
+    train_parser.add_argument("--seed", type=int, default=42)
 
     # Collect data command
     collect_parser = subparsers.add_parser("collect", help="Collect molecular data")
-    collect_parser.add_argument("--sources", nargs="+", default=["pubchem", "chembl"])
+    collect_parser.add_argument(
+        "--sources",
+        nargs="+",
+        default=["pubchem", "chembl"],
+        choices=["pubchem", "chembl", "approved_drugs", "drugbank"],
+    )
     collect_parser.add_argument("--limit", type=int, default=1000)
+    collect_parser.add_argument("--drugbank-file", default=None, help="Path to DrugBank CSV/TSV export")
 
     # Dashboard command
     dashboard_parser = subparsers.add_parser(
@@ -221,6 +229,8 @@ def analyze_admet(args):
 def train_model(args):
     """Train a new model"""
     print(f"Training {args.model} model...")
+    set_seed(args.seed)
+    print(f"Using random seed: {args.seed}")
 
     pipeline = DrugDiscoveryPipeline(model_type=args.model)
 
@@ -228,7 +238,7 @@ def train_model(args):
     data = pipeline.collect_data()
 
     # Prepare datasets
-    train_loader, test_loader = pipeline.prepare_datasets(data, batch_size=args.batch_size)
+    train_loader, test_loader = pipeline.prepare_datasets(data, batch_size=args.batch_size, seed=args.seed)
 
     # Train
     pipeline.train(train_loader, test_loader, num_epochs=args.epochs)
@@ -252,6 +262,10 @@ def collect_data(args):
             df = collector.collect_from_pubchem(limit=args.limit)
         elif source == "chembl":
             df = collector.collect_from_chembl(limit=args.limit)
+        elif source == "approved_drugs":
+            df = collector.collect_approved_drugs()
+        elif source == "drugbank":
+            df = collector.collect_from_drugbank(file_path=args.drugbank_file, limit=args.limit)
         else:
             continue
 

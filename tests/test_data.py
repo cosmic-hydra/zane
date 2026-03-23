@@ -2,6 +2,8 @@
 Tests for Data Collection Module
 """
 
+from pathlib import Path
+
 import pandas as pd
 from drug_discovery.data import DataCollector
 
@@ -39,3 +41,27 @@ class TestDataCollector:
         assert "smiles" in merged.columns
         # Should remove duplicates
         assert len(merged) < len(df1) + len(df2)
+
+    def test_collect_from_drugbank_csv(self, tmp_path):
+        """Test DrugBank CSV parsing with normalized output schema."""
+        csv_path = tmp_path / "drugbank.csv"
+        csv_path.write_text(
+            "SMILES,drug_name\nCCO,Ethanol\nCC(=O)O,Acetic acid\n",
+            encoding="utf-8",
+        )
+
+        df = self.collector.collect_from_drugbank(file_path=str(csv_path), limit=10)
+
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+        assert "smiles" in df.columns
+        assert "name" in df.columns
+        assert "source" in df.columns
+        assert set(df["source"].unique()) == {"drugbank"}
+
+    def test_collect_from_drugbank_missing_file(self, tmp_path):
+        """Test DrugBank behavior when file is absent."""
+        missing_file = str(Path(tmp_path) / "not_found.csv")
+        df = self.collector.collect_from_drugbank(file_path=missing_file, limit=10)
+        assert isinstance(df, pd.DataFrame)
+        assert df.empty

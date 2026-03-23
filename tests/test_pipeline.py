@@ -2,6 +2,8 @@
 Tests for Drug Discovery Pipeline
 """
 
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -55,3 +57,11 @@ class TestDrugDiscoveryPipeline:
         new_pipeline.load("./test_pipeline.pt")
 
         assert new_pipeline.model is not None
+
+    def test_creates_checkpoint_dir(self, tmp_path):
+        """Pipeline initialization should create checkpoint directory."""
+        ckpt_dir = tmp_path / "ckpts"
+        assert not ckpt_dir.exists()
+        pipeline = DrugDiscoveryPipeline(model_type="gnn", device="cpu", checkpoint_dir=str(ckpt_dir))
+        assert pipeline is not None
+        assert Path(ckpt_dir).exists()
