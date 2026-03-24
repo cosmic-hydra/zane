@@ -1,4 +1,4 @@
-# ZANE: Autonomous AI Drug Discovery Platform
+# ZANE:  AI-native Drug Discovery Module - experimental version beta
 
 A production-minded, research-first platform for molecular intelligence workflows, from data acquisition and model training to simulation-aware candidate prioritization and AI-assisted decision support.
 

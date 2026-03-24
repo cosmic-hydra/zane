@@ -6,12 +6,7 @@ import argparse
 import json
 import sys
 
-from drug_discovery import DrugDiscoveryPipeline
-from drug_discovery.ai_support import AISupportConfig, LlamaSupportAssistant
 from drug_discovery.dashboard import run_dashboard
-from drug_discovery.evaluation import ADMETPredictor
-from drug_discovery.synthesis import RetrosynthesisPlanner
-from drug_discovery.utils import set_seed
 
 
 def main():
@@ -202,6 +197,8 @@ def main():
 
 def predict_properties(args):
     """Predict molecular properties"""
+    from drug_discovery import DrugDiscoveryPipeline
+
     print(f"Predicting properties for: {args.smiles}")
 
     if args.checkpoint:
@@ -219,6 +216,8 @@ def predict_properties(args):
 
 def analyze_admet(args):
     """Analyze ADMET properties"""
+    from drug_discovery.evaluation import ADMETPredictor
+
     print(f"Analyzing ADMET for: {args.smiles}")
 
     admet = ADMETPredictor()
@@ -242,6 +241,9 @@ def analyze_admet(args):
 
 def train_model(args):
     """Train a new model"""
+    from drug_discovery import DrugDiscoveryPipeline
+    from drug_discovery.utils import set_seed
+
     print(f"Training {args.model} model...")
     set_seed(args.seed)
     print(f"Using random seed: {args.seed}")
@@ -393,6 +395,8 @@ def show_dashboard(args):
 
 def run_ai_support(args):
     """Generate AI support response using Meta Llama."""
+    from drug_discovery.ai_support import AISupportConfig, LlamaSupportAssistant
+
     assistant = LlamaSupportAssistant(config=AISupportConfig(model_id=args.model_id))
 
     try:
@@ -413,6 +417,8 @@ def run_ai_support(args):
 
 def run_synthesis_research(args):
     """Plan synthesis with internet research and optional AI guidance."""
+    from drug_discovery.synthesis import RetrosynthesisPlanner
+
     planner = RetrosynthesisPlanner()
     result = planner.plan_synthesis_with_research(
         target_smiles=args.smiles,

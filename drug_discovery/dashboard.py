@@ -344,7 +344,7 @@ def _gather_external_intel(
             providers.append("web-search")
 
             for hit in hits[:5]:
-                title = str(hit.get("title", ""))[:80]
+                title = str(hit.get("title", ""))
                 url = str(hit.get("url", ""))
                 source = str(hit.get("source", "web"))
                 lines.append(f"- [web:{source}] {title}")
@@ -357,7 +357,7 @@ def _gather_external_intel(
                     rtype = str(resource.get("resource_type", "unknown"))
                     text = str(resource.get("text", "")).replace("\n", " ").strip()
                     if text:
-                        evidence_lines.append(f"[{rtype}] {title}: {text[:220]}")
+                        evidence_lines.append(f"[{rtype}] {title}: {text}")
             if enable_pdf_read:
                 providers.append("pdf-reader")
         except Exception as exc:
@@ -406,11 +406,11 @@ def _gather_external_intel(
 
     intel_parts = []
     if lines:
-        intel_parts.append("Evidence Feeds:\n" + "\n".join(lines[:6]))
+        intel_parts.append("Evidence Feeds:\n" + "\n".join(lines))
     if local_lines:
-        intel_parts.append("Local Simulation Signals:\n" + "\n".join(local_lines[:4]))
+        intel_parts.append("Local Simulation Signals:\n" + "\n".join(local_lines))
     if evidence_lines:
-        intel_parts.append("PDF/URL Extracts:\n" + "\n".join(f"- {line}" for line in evidence_lines[:3]))
+        intel_parts.append("PDF/URL Extracts:\n" + "\n".join(f"- {line}" for line in evidence_lines))
     if cerebras_text:
         intel_parts.append("Cerebras Guidance:\n" + cerebras_text)
 
@@ -450,8 +450,8 @@ def _build_header(snapshot: DashboardSnapshot, theme: DashboardTheme) -> Panel:
     )
     meta = Text(
         (
-            f"RUN-CODE: {snapshot.run_id}  |  MODEL-CODE: {snapshot.model_type.upper()}  |  "
-            f"OPS-MODE: {snapshot.mode}  |  TS: {now}"
+            f"RUN ID: {snapshot.run_id}  |  MODEL: {snapshot.model_type.upper()}  |  "
+            f"OPERATING MODE: {snapshot.mode}  |  TIMESTAMP: {now}"
         ),
         style="dim",
     )
@@ -593,17 +593,17 @@ def _build_kpi_table(snapshot: DashboardSnapshot, theme: DashboardTheme) -> Pane
     table.add_column("Metric", style="bold white")
     table.add_column("Value", justify="right")
 
-    table.add_row("KPI-THRPT | Molecules Screened", f"[bold {theme.ok}]{snapshot.molecules_screened:,}[/bold {theme.ok}]")
-    table.add_row("KPI-GEN | Generated Candidates", f"{snapshot.molecules_generated:,}")
-    table.add_row("KPI-JOBS | Active Jobs", f"{snapshot.active_jobs}")
-    table.add_row("KPI-HIT | Hit Rate", f"{snapshot.hit_rate:.2%}")
-    table.add_row("KPI-QED | Avg QED", f"{snapshot.avg_qed:.3f}")
-    table.add_row("KPI-SA | Avg SA", f"{snapshot.avg_sa:.2f}")
-    table.add_row("KPI-BIND | Best Binding (kcal/mol)", f"[bold {theme.accent}]{snapshot.best_binding:.2f}[/bold {theme.accent}]")
-    table.add_row("KPI-LAT | Inference Latency", f"{snapshot.latency_ms:.1f} ms")
-    table.add_row("SYS-CPU | Utilization", f"{snapshot.cpu_util:.1f}%")
-    table.add_row("SYS-GPU | Utilization", f"{snapshot.gpu_util:.1f}%")
-    table.add_row("SYS-MEM | Active Memory", f"{snapshot.memory_gb:.2f} GB")
+    table.add_row("Molecules Screened", f"[bold {theme.ok}]{snapshot.molecules_screened:,}[/bold {theme.ok}]")
+    table.add_row("Generated Candidates", f"{snapshot.molecules_generated:,}")
+    table.add_row("Active Jobs", f"{snapshot.active_jobs}")
+    table.add_row("Hit Rate", f"{snapshot.hit_rate:.2%}")
+    table.add_row("Average QED", f"{snapshot.avg_qed:.3f}")
+    table.add_row("Average SA", f"{snapshot.avg_sa:.2f}")
+    table.add_row("Best Binding (kcal/mol)", f"[bold {theme.accent}]{snapshot.best_binding:.2f}[/bold {theme.accent}]")
+    table.add_row("Inference Latency", f"{snapshot.latency_ms:.1f} ms")
+    table.add_row("CPU Utilization", f"{snapshot.cpu_util:.1f}%")
+    table.add_row("GPU Utilization", f"{snapshot.gpu_util:.1f}%")
+    table.add_row("Active Memory", f"{snapshot.memory_gb:.2f} GB")
 
     return Panel(
         table,
@@ -858,12 +858,12 @@ def _build_candidates_table(simulated_combos: list[dict[str, float | str]] | Non
     resolved_theme = theme or _resolve_theme("lab")
     table = Table(box=box.SIMPLE_HEAVY, expand=True)
     table.add_column("Rank", justify="right", style="bold")
-    table.add_column("Combination", style="cyan")
+    table.add_column("Combination", style="cyan", overflow="fold")
     table.add_column("Match", justify="right")
     table.add_column("Efficacy", justify="right")
     table.add_column("Risk", justify="right")
     table.add_column("Score", justify="right", style="magenta")
-    table.add_column("Status", justify="center")
+    table.add_column("Status", justify="center", overflow="fold")
 
     sample_rows = simulated_combos or []
     if not sample_rows:
@@ -896,10 +896,10 @@ def _build_composition_table(simulated_combos: list[dict[str, float | str]] | No
     """Build a simulation-only composition table for beta dosage exploration."""
     table = Table(box=box.SIMPLE_HEAVY, expand=True)
     table.add_column("Rank", justify="right", style="bold")
-    table.add_column("Drug Candidate", style="cyan")
-    table.add_column("Probable Composition (sim)", style="white")
+    table.add_column("Drug Candidate", style="cyan", overflow="fold")
+    table.add_column("Probable Composition (sim)", style="white", overflow="fold")
     table.add_column("Beta Dose Index", justify="right", style="yellow")
-    table.add_column("Usage Profile", style="green")
+    table.add_column("Usage Profile", style="green", overflow="fold")
 
     rows = simulated_combos or []
     seen: set[str] = set()
@@ -968,12 +968,10 @@ def _build_composition_table(simulated_combos: list[dict[str, float | str]] | No
 
         table.add_row(str(rank), candidate, composition, f"{beta_dose_index:.2f}", usage)
 
-    subtitle = "Simulation-only composition estimates for beta testing mode (not real dosage guidance)."
     resolved_theme = theme or _resolve_theme("lab")
     return Panel(
         table,
         title="Drug Composition Table | Beta Testing Mode",
-        subtitle=subtitle,
         border_style=resolved_theme.primary,
         box=resolved_theme.panel_box,
     )
@@ -981,9 +979,9 @@ def _build_composition_table(simulated_combos: list[dict[str, float | str]] | No
 
 def _build_overview_panel(detail_sections: set[str], theme: DashboardTheme) -> Panel:
     text = Text()
-    text.append("Simple View Active\n", style="bold white")
-    text.append("Detailed panels are hidden by default.\n\n", style="white")
-    text.append("Type specific commands to open details:\n", style="bold cyan")
+    text.append("Unified View Active\n", style="bold white")
+    text.append("All detail panels are shown by default.\n\n", style="white")
+    text.append("Optional command filters:\n", style="bold cyan")
     text.append("- --detail-panels combinations\n", style="white")
     text.append("- --detail-panels composition\n", style="white")
     text.append("- --detail-panels analytics\n", style="white")
@@ -1032,12 +1030,12 @@ def _build_graphs_panel(
     theme: DashboardTheme,
 ) -> Panel:
     rows = simulated_combos or []
-    top_rows = rows[:5]
+    top_rows = rows
 
     text = Text()
     text.append("Top Score Bars\n", style="bold white")
     for row in top_rows:
-        label = str(row["combo"])[:18].ljust(18)
+        label = str(row["combo"]).ljust(18)
         score = float(row["score"])
         text.append(f"{label} {_metric_bar(score, 0.0, 1.0, width=16)} {score:.2f}\n", style="cyan")
 
@@ -1139,7 +1137,7 @@ def _compose_ai_panel_content(
         local_ai = advisor.summarize(snapshot)
         if evidence_lines:
             local_ai = f"{local_ai}\n\nExternal evidence signals:\n" + "\n".join(
-                f"- {line[:180]}" for line in evidence_lines[:3]
+                f"- {line}" for line in evidence_lines
             )
         ai_provider = f"{advisor.provider}, {intel_provider}" if intel_provider else advisor.provider
         if intel_text:
@@ -1161,67 +1159,50 @@ def render_dashboard(
     detail_sections: set[str] | None = None,
     theme_name: str = "lab",
     motion_intensity: int = 2,
-) -> Layout:
+) -> Any:
     """Build a complete terminal dashboard layout for the given snapshot."""
-    layout = Layout()
     theme = _resolve_theme(theme_name)
-    layout.split_column(
-        Layout(name="header", size=16),
-        Layout(name="main"),
-        Layout(name="footer", size=8),
-    )
 
-    layout["header"].update(_build_header(snapshot, theme=theme))
-
-    resolved_sections = set(detail_sections or set())
+    # Show every detail section by default so all process panels are visible.
+    resolved_sections = set(detail_sections or {"all"})
     if "all" in resolved_sections:
         resolved_sections = {"combinations", "composition", "analytics", "ai"}
 
-    layout["main"].split_row(Layout(name="left", ratio=2), Layout(name="right", ratio=3))
-    layout["left"].split_column(Layout(name="kpis"), Layout(name="train"), Layout(name="flow"))
+    panel_stack: list[Panel] = [
+        _build_header(snapshot, theme=theme),
+        _build_kpi_table(snapshot, theme=theme),
+        _build_training_panel(snapshot, theme=theme, motion_intensity=motion_intensity),
+        _build_pipeline_flow_panel(snapshot=snapshot, theme=theme),
+        _build_overview_panel(resolved_sections, theme=theme),
+    ]
 
-    right_panels: list[tuple[str, Panel]] = [("overview", _build_overview_panel(resolved_sections, theme=theme))]
     if "combinations" in resolved_sections:
-        right_panels.append(("candidates", _build_candidates_table(simulated_combos=simulated_combos, theme=theme)))
+        panel_stack.append(_build_candidates_table(simulated_combos=simulated_combos, theme=theme))
     if "composition" in resolved_sections:
-        right_panels.append(("composition", _build_composition_table(simulated_combos=simulated_combos, theme=theme)))
+        panel_stack.append(_build_composition_table(simulated_combos=simulated_combos, theme=theme))
     if "analytics" in resolved_sections:
-        right_panels.append(
-            (
-                "charts",
-                _build_graphs_panel(
-                    simulated_combos=simulated_combos,
-                    hit_rate_history=hit_rate_history or [],
-                    score_history=score_history or [],
-                    theme=theme,
-                ),
+        panel_stack.append(
+            _build_graphs_panel(
+                simulated_combos=simulated_combos,
+                hit_rate_history=hit_rate_history or [],
+                score_history=score_history or [],
+                theme=theme,
             )
         )
-        right_panels.append(
-            (
-                "telemetry",
-                _build_runtime_telemetry_panel(
-                    snapshot=snapshot,
-                    hit_rate_history=hit_rate_history or [],
-                    score_history=score_history or [],
-                    theme=theme,
-                ),
+        panel_stack.append(
+            _build_runtime_telemetry_panel(
+                snapshot=snapshot,
+                hit_rate_history=hit_rate_history or [],
+                score_history=score_history or [],
+                theme=theme,
             )
         )
     if "ai" in resolved_sections:
-        right_panels.append(("ai", _build_ai_panel(ai_text=ai_text, provider=ai_provider, theme=theme)))
-    right_panels.append(("protocol", _build_protocol_panel(snapshot=snapshot, theme=theme)))
+        panel_stack.append(_build_ai_panel(ai_text=ai_text, provider=ai_provider, theme=theme))
+    panel_stack.append(_build_protocol_panel(snapshot=snapshot, theme=theme))
+    panel_stack.append(_build_alerts_panel(snapshot, theme=theme))
 
-    layout["right"].split_column(*(Layout(name=name) for name, _ in right_panels))
-
-    layout["left"]["kpis"].update(_build_kpi_table(snapshot, theme=theme))
-    layout["left"]["train"].update(_build_training_panel(snapshot, theme=theme, motion_intensity=motion_intensity))
-    layout["left"]["flow"].update(_build_pipeline_flow_panel(snapshot=snapshot, theme=theme))
-    for name, panel in right_panels:
-        layout["right"][name].update(panel)
-
-    layout["footer"].update(_build_alerts_panel(snapshot, theme=theme))
-    return layout
+    return Group(*panel_stack)
 
 
 def _next_snapshot(previous: DashboardSnapshot) -> DashboardSnapshot:
@@ -1377,7 +1358,7 @@ def run_dashboard(
         ),
         refresh_per_second=8,
         console=console,
-        screen=True,
+        screen=False,
     ) as live_view:
         for _ in range(max(iterations, 1)):
             time.sleep(max(refresh_seconds, 0.2))
