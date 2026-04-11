@@ -1,0 +1,12 @@
+[submodule "external/aizynthfinder"]
+	path = external/aizynthfinder
+	url = https://github.com/MolecularAI/aizynthfinder
+[submodule "external/REINVENT4"]
+	path = external/REINVENT4
+	url = https://github.com/MolecularAI/REINVENT4
+[submodule "external/molecular-design"]
+	path = external/molecular-design
+	url = https://github.com/GT4SD/molecular-design
+[submodule "external/gt4sd-core"]
+	path = external/gt4sd-core
+	url = https://github.com/GT4SD/gt4sd-core
