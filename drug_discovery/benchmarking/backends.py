@@ -7,9 +7,10 @@ when the external suites are installed. They degrade gracefully when missing.
 
 from __future__ import annotations
 
-import importlib.util
 from dataclasses import dataclass, field
 from typing import Any
+
+from drug_discovery.integrations import get_integration_status
 
 
 @dataclass
@@ -48,14 +49,18 @@ class MosesBenchmarkBackend(BaseBenchmarkBackend):
     name = "moses"
 
     def is_available(self) -> bool:
-        return importlib.util.find_spec("moses") is not None
+        return get_integration_status("moses").importable
 
     def run(self, dataset_path: str | None = None) -> BenchmarkResult:  # pragma: no cover - optional
         if not self.is_available():
+            status = get_integration_status("moses")
             return BenchmarkResult.failure(
                 self.name,
                 "MOSES not installed.",
-                warnings=["Install moses to run molecule quality benchmarks."],
+                warnings=[
+                    "Install moses to run molecule quality benchmarks.",
+                    f"Submodule registered: {status.submodule_registered}; local checkout present: {status.local_checkout_present}.",
+                ],
             )
         metrics = {"valid": 0.98, "unique": 0.95, "novelty": 0.85}
         return BenchmarkResult(suite=self.name, success=True, metrics=metrics)
@@ -65,14 +70,18 @@ class GuacamolBenchmarkBackend(BaseBenchmarkBackend):
     name = "guacamol"
 
     def is_available(self) -> bool:
-        return importlib.util.find_spec("guacamol") is not None
+        return get_integration_status("guacamol").importable
 
     def run(self, dataset_path: str | None = None) -> BenchmarkResult:  # pragma: no cover - optional
         if not self.is_available():
+            status = get_integration_status("guacamol")
             return BenchmarkResult.failure(
                 self.name,
                 "GuacaMol not installed.",
-                warnings=["Install guacamol to run drug design benchmarks."],
+                warnings=[
+                    "Install guacamol to run drug design benchmarks.",
+                    f"Submodule registered: {status.submodule_registered}; local checkout present: {status.local_checkout_present}.",
+                ],
             )
         metrics = {"median_score": 0.72, "topk_mean": 0.81}
         return BenchmarkResult(suite=self.name, success=True, metrics=metrics)

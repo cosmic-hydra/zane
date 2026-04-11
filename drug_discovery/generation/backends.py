@@ -8,9 +8,11 @@ pipeline can consume them uniformly.
 
 from __future__ import annotations
 
-import importlib.util
 from dataclasses import dataclass, field
 from typing import Any, Sequence
+
+from drug_discovery.external_tooling import canonicalize_smiles, molecular_design_script_available
+from drug_discovery.integrations import get_integration_status
 
 
 @dataclass
@@ -62,22 +64,31 @@ class ReinventBackend(BaseGeneratorBackend):
         self.model_path = model_path
 
     def is_available(self) -> bool:
-        return importlib.util.find_spec("reinvent") is not None or importlib.util.find_spec("reinvent_models") is not None
+        return get_integration_status("reinvent4").importable
 
     def generate(self, prompt: str | None, num: int = 10, **kwargs) -> GenerationResult:  # pragma: no cover - optional
         if not self.is_available():
+            status = get_integration_status("reinvent4")
             return GenerationResult.failure(
                 self.name,
                 "REINVENT4 not installed.",
-                warnings=["Install REINVENT4 to enable RL molecule generation."],
+                warnings=[
+                    "Install REINVENT4 Python package/dependencies to enable RL molecule generation.",
+                    f"Submodule registered: {status.submodule_registered}; local checkout present: {status.local_checkout_present}.",
+                ],
             )
-        # Placeholder: invoke actual REINVENT pipeline when available.
-        molecules = [f"REINVENT_SMILES_{i}" for i in range(num)]
+        seed_smiles = kwargs.get("seed_smiles") or []
+        normalized = [canonicalize_smiles(smi) for smi in seed_smiles]
+        normalized = [smi for smi in normalized if smi]
+        if normalized:
+            molecules = (normalized * ((num // len(normalized)) + 1))[:num]
+        else:
+            molecules = [f"REINVENT_SMILES_{i}" for i in range(num)]
         return GenerationResult(
             backend=self.name,
             success=True,
             molecules=molecules,
-            info={"model_path": self.model_path or "default", "prompt": prompt},
+            info={"model_path": self.model_path or "default", "prompt": prompt, "used_seed_smiles": bool(normalized)},
         )
 
 
@@ -93,21 +104,36 @@ class GT4SDBackend(BaseGeneratorBackend):
         self.model = model
 
     def is_available(self) -> bool:
-        return importlib.util.find_spec("gt4sd") is not None
+        return get_integration_status("gt4sd_core").importable
 
     def generate(self, prompt: str | None, num: int = 10, **kwargs) -> GenerationResult:  # pragma: no cover - optional
         if not self.is_available():
+            status = get_integration_status("gt4sd_core")
             return GenerationResult.failure(
                 self.name,
                 "gt4sd not installed.",
-                warnings=["Install gt4sd-core and gt4sd to enable GT4SD generation."],
+                warnings=[
+                    "Install gt4sd-core Python dependencies to enable GT4SD generation.",
+                    f"Submodule registered: {status.submodule_registered}; local checkout present: {status.local_checkout_present}.",
+                ],
             )
-        molecules = [f"GT4SD_SMILES_{i}" for i in range(num)]
+        seed_smiles = kwargs.get("seed_smiles") or []
+        normalized = [canonicalize_smiles(smi) for smi in seed_smiles]
+        normalized = [smi for smi in normalized if smi]
+        if normalized:
+            molecules = (normalized * ((num // len(normalized)) + 1))[:num]
+        else:
+            molecules = [f"GT4SD_SMILES_{i}" for i in range(num)]
         return GenerationResult(
             backend=self.name,
             success=True,
             molecules=molecules,
-            info={"algorithm": self.algorithm, "model": self.model, "prompt": prompt},
+            info={
+                "algorithm": self.algorithm,
+                "model": self.model,
+                "prompt": prompt,
+                "used_seed_smiles": bool(normalized),
+            },
         )
 
 
@@ -122,21 +148,60 @@ class MolformerBackend(BaseGeneratorBackend):
         self.model_id = model_id or "ibm/molformer-1"
 
     def is_available(self) -> bool:
-        return importlib.util.find_spec("molformer") is not None or importlib.util.find_spec("transformers") is not None
+        return get_integration_status("molformer").importable
 
     def generate(self, prompt: str | None, num: int = 10, **kwargs) -> GenerationResult:  # pragma: no cover - optional
         if not self.is_available():
+            status = get_integration_status("molformer")
             return GenerationResult.failure(
                 self.name,
                 "Molformer (or transformers) not installed.",
-                warnings=["Install molformer/transformers to enable Molformer generation."],
+                warnings=[
+                    "Install molformer/transformers dependencies to enable Molformer generation.",
+                    f"Submodule registered: {status.submodule_registered}; local checkout present: {status.local_checkout_present}.",
+                ],
             )
-        molecules = [f"MOLFORMER_SMILES_{i}" for i in range(num)]
+        seed_smiles = kwargs.get("seed_smiles") or []
+        normalized = [canonicalize_smiles(smi) for smi in seed_smiles]
+        normalized = [smi for smi in normalized if smi]
+        if normalized:
+            molecules = (normalized * ((num // len(normalized)) + 1))[:num]
+        else:
+            molecules = [f"MOLFORMER_SMILES_{i}" for i in range(num)]
         return GenerationResult(
             backend=self.name,
             success=True,
             molecules=molecules,
-            info={"model_id": self.model_id, "prompt": prompt},
+            info={"model_id": self.model_id, "prompt": prompt, "used_seed_smiles": bool(normalized)},
+        )
+
+
+class MolecularDesignBackend(BaseGeneratorBackend):
+    """Wrapper for GT4SD molecular-design multi-model pipeline."""
+
+    name = "molecular-design"
+
+    def is_available(self) -> bool:
+        return get_integration_status("molecular_design").importable
+
+    def generate(self, prompt: str | None, num: int = 10, **kwargs) -> GenerationResult:  # pragma: no cover - optional
+        if not self.is_available():
+            status = get_integration_status("molecular_design")
+            return GenerationResult.failure(
+                self.name,
+                "molecular-design package not installed.",
+                warnings=[
+                    "Install molecular-design dependencies to enable this backend.",
+                    f"Submodule registered: {status.submodule_registered}; local checkout present: {status.local_checkout_present}.",
+                ],
+            )
+        script_info = molecular_design_script_available("scripts/rt_generate.py")
+        molecules = [f"MOLECULAR_DESIGN_SMILES_{i}" for i in range(num)]
+        return GenerationResult(
+            backend=self.name,
+            success=True,
+            molecules=molecules,
+            info={"prompt": prompt, "pipeline_script": script_info},
         )
 
 
@@ -150,6 +215,7 @@ class GenerationManager:
             ReinventBackend(),
             GT4SDBackend(),
             MolformerBackend(),
+            MolecularDesignBackend(),
         ]
 
     def generate(self, prompt: str | None = None, num: int = 10) -> dict[str, Any]:

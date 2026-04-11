@@ -8,10 +8,11 @@ configuration is not available.
 
 from __future__ import annotations
 
-import importlib.util
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+from drug_discovery.integrations import get_integration_status
 
 
 @dataclass
@@ -78,14 +79,18 @@ class AiZynthFinderBackend(BaseRetrosynthesisBackend):
         self.config_path = Path(config_path) if config_path else None
 
     def is_available(self) -> bool:
-        return bool(self.config_path and importlib.util.find_spec("aizynthfinder"))
+        return bool(self.config_path and get_integration_status("aizynthfinder").importable)
 
     def plan(self, smiles: str, max_depth: int = 5) -> BackendResult:
         if not self.is_available():
+            status = get_integration_status("aizynthfinder")
             return BackendResult.failure(
                 self.name,
                 "AiZynthFinder unavailable (missing dependency or config path).",
-                warnings=["Install aizynthfinder and provide a config file via RetrosynthesisPlanner(aizynth_config=...)"],
+                warnings=[
+                    "Install aizynthfinder and provide a config file via RetrosynthesisPlanner(aizynth_config=...).",
+                    f"Submodule registered: {status.submodule_registered}; local checkout present: {status.local_checkout_present}.",
+                ],
             )
 
         try:

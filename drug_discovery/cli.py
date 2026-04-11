@@ -6,8 +6,6 @@ import argparse
 import json
 import sys
 
-from drug_discovery.dashboard import run_dashboard
-
 
 def main():
     """Main CLI entry point"""
@@ -225,7 +223,7 @@ def main():
     generate_parser.add_argument(
         "--backends",
         nargs="+",
-        default=["reinvent4", "gt4sd", "molformer"],
+        default=["reinvent4", "gt4sd", "molformer", "molecular-design"],
         help="Priority-ordered list of backends to try.",
     )
 
@@ -241,6 +239,8 @@ def main():
         default=None,
         help="Optional dataset path required by some benchmarks.",
     )
+
+    subparsers.add_parser("integrations", help="Show status of optional external integrations and submodules")
 
     args = parser.parse_args()
 
@@ -264,6 +264,8 @@ def main():
         run_generation(args)
     elif args.command == "benchmark":
         run_benchmark(args)
+    elif args.command == "integrations":
+        run_integrations_status()
     else:
         parser.print_help()
 
@@ -375,6 +377,8 @@ def collect_data(args):
 
 def show_dashboard(args):
     """Display ZANE terminal dashboard."""
+    from drug_discovery.dashboard import run_dashboard
+
     query = "" if args.interactive_query else args.query
 
     if args.guided:
@@ -550,12 +554,19 @@ def run_boltzgen(args):
 
 def run_generation(args):
     """Generate molecules using optional backends."""
-    from drug_discovery.generation.backends import GenerationManager, GT4SDBackend, MolformerBackend, ReinventBackend
+    from drug_discovery.generation.backends import (
+        GT4SDBackend,
+        GenerationManager,
+        MolecularDesignBackend,
+        MolformerBackend,
+        ReinventBackend,
+    )
 
     backend_map = {
         "reinvent4": ReinventBackend(),
         "gt4sd": GT4SDBackend(),
         "molformer": MolformerBackend(),
+        "molecular-design": MolecularDesignBackend(),
     }
     selected = [backend_map[b] for b in args.backends if b in backend_map]
     manager = GenerationManager(backends=selected or None)
@@ -574,6 +585,14 @@ def run_benchmark(args):
     print(json.dumps(result, indent=2))
     if not result.get("success"):
         sys.exit(1)
+
+
+def run_integrations_status():
+    """Report optional integration and local submodule status."""
+    from drug_discovery.integrations import get_all_integration_statuses
+
+    payload = {"integrations": [status.as_dict() for status in get_all_integration_statuses()]}
+    print(json.dumps(payload, indent=2))
 
 
 if __name__ == "__main__":

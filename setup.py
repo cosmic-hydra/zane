@@ -34,6 +34,13 @@ setup(
     python_requires=">=3.8",
     install_requires=requirements,
     extras_require={
+        "integrations": [
+            "aizynthfinder>=4.3.0",
+            "gt4sd>=1.0.0",
+            "guacamol>=0.5.5",
+            "moses>=0.10.0",
+            "transformers>=4.30.0",
+        ],
         "dashboard": [
             "rich>=13.7.0",
             "requests>=2.31.0",

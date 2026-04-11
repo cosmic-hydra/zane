@@ -10,3 +10,15 @@
 [submodule "external/gt4sd-core"]
 	path = external/gt4sd-core
 	url = https://github.com/GT4SD/gt4sd-core
+[submodule "external/rdkit"]
+	path = external/rdkit
+	url = https://github.com/rdkit/rdkit
+[submodule "external/molformer"]
+	path = external/molformer
+	url = https://github.com/IBM/molformer
+[submodule "external/moses"]
+	path = external/moses
+	url = https://github.com/molecularsets/moses
+[submodule "external/guacamol"]
+	path = external/guacamol
+	url = https://github.com/BenevolentAI/guacamol

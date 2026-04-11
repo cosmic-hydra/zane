@@ -14,8 +14,11 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from rdkit import Chem
-from rdkit.Chem import Descriptors, AllChem
+from rdkit import DataStructs
+from rdkit.Chem import AllChem, Descriptors
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+
+from drug_discovery.external_tooling import canonicalize_smiles, gt4sd_properties
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +63,9 @@ class DrugCombinationTester:
             Feature vector or None if computation fails
         """
         try:
+            smiles1 = canonicalize_smiles(smiles1) or smiles1
+            smiles2 = canonicalize_smiles(smiles2) or smiles2
+
             mol1 = Chem.MolFromSmiles(smiles1)
             mol2 = Chem.MolFromSmiles(smiles2)
 
@@ -86,7 +92,20 @@ class DrugCombinationTester:
             # Compute fingerprint similarity
             fp1 = AllChem.GetMorganFingerprintAsBitVect(mol1, 2, nBits=2048)
             fp2 = AllChem.GetMorganFingerprintAsBitVect(mol2, 2, nBits=2048)
-            similarity = np.sum(np.array(fp1) & np.array(fp2)) / np.sum(np.array(fp1) | np.array(fp2))
+            similarity = float(DataStructs.TanimotoSimilarity(fp1, fp2))
+
+            gt4sd_1 = gt4sd_properties(smiles1)
+            gt4sd_2 = gt4sd_properties(smiles2)
+            gt4sd_features = np.array(
+                [
+                    gt4sd_1.get("qed", 0.0),
+                    gt4sd_2.get("qed", 0.0),
+                    gt4sd_2.get("qed", 0.0) - gt4sd_1.get("qed", 0.0),
+                    gt4sd_1.get("logp", 0.0),
+                    gt4sd_2.get("logp", 0.0),
+                    abs(gt4sd_2.get("logp", 0.0) - gt4sd_1.get("logp", 0.0)),
+                ]
+            )
 
             # Combine features: individual descriptors + differences + similarity
             features = np.concatenate([
@@ -94,6 +113,7 @@ class DrugCombinationTester:
                 desc2,
                 desc2 - desc1,  # Differences
                 [similarity],
+                gt4sd_features,
             ])
 
             return features
@@ -231,12 +251,15 @@ class DrugCombinationTester:
         # Using simple heuristics for demonstration
         similarity = features[-1]
         logp_diff = abs(features[6])  # Difference in logP
+        gt4sd_qed_delta = abs(features[-4])
 
         synergy_score = 0.0
         if 0.3 < similarity < 0.7:
             synergy_score += 0.3
         if logp_diff > 2:
             synergy_score += 0.2  # Different physicochemical properties
+        if gt4sd_qed_delta < 0.25:
+            synergy_score += 0.1
 
         synergy_score = min(1.0, synergy_score)
 

@@ -18,6 +18,8 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Crippen
 
+from drug_discovery.external_tooling import canonicalize_smiles, gt4sd_properties
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,14 +72,17 @@ class ADMEPredictor:
             ADME properties or None
         """
         try:
+            smiles = canonicalize_smiles(smiles) or smiles
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
                 return None
 
             # Compute molecular descriptors
-            mol_weight = Descriptors.MolWt(mol)
-            logp = Crippen.MolLogP(mol)
-            tpsa = Descriptors.TPSA(mol)
+            ext_props = gt4sd_properties(smiles)
+
+            mol_weight = ext_props.get("molecular_weight", Descriptors.MolWt(mol))
+            logp = ext_props.get("logp", Crippen.MolLogP(mol))
+            tpsa = ext_props.get("tpsa", Descriptors.TPSA(mol))
             num_hbd = Descriptors.NumHDonors(mol)
             num_hba = Descriptors.NumHAcceptors(mol)
             num_rotatable = Descriptors.NumRotatableBonds(mol)
@@ -142,6 +147,7 @@ class ADMEPredictor:
             Dictionary with drug-likeness assessment
         """
         try:
+            smiles = canonicalize_smiles(smiles) or smiles
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
                 return {"drug_like": False, "violations": ["Invalid SMILES"]}
@@ -328,6 +334,7 @@ class CellularResponseSimulator:
             CellularResponse or None
         """
         try:
+            smiles = canonicalize_smiles(smiles) or smiles
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
                 return None

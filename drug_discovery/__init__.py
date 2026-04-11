@@ -21,6 +21,7 @@ __all__ = [
     "ReinventBackend",
     "GT4SDBackend",
     "MolformerBackend",
+    "MolecularDesignBackend",
     "BenchmarkRunner",
     "MosesBenchmarkBackend",
     "GuacamolBenchmarkBackend",
@@ -49,14 +50,21 @@ def __getattr__(name: str) -> Any:
         from .boltzgen_adapter import BoltzGenRunner
 
         return BoltzGenRunner
-    if name in {"GenerationManager", "ReinventBackend", "GT4SDBackend", "MolformerBackend"}:
-        from .generation.backends import GenerationManager, GT4SDBackend, MolformerBackend, ReinventBackend
+    if name in {"GenerationManager", "ReinventBackend", "GT4SDBackend", "MolformerBackend", "MolecularDesignBackend"}:
+        from .generation.backends import (
+            GT4SDBackend,
+            GenerationManager,
+            MolecularDesignBackend,
+            MolformerBackend,
+            ReinventBackend,
+        )
 
         return {
             "GenerationManager": GenerationManager,
             "ReinventBackend": ReinventBackend,
             "GT4SDBackend": GT4SDBackend,
             "MolformerBackend": MolformerBackend,
+            "MolecularDesignBackend": MolecularDesignBackend,
         }[name]
     if name in {"BenchmarkRunner", "MosesBenchmarkBackend", "GuacamolBenchmarkBackend"}:
         from .benchmarking.backends import BenchmarkRunner, GuacamolBenchmarkBackend, MosesBenchmarkBackend
