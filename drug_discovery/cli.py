@@ -175,6 +175,41 @@ def main():
     synth_parser.add_argument("--no-ai", action="store_true", help="Disable AI synthesis guidance")
     synth_parser.add_argument("--no-resource-read", action="store_true", help="Disable URL/PDF reading")
 
+    boltzgen_parser = subparsers.add_parser("boltzgen", help="Run BoltzGen binder design pipeline")
+    boltzgen_parser.add_argument("spec", help="Path to a BoltzGen design specification YAML")
+    boltzgen_parser.add_argument(
+        "--output", default="outputs/boltzgen/run", help="Output directory for BoltzGen artifacts"
+    )
+    boltzgen_parser.add_argument(
+        "--protocol",
+        default="protein-anything",
+        choices=[
+            "protein-anything",
+            "peptide-anything",
+            "protein-small_molecule",
+            "nanobody-anything",
+            "antibody-anything",
+            "protein-redesign",
+        ],
+        help="BoltzGen protocol to use",
+    )
+    boltzgen_parser.add_argument("--num-designs", type=int, default=50, help="Number of intermediate designs to generate")
+    boltzgen_parser.add_argument("--budget", type=int, default=10, help="Final number of designs after filtering")
+    boltzgen_parser.add_argument("--steps", nargs="+", default=None, help="Optional subset of BoltzGen steps to run")
+    boltzgen_parser.add_argument("--devices", type=int, default=None, help="Number of devices to request")
+    boltzgen_parser.add_argument(
+        "--reuse",
+        action="store_true",
+        help="Reuse intermediate files when present to avoid regenerating designs",
+    )
+    boltzgen_parser.add_argument("--cache-dir", default=None, help="Cache directory for BoltzGen downloads")
+    boltzgen_parser.add_argument("--top-k", type=int, default=5, help="Number of designs to show in summary output")
+    boltzgen_parser.add_argument(
+        "--score-key",
+        default=None,
+        help="Optional metric key to sort the summary (e.g., refolding_rmsd or filter_rank)",
+    )
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -191,6 +226,8 @@ def main():
         run_ai_support(args)
     elif args.command == "synthesis-research":
         run_synthesis_research(args)
+    elif args.command == "boltzgen":
+        run_boltzgen(args)
     else:
         parser.print_help()
 
@@ -433,6 +470,46 @@ def run_synthesis_research(args):
 
     print("\nSynthesis Research Result:\n")
     print(json.dumps(result, indent=2))
+
+
+def run_boltzgen(args):
+    """Run the BoltzGen binder design workflow via CLI wrapper."""
+    from drug_discovery.boltzgen_adapter import BoltzGenRunner
+
+    runner = BoltzGenRunner(cache_dir=args.cache_dir)
+    try:
+        result = runner.run(
+            design_spec=args.spec,
+            output_dir=args.output,
+            protocol=args.protocol,
+            num_designs=args.num_designs,
+            budget=args.budget,
+            steps=args.steps,
+            devices=args.devices,
+            reuse=args.reuse,
+            parse_results=True,
+        )
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    summary = runner.summarize_metrics(result.metrics, top_k=args.top_k, score_key=args.score_key)
+    payload = {
+        "success": result.success,
+        "command": result.command,
+        "output_dir": str(result.output_dir),
+        "metrics_file": str(result.metrics_file) if result.metrics_file else None,
+        "summary": summary,
+    }
+    if result.stdout.strip():
+        payload["stdout"] = result.stdout.strip()
+    if result.stderr.strip():
+        payload["stderr"] = result.stderr.strip()
+
+    print(json.dumps(payload, indent=2))
+
+    if not result.success:
+        sys.exit(result.returncode or 1)
 
 
 if __name__ == "__main__":

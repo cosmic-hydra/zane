@@ -589,6 +589,22 @@ Generated compounds appear in rankings as `KB721H66-<FOCUS>-<N>` and are include
 2. Use AI support to draft test priorities.
 3. Finalize shortlist with domain experts.
 
+### BoltzGen Binder Design Workflow
+
+Install the upstream package (`pip install boltzgen`) and launch the integrated wrapper:
+
+```bash
+zane boltzgen path/to/design.yaml \
+  --output outputs/boltzgen/demo \
+  --protocol protein-anything \
+  --num-designs 50 \
+  --budget 5 \
+  --top-k 3 \
+  --score-key refolding_rmsd
+```
+
+The CLI delegates to the official BoltzGen pipeline, reuses cached downloads when available, and returns a JSON summary of the top-ranked designs. Use `--steps` to run only parts of the pipeline or `--devices` to set accelerator counts.
+
 ## 11. Quality and CI/CD
 
 Recommended pre-push checks:

@@ -4,7 +4,8 @@ Orchestrates the entire AI drug discovery process
 """
 
 import os
-from typing import Any, cast
+from pathlib import Path
+from typing import Any, Sequence, cast
 
 import numpy as np
 import pandas as pd
@@ -437,3 +438,68 @@ class DrugDiscoveryPipeline:
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.property_predictor = PropertyPredictor(self.model, self.device)
         print(f"Pipeline loaded from {filepath}")
+
+    def run_boltzgen_design(
+        self,
+        design_spec: str | Path,
+        output_dir: str | Path | None = None,
+        protocol: str = "protein-anything",
+        num_designs: int = 50,
+        budget: int = 10,
+        steps: Sequence[str] | None = None,
+        devices: int | None = None,
+        reuse: bool = True,
+        cache_dir: str | Path | None = None,
+        top_k: int = 5,
+        score_key: str | None = None,
+        runner: Any | None = None,
+    ) -> dict[str, Any]:
+        """
+        Launch a BoltzGen design run and return parsed results.
+
+        Args:
+            design_spec: Path to BoltzGen design YAML.
+            output_dir: Destination for BoltzGen artifacts.
+            protocol: BoltzGen protocol (e.g., protein-anything, peptide-anything).
+            num_designs: Intermediate designs to generate.
+            budget: Final designs to keep after filtering.
+            steps: Optional subset of steps to run.
+            devices: Number of accelerators to request.
+            reuse: Reuse intermediate files when present.
+            cache_dir: Optional cache directory for BoltzGen downloads.
+            top_k: Number of ranked designs to summarize.
+            score_key: Optional metric key used to sort summaries.
+            runner: Optional BoltzGenRunner for injection/testing.
+
+        Returns:
+            Dictionary with run status, command, parsed metrics, and a top-k summary.
+        """
+        if runner is None:
+            from .boltzgen_adapter import BoltzGenRunner
+
+            runner = BoltzGenRunner(cache_dir=cache_dir, work_dir=output_dir or self.checkpoint_dir)
+
+        result = runner.run(
+            design_spec=design_spec,
+            output_dir=output_dir or self.checkpoint_dir,
+            protocol=protocol,
+            num_designs=num_designs,
+            budget=budget,
+            steps=steps,
+            devices=devices,
+            reuse=reuse,
+            parse_results=True,
+        )
+
+        summary = runner.summarize_metrics(result.metrics, top_k=top_k, score_key=score_key)
+
+        return {
+            "success": result.success,
+            "command": result.command,
+            "output_dir": str(result.output_dir),
+            "metrics_file": str(result.metrics_file) if result.metrics_file else None,
+            "metrics": result.metrics,
+            "summary": summary,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+        }

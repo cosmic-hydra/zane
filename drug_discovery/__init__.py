@@ -16,6 +16,7 @@ __all__ = [
     "MolecularTransformer",
     "DrugModeler",
     "LlamaSupportAssistant",
+    "BoltzGenRunner",
 ]
 
 
@@ -37,4 +38,8 @@ def __getattr__(name: str) -> Any:
         from .ai_support import LlamaSupportAssistant
 
         return LlamaSupportAssistant
+    if name == "BoltzGenRunner":
+        from .boltzgen_adapter import BoltzGenRunner
+
+        return BoltzGenRunner
     raise AttributeError(f"module 'drug_discovery' has no attribute {name!r}")
