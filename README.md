@@ -122,7 +122,7 @@ Primary modules:
 - drug_discovery/training: training loop and closed-loop utilities
 - drug_discovery/evaluation: property/ADMET prediction and model evaluation
 - drug_discovery/physics: docking and MD simulation utilities
-- drug_discovery/synthesis: retrosynthesis and feasibility support
+- drug_discovery/synthesis: retrosynthesis and feasibility support (optional AiZynthFinder integration via `AIZYNTH_CONFIG`)
 - drug_discovery/optimization: Bayesian and multi-objective optimization
 - drug_discovery/agents: multi-agent orchestration framework
 - drug_discovery/dashboard.py: terminal dashboard implementation
