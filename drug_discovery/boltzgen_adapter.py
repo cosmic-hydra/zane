@@ -8,9 +8,9 @@ import csv
 import os
 import shutil
 import subprocess
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Sequence
 
 
 @dataclass
