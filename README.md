@@ -123,6 +123,8 @@ Primary modules:
 - drug_discovery/evaluation: property/ADMET prediction and model evaluation
 - drug_discovery/physics: docking and MD simulation utilities
 - drug_discovery/synthesis: retrosynthesis and feasibility support (optional AiZynthFinder integration via `AIZYNTH_CONFIG`)
+- drug_discovery/generation: optional molecule generation backends (REINVENT4, GT4SD, Molformer)
+- drug_discovery/benchmarking: optional benchmarking backends (MOSES, GuacaMol)
 - drug_discovery/optimization: Bayesian and multi-objective optimization
 - drug_discovery/agents: multi-agent orchestration framework
 - drug_discovery/dashboard.py: terminal dashboard implementation

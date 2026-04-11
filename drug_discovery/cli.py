@@ -210,6 +210,38 @@ def main():
         help="Optional metric key to sort the summary (e.g., refolding_rmsd or filter_rank)",
     )
 
+    generate_parser = subparsers.add_parser("generate", help="Run molecule generation via optional backends")
+    generate_parser.add_argument(
+        "--prompt",
+        default=None,
+        help="Optional prompt or conditioning string passed to the generator (backend-specific).",
+    )
+    generate_parser.add_argument(
+        "--num",
+        type=int,
+        default=10,
+        help="Number of molecules to sample (if supported by backend).",
+    )
+    generate_parser.add_argument(
+        "--backends",
+        nargs="+",
+        default=["reinvent4", "gt4sd", "molformer"],
+        help="Priority-ordered list of backends to try.",
+    )
+
+    benchmark_parser = subparsers.add_parser("benchmark", help="Run benchmarking suites (MOSES, GuacaMol)")
+    benchmark_parser.add_argument(
+        "--suite",
+        required=True,
+        choices=["moses", "guacamol"],
+        help="Benchmark suite to run.",
+    )
+    benchmark_parser.add_argument(
+        "--dataset",
+        default=None,
+        help="Optional dataset path required by some benchmarks.",
+    )
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -228,6 +260,10 @@ def main():
         run_synthesis_research(args)
     elif args.command == "boltzgen":
         run_boltzgen(args)
+    elif args.command == "generate":
+        run_generation(args)
+    elif args.command == "benchmark":
+        run_benchmark(args)
     else:
         parser.print_help()
 
@@ -510,6 +546,34 @@ def run_boltzgen(args):
 
     if not result.success:
         sys.exit(result.returncode or 1)
+
+
+def run_generation(args):
+    """Generate molecules using optional backends."""
+    from drug_discovery.generation.backends import GenerationManager, GT4SDBackend, MolformerBackend, ReinventBackend
+
+    backend_map = {
+        "reinvent4": ReinventBackend(),
+        "gt4sd": GT4SDBackend(),
+        "molformer": MolformerBackend(),
+    }
+    selected = [backend_map[b] for b in args.backends if b in backend_map]
+    manager = GenerationManager(backends=selected or None)
+    result = manager.generate(prompt=args.prompt, num=args.num)
+    print(json.dumps(result, indent=2))
+    if not result.get("success"):
+        sys.exit(1)
+
+
+def run_benchmark(args):
+    """Run benchmarking suites with graceful fallback."""
+    from drug_discovery.benchmarking.backends import BenchmarkRunner
+
+    runner = BenchmarkRunner()
+    result = runner.run(suite=args.suite, dataset_path=args.dataset)
+    print(json.dumps(result, indent=2))
+    if not result.get("success"):
+        sys.exit(1)
 
 
 if __name__ == "__main__":
