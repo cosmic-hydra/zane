@@ -49,6 +49,7 @@ class RetrosynthesisPlanner:
             try:
                 result: BackendResult = backend.plan(target_smiles, max_depth=max_depth)
             except Exception as exc:
+                logger.error(f"Backend {backend.name} failed with error: {exc}", exc_info=True)
                 result = BackendResult.failure(backend.name, f"Backend error: {exc}")
 
             backend_results.append(result.as_dict())

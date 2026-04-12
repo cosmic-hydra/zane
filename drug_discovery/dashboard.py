@@ -189,16 +189,42 @@ _DASHBOARD_THEMES: dict[str, DashboardTheme] = {
 
 
 def _resolve_theme(name: str | None) -> DashboardTheme:
+    """Resolve theme by name with fallback to 'lab' theme.
+
+    Args:
+        name: Theme name or None to use default.
+
+    Returns:
+        DashboardTheme configuration object.
+    """
     key = (name or "lab").strip().lower()
     return _DASHBOARD_THEMES.get(key, _DASHBOARD_THEMES["lab"])
 
 
 def _phase_glyph(tick: int) -> str:
+    """Return an animated spinner glyph cycling through phases.
+
+    Args:
+        tick: Animation frame counter.
+
+    Returns:
+        Single character representing current animation phase.
+    """
     glyphs = ["◐", "◓", "◑", "◒"]
     return glyphs[max(0, tick) % len(glyphs)]
 
 
 def _animated_bar(ratio: float, tick: int, width: int = 26) -> str:
+    """Render an animated progress bar with animated head.
+
+    Args:
+        ratio: Progress from 0.0 to 1.0.
+        tick: Animation frame counter for head animation.
+        width: Bar width in characters.
+
+    Returns:
+        Animated progress bar string.
+    """
     ratio = max(0.0, min(1.0, ratio))
     filled = int(ratio * width)
     head = min(width - 1, max(0, filled))
@@ -209,6 +235,11 @@ def _animated_bar(ratio: float, tick: int, width: int = 26) -> str:
 
 
 def _get_admet_predictor() -> Any | None:
+    """Safely instantiate ADMET predictor with graceful degradation.
+
+    Returns:
+        ADMETPredictor instance if available, None if import or instantiation fails.
+    """
     try:
         from .evaluation import ADMETPredictor
 
@@ -420,6 +451,16 @@ def _gather_external_intel(
 
 
 def _heuristic_insights(snapshot: DashboardSnapshot) -> str:
+    """Generate heuristic recommendations based on dashboard metrics.
+
+    Analyzes training stability, hit rate, and latency to provide actionable guidance.
+
+    Args:
+        snapshot: Current dashboard state snapshot.
+
+    Returns:
+        Multi-line string with operational recommendations.
+    """
     notes: list[str] = []
 
     if snapshot.val_loss > snapshot.train_loss * 1.2:

@@ -34,16 +34,15 @@ class PubMedAPI:
         self.rate_limit_delay = 0.34 if api_key else 1.0  # seconds
 
     def search(self, query: str, max_results: int = 100, date_from: str | None = None) -> list[str]:
-        """
-        Search PubMed for articles
+        """Search PubMed for articles.
 
         Args:
-            query: Search query
-            max_results: Maximum results
-            date_from: Start date (YYYY/MM/DD)
+            query: Search query.
+            max_results: Maximum results.
+            date_from: Start date (YYYY/MM/DD).
 
         Returns:
-            List of PubMed IDs
+            List of PubMed IDs.
         """
         try:
             # Build search URL
@@ -58,7 +57,7 @@ class PubMedAPI:
 
             # Execute search
             search_url = f"{self.base_url}/esearch.fcgi"
-            response = requests.get(search_url, params=params)
+            response = requests.get(search_url, params=params, timeout=10)
             response.raise_for_status()
 
             data = response.json()
@@ -69,19 +68,21 @@ class PubMedAPI:
 
             return pmids
 
-        except Exception as e:
-            logger.error(f"PubMed search error: {e}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"PubMed API request failed: {e}")
+            return []
+        except (ValueError, KeyError) as e:
+            logger.error(f"PubMed response parsing error: {e}")
             return []
 
     def fetch_abstracts(self, pmids: list[str]) -> list[dict]:
-        """
-        Fetch abstracts for PubMed IDs
+        """Fetch abstracts for PubMed IDs.
 
         Args:
-            pmids: List of PubMed IDs
+            pmids: List of PubMed IDs.
 
         Returns:
-            List of article dictionaries
+            List of article dictionaries.
         """
         articles = []
 
@@ -99,7 +100,7 @@ class PubMedAPI:
                     params["api_key"] = self.api_key
 
                 fetch_url = f"{self.base_url}/efetch.fcgi"
-                response = requests.get(fetch_url, params=params)
+                response = requests.get(fetch_url, params=params, timeout=10)
                 response.raise_for_status()
 
                 # Parse XML (simplified - would use proper XML parsing)
@@ -118,8 +119,11 @@ class PubMedAPI:
             logger.info(f"Fetched {len(articles)} abstracts")
             return articles
 
-        except Exception as e:
-            logger.error(f"Error fetching abstracts: {e}")
+        except requests.exceptions.Timeout:
+            logger.error("PubMed fetch request timed out")
+            return articles
+        except requests.exceptions.RequestException as e:
+            logger.error(f"PubMed fetch failed: {e}")
             return articles
 
 

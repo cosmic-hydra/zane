@@ -1,21 +1,20 @@
-"""
-Ensemble Models combining multiple approaches
-"""
+"""Ensemble Models combining multiple approaches."""
+
+from __future__ import annotations
 
 import torch
 import torch.nn as nn
 
 
 class EnsembleModel(nn.Module):
-    """
-    Ensemble of multiple models with learned weighting
-    """
+    """Ensemble of multiple models with learned weighting."""
 
     def __init__(self, models: list[nn.Module], learnable_weights: bool = True):
-        """
+        """Initialize ensemble model.
+
         Args:
-            models: List of models to ensemble
-            learnable_weights: Whether to learn ensemble weights
+            models: List of models to ensemble.
+            learnable_weights: Whether to learn ensemble weights.
         """
         super().__init__()
 
@@ -27,12 +26,11 @@ class EnsembleModel(nn.Module):
         else:
             self.register_buffer("weights", torch.ones(self.num_models) / self.num_models)
 
-    def forward(self, *args, **kwargs):
-        """
-        Forward pass through all models
+    def forward(self, *args: object, **kwargs: object) -> torch.Tensor:
+        """Forward pass through all models.
 
         Returns:
-            Weighted ensemble prediction
+            Weighted ensemble prediction.
         """
         predictions = []
 
@@ -51,8 +49,12 @@ class EnsembleModel(nn.Module):
 
         return ensemble_pred
 
-    def get_individual_predictions(self, *args, **kwargs):
-        """Get predictions from individual models"""
+    def get_individual_predictions(self, *args: object, **kwargs: object) -> dict[str, torch.Tensor]:
+        """Get predictions from individual models.
+
+        Returns:
+            Dictionary mapping model indices to their predictions.
+        """
         predictions = {}
 
         for i, model in enumerate(self.models):
@@ -63,17 +65,18 @@ class EnsembleModel(nn.Module):
 
 
 class MultiTaskModel(nn.Module):
-    """
-    Multi-task learning model for predicting multiple properties
-    """
+    """Multi-task learning model for predicting multiple properties."""
 
-    def __init__(self, base_model: nn.Module, num_tasks: int, shared_dim: int = 128, task_specific_dim: int = 64):
-        """
+    def __init__(
+        self, base_model: nn.Module, num_tasks: int, shared_dim: int = 128, task_specific_dim: int = 64
+    ):
+        """Initialize multi-task model.
+
         Args:
-            base_model: Base feature extractor
-            num_tasks: Number of prediction tasks
-            shared_dim: Shared representation dimension
-            task_specific_dim: Task-specific dimension
+            base_model: Base feature extractor.
+            num_tasks: Number of prediction tasks.
+            shared_dim: Shared representation dimension.
+            task_specific_dim: Task-specific dimension.
         """
         super().__init__()
 
@@ -93,12 +96,11 @@ class MultiTaskModel(nn.Module):
             ]
         )
 
-    def forward(self, *args, **kwargs):
-        """
-        Forward pass
+    def forward(self, *args: object, **kwargs: object) -> dict[str, torch.Tensor]:
+        """Forward pass through multi-task model.
 
         Returns:
-            Dictionary of predictions for each task
+            Dictionary of predictions for each task.
         """
         # Get shared representation
         shared_features = self.base_model(*args, **kwargs)
@@ -112,17 +114,18 @@ class MultiTaskModel(nn.Module):
 
 
 class HybridModel(nn.Module):
-    """
-    Hybrid model combining GNN and Transformer
-    """
+    """Hybrid model combining GNN and Transformer."""
 
-    def __init__(self, gnn_model: nn.Module, transformer_model: nn.Module, fusion_dim: int = 128, output_dim: int = 1):
-        """
+    def __init__(
+        self, gnn_model: nn.Module, transformer_model: nn.Module, fusion_dim: int = 128, output_dim: int = 1
+    ):
+        """Initialize hybrid model.
+
         Args:
-            gnn_model: Graph neural network
-            transformer_model: Transformer model
-            fusion_dim: Fusion layer dimension
-            output_dim: Output dimension
+            gnn_model: Graph neural network.
+            transformer_model: Transformer model.
+            fusion_dim: Fusion layer dimension.
+            output_dim: Output dimension.
         """
         super().__init__()
 
@@ -139,16 +142,15 @@ class HybridModel(nn.Module):
             nn.Linear(fusion_dim // 2, output_dim),
         )
 
-    def forward(self, graph_data, fingerprint_data):
-        """
-        Forward pass
+    def forward(self, graph_data: object, fingerprint_data: object) -> torch.Tensor:
+        """Forward pass through hybrid model.
 
         Args:
-            graph_data: Graph data for GNN
-            fingerprint_data: Fingerprint data for Transformer
+            graph_data: Graph data for GNN.
+            fingerprint_data: Fingerprint data for Transformer.
 
         Returns:
-            Fused prediction
+            Fused prediction tensor.
         """
         gnn_pred = self.gnn_model(graph_data)
         transformer_pred = self.transformer_model(fingerprint_data)
