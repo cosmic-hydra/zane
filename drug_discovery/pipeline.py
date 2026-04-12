@@ -596,7 +596,7 @@ class DrugDiscoveryPipeline:
         for smi, prop_score in ranked_smiles[:top_n]:
             md = next((r for r in md_results if r.smiles == smi), None)
             docking = docking_poses_by_smiles.get(smi, [])
-            top_confidence = max((d.get("confidence", 0.0) for d in docking), default=None)
+            top_confidence = max((d.get("confidence", 0.0) for d in docking), default=None) if docking else None
             rows.append({
                 "smiles": smi,
                 "composite_property_score": prop_score,

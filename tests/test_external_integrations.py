@@ -223,7 +223,7 @@ def test_torchdrug_scorer_invalid_smiles_returns_zero_composite():
     scorer = TorchDrugScorer()
     result = scorer.score("NOT_VALID_SMILES_###")
 
-    assert result.composite_score == 0.0 or isinstance(result.composite_score, float)
+    assert result.composite_score == 0.0
 
 
 @pytest.mark.unit

@@ -234,6 +234,7 @@ def pistachio_load_reactions(data_path: str, limit: int = 1000) -> list[dict[str
         pass
 
     # Minimal file-based fallback: read JSON-lines if the library is absent.
+    import itertools
     import json
     import os
 
@@ -243,9 +244,7 @@ def pistachio_load_reactions(data_path: str, limit: int = 1000) -> list[dict[str
 
     try:
         with open(data_path, encoding="utf-8") as fh:
-            for i, line in enumerate(fh):
-                if i >= limit:
-                    break
+            for line in itertools.islice(fh, limit):
                 line = line.strip()
                 if line:
                     try:
