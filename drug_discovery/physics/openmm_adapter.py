@@ -156,7 +156,7 @@ class OpenMMAdapter:
             # Single-particle placeholder — real usage would load topology/FF
             system.addParticle(12.0)
             context = mm.Context(system, integrator)
-            context.setPositions([[0.0, 0.0, 0.0]] * unit.nanometers)
+            context.setPositions([mm.Vec3(0.0, 0.0, 0.0)] * unit.nanometers)
 
             integrator.step(min(self.num_steps, 100))
 

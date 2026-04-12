@@ -118,13 +118,13 @@ class PistachioDatasets:
 
     def _iter_reactions(self, pistachio_module: Any, dataset_path: str) -> Iterator[ReactionRecord]:
         """Yield :class:`ReactionRecord` objects from the pistachio module."""
+        import itertools
+
         loader_fn = getattr(pistachio_module, "load", None) or getattr(pistachio_module, "load_reactions", None)
         if loader_fn is None:
             raise AttributeError("pistachio module has no 'load' or 'load_reactions' function")
 
-        for i, item in enumerate(loader_fn(dataset_path)):
-            if i >= self.limit:
-                break
+        for item in itertools.islice(loader_fn(dataset_path), self.limit):
             if isinstance(item, dict):
                 yield ReactionRecord(
                     reactants=item.get("reactants", ""),
