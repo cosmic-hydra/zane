@@ -13,29 +13,27 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 
 class PropertyPredictor:
-    """
-    Predicts various molecular properties using trained models
-    """
+    """Predicts various molecular properties using trained models."""
 
     def __init__(self, model: torch.nn.Module, device: str = "cpu"):
-        """
+        """Initialize property predictor.
+
         Args:
-            model: Trained PyTorch model
-            device: Device to run predictions
+            model: Trained PyTorch model.
+            device: Device to run predictions on.
         """
         self.model = model.to(device)
         self.device = device
         self.model.eval()
 
     def predict(self, features: torch.Tensor) -> np.ndarray:
-        """
-        Predict properties for given features
+        """Predict properties for given features.
 
         Args:
-            features: Input features
+            features: Input feature tensor.
 
         Returns:
-            Predictions
+            Predictions as numpy array.
         """
         with torch.no_grad():
             features = features.to(self.device)
@@ -43,15 +41,14 @@ class PropertyPredictor:
             return predictions.cpu().numpy()
 
     def predict_from_smiles(self, smiles: str, featurizer) -> float | None:
-        """
-        Predict property from SMILES string
+        """Predict property from SMILES string.
 
         Args:
-            smiles: SMILES string
-            featurizer: Molecular featurizer
+            smiles: SMILES string.
+            featurizer: Molecular featurizer object.
 
         Returns:
-            Predicted property value
+            Predicted property value or None if SMILES is invalid.
         """
         features = featurizer.smiles_to_fingerprint(smiles)
         if features is None:
@@ -64,54 +61,45 @@ class PropertyPredictor:
 
 
 class ADMETPredictor:
-    """
-    Predicts ADMET (Absorption, Distribution, Metabolism, Excretion, Toxicity) properties
-    """
+    """Predicts ADMET (Absorption, Distribution, Metabolism, Excretion, Toxicity) properties."""
 
     def __init__(self):
+        """Initialize ADMET predictor."""
         pass
 
     def calculate_lipinski_properties(self, smiles: str) -> dict[str, float] | None:
-        """
-        Calculate Lipinski's Rule of Five properties
+        """Calculate Lipinski's Rule of Five properties.
 
         Args:
-            smiles: SMILES string
+            smiles: SMILES string.
 
         Returns:
-            Dictionary of Lipinski properties
+            Dictionary of Lipinski properties or None if invalid SMILES.
         """
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return None
 
-        mol_wt = getattr(Descriptors, "MolWt")
-        mol_logp = getattr(Crippen, "MolLogP")
-        num_h_donors = getattr(Lipinski, "NumHDonors")
-        num_h_acceptors = getattr(Lipinski, "NumHAcceptors")
-        num_rotatable_bonds = getattr(Lipinski, "NumRotatableBonds")
-        num_aromatic_rings = getattr(Lipinski, "NumAromaticRings")
-
         properties = {
-            "molecular_weight": float(mol_wt(mol)),
-            "logp": float(mol_logp(mol)),
-            "h_bond_donors": float(num_h_donors(mol)),
-            "h_bond_acceptors": float(num_h_acceptors(mol)),
-            "rotatable_bonds": float(num_rotatable_bonds(mol)),
-            "aromatic_rings": float(num_aromatic_rings(mol)),
+            "molecular_weight": float(Descriptors.MolWt(mol)),
+            "logp": float(Crippen.MolLogP(mol)),
+            "h_bond_donors": float(Lipinski.NumHDonors(mol)),
+            "h_bond_acceptors": float(Lipinski.NumHAcceptors(mol)),
+            "rotatable_bonds": float(Lipinski.NumRotatableBonds(mol)),
+            "aromatic_rings": float(Lipinski.NumAromaticRings(mol)),
         }
 
         return properties
 
     def check_lipinski_rule(self, smiles: str) -> dict[str, Any] | None:
-        """
-        Check if molecule passes Lipinski's Rule of Five
+        """Check if molecule passes Lipinski's Rule of Five.
 
         Args:
-            smiles: SMILES string
+            smiles: SMILES string.
 
         Returns:
-            Dictionary with pass/fail and violations
+            Dictionary with pass/fail status, violations list, and properties,
+            or None if SMILES is invalid.
         """
         props = self.calculate_lipinski_properties(smiles)
         if props is None:
@@ -136,14 +124,13 @@ class ADMETPredictor:
         }
 
     def calculate_qed(self, smiles: str) -> float | None:
-        """
-        Calculate Quantitative Estimate of Drug-likeness
+        """Calculate Quantitative Estimate of Drug-likeness.
 
         Args:
-            smiles: SMILES string
+            smiles: SMILES string.
 
         Returns:
-            QED score (0-1, higher is better)
+            QED score (0-1, higher is more drug-like) or None if invalid.
         """
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
