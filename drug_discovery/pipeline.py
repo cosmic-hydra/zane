@@ -4,8 +4,9 @@ Orchestrates the entire AI drug discovery process
 """
 
 import os
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -13,9 +14,21 @@ import torch
 from torch.utils.data import DataLoader
 from torch_geometric.loader import DataLoader as GeometricDataLoader
 
-from .data import DataCollector, MolecularDataset, MolecularFeaturizer, murcko_scaffold_split_molecular, train_test_split_molecular
+from .data import (
+    DataCollector,
+    MolecularDataset,
+    MolecularFeaturizer,
+    murcko_scaffold_split_molecular,
+    train_test_split_molecular,
+)
 from .evaluation import ADMETPredictor, ModelEvaluator, PropertyPredictor
+from .evaluation.torchdrug_scorer import TorchDrugScorer
 from .models import EnsembleModel, MolecularGNN, MolecularTransformer
+from .physics.diffdock_adapter import DiffDockAdapter
+from .physics.openmm_adapter import OpenMMAdapter
+from .physics.protein_structure import ProteinStructurePredictor
+from .synthesis.pistachio_datasets import PistachioDatasets
+from .synthesis.reaction_prediction import ReactionPredictor
 from .training import SelfLearningTrainer
 
 
@@ -56,6 +69,14 @@ class DrugDiscoveryPipeline:
         self.model = None
         self.trainer = None
         self.property_predictor = None
+
+        # Elite external-tool adapters (lazy-initialized on first use)
+        self._torchdrug_scorer: TorchDrugScorer | None = None
+        self._reaction_predictor: ReactionPredictor | None = None
+        self._diffdock_adapter: DiffDockAdapter | None = None
+        self._protein_predictor: ProteinStructurePredictor | None = None
+        self._openmm_adapter: OpenMMAdapter | None = None
+        self._pistachio_datasets: PistachioDatasets | None = None
 
         print("Drug Discovery Pipeline initialized")
         print(f"Model type: {model_type}")
@@ -438,6 +459,155 @@ class DrugDiscoveryPipeline:
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.property_predictor = PropertyPredictor(self.model, self.device)
         print(f"Pipeline loaded from {filepath}")
+
+    # ------------------------------------------------------------------
+    # Integrated elite-pipeline methods (TorchDrug → MolecularTransformer
+    #   → DiffDock → OpenMM)
+    # ------------------------------------------------------------------
+
+    @property
+    def torchdrug_scorer(self) -> TorchDrugScorer:
+        if self._torchdrug_scorer is None:
+            self._torchdrug_scorer = TorchDrugScorer(device=self.device)
+        return self._torchdrug_scorer
+
+    @property
+    def reaction_predictor(self) -> ReactionPredictor:
+        if self._reaction_predictor is None:
+            self._reaction_predictor = ReactionPredictor()
+        return self._reaction_predictor
+
+    @property
+    def diffdock_adapter(self) -> DiffDockAdapter:
+        if self._diffdock_adapter is None:
+            self._diffdock_adapter = DiffDockAdapter()
+        return self._diffdock_adapter
+
+    @property
+    def protein_predictor(self) -> ProteinStructurePredictor:
+        if self._protein_predictor is None:
+            self._protein_predictor = ProteinStructurePredictor()
+        return self._protein_predictor
+
+    @property
+    def openmm_adapter(self) -> OpenMMAdapter:
+        if self._openmm_adapter is None:
+            self._openmm_adapter = OpenMMAdapter(temperature_K=300.0)
+        return self._openmm_adapter
+
+    @property
+    def pistachio_datasets(self) -> PistachioDatasets:
+        if self._pistachio_datasets is None:
+            self._pistachio_datasets = PistachioDatasets()
+        return self._pistachio_datasets
+
+    def run_integrated_pipeline(
+        self,
+        smiles_list: list[str],
+        target_protein_sequence: str | None = None,
+        target_protein_pdb: str | None = None,
+        target_protein_id: str = "target",
+        md_steps: int = 10_000,
+        top_n: int = 5,
+    ) -> dict[str, Any]:
+        """Run the full elite drug-discovery pipeline:
+
+        1. **TorchDrug** – score candidates by predicted properties
+           (QED, solubility, bioactivity, toxicity)
+        2. **MolecularTransformer** – validate synthetic accessibility via
+           reaction-outcome prediction
+        3. **OpenFold** – predict target protein 3D structure (optional, if a
+           sequence is provided and no PDB is available)
+        4. **DiffDock** – predict protein–ligand binding poses
+        5. **OpenMM** – simulate MD stability of top candidates
+
+        Each step degrades gracefully when the corresponding external
+        submodule is not installed.
+
+        Args:
+            smiles_list: List of candidate molecule SMILES strings.
+            target_protein_sequence: Amino-acid sequence for structure
+                prediction with OpenFold (optional).
+            target_protein_pdb: Path to a PDB file for docking (optional).
+            target_protein_id: Human-readable identifier for the target.
+            md_steps: Number of MD steps for OpenMM simulation.
+            top_n: Number of top candidates to carry through to docking and MD.
+
+        Returns:
+            Dictionary with per-step results and a ranked summary DataFrame.
+        """
+        print("\n=== Integrated Elite Pipeline ===")
+        results: dict[str, Any] = {
+            "input_count": len(smiles_list),
+            "target_protein_id": target_protein_id,
+        }
+
+        # ── Step 1: TorchDrug property scoring ────────────────────────
+        print("\n[1/5] TorchDrug – property scoring …")
+        property_scores = self.torchdrug_scorer.score_batch(smiles_list)
+        ranked_smiles = self.torchdrug_scorer.rank(smiles_list)
+        results["property_scores"] = [s.as_dict() for s in property_scores]
+        top_smiles = [smi for smi, _ in ranked_smiles[:top_n]]
+        print(f"  ✓ Scored {len(smiles_list)} molecules; top {top_n} selected.")
+
+        # ── Step 2: MolecularTransformer reaction validation ──────────
+        print("\n[2/5] MolecularTransformer – reaction validation …")
+        reaction_results = self.reaction_predictor.predict_batch(top_smiles)
+        results["reaction_predictions"] = [r.as_dict() for r in reaction_results]
+        print(f"  ✓ Predicted reaction outcomes for {len(top_smiles)} molecules.")
+
+        # ── Step 3: OpenFold protein structure (if sequence given) ────
+        protein_structure = None
+        if target_protein_sequence and target_protein_pdb is None:
+            print("\n[3/5] OpenFold – protein structure prediction …")
+            protein_structure = self.protein_predictor.predict(
+                sequence=target_protein_sequence,
+                protein_id=target_protein_id,
+            )
+            results["protein_structure"] = protein_structure.as_dict()
+            if protein_structure.pdb_string:
+                target_protein_pdb = protein_structure.pdb_string
+            print(f"  ✓ Structure prediction: {protein_structure.backend}.")
+        else:
+            print("\n[3/5] OpenFold – skipped (PDB provided or no sequence given).")
+            results["protein_structure"] = None
+
+        # ── Step 4: DiffDock binding prediction ──────────────────────
+        print("\n[4/5] DiffDock – binding pose prediction …")
+        docking_poses_by_smiles: dict[str, list[dict[str, Any]]] = {}
+        for smi in top_smiles:
+            poses = self.diffdock_adapter.dock(
+                ligand_smiles=smi,
+                protein_id=target_protein_id,
+                protein_pdb=target_protein_pdb,
+            )
+            docking_poses_by_smiles[smi] = [p.as_dict() for p in poses]
+        results["docking_poses"] = docking_poses_by_smiles
+        print(f"  ✓ Docking complete for {len(top_smiles)} molecules.")
+
+        # ── Step 5: OpenMM MD stability ───────────────────────────────
+        print("\n[5/5] OpenMM – molecular dynamics stability …")
+        md_results = self.openmm_adapter.batch_simulate(top_smiles, steps=md_steps)
+        results["md_simulations"] = [r.as_dict() for r in md_results]
+        print(f"  ✓ MD simulation complete for {len(top_smiles)} molecules.")
+
+        # ── Summary DataFrame ─────────────────────────────────────────
+        rows = []
+        for smi, prop_score in ranked_smiles[:top_n]:
+            md = next((r for r in md_results if r.smiles == smi), None)
+            docking = docking_poses_by_smiles.get(smi, [])
+            top_confidence = max((d.get("confidence", 0.0) for d in docking), default=None)
+            rows.append({
+                "smiles": smi,
+                "composite_property_score": prop_score,
+                "docking_top_confidence": top_confidence,
+                "md_stable": md.stable if md else None,
+                "md_stability_score": md.stability_score if md else None,
+            })
+        results["summary"] = pd.DataFrame(rows)
+
+        print("\n=== Pipeline Complete ===")
+        return results
 
     def run_boltzgen_design(
         self,

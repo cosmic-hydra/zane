@@ -22,3 +22,21 @@
 [submodule "external/guacamol"]
 	path = external/guacamol
 	url = https://github.com/BenevolentAI/guacamol
+[submodule "external/MolecularTransformer"]
+	path = external/MolecularTransformer
+	url = https://github.com/pschwllr/MolecularTransformer
+[submodule "external/DiffDock"]
+	path = external/DiffDock
+	url = https://github.com/gcorso/DiffDock
+[submodule "external/torchdrug"]
+	path = external/torchdrug
+	url = https://github.com/DeepGraphLearning/torchdrug
+[submodule "external/openfold"]
+	path = external/openfold
+	url = https://github.com/aqlaboratory/openfold
+[submodule "external/openmm"]
+	path = external/openmm
+	url = https://github.com/openmm/openmm
+[submodule "external/pistachio"]
+	path = external/pistachio
+	url = https://github.com/CASPistachio/pistachio
