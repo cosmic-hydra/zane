@@ -9,14 +9,14 @@ Provides web-scale biomedical literature mining with:
 """
 
 from drug_discovery.intelligence.biomedical_intelligence import (
+    ArXivIngester,
     BiomedicalIntelligence,
     BiomedicalNER,
-    RelationshipExtractor,
-    PubMedIngester,
-    ArXivIngester,
-    LiteratureDocument,
     ExtractedEntity,
     ExtractedRelationship,
+    LiteratureDocument,
+    PubMedIngester,
+    RelationshipExtractor,
 )
 
 __all__ = [

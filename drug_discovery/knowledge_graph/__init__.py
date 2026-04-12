@@ -10,12 +10,12 @@ Stores and queries relationships between molecules, proteins, diseases with:
 
 from .graph import DrugKnowledgeGraph, KnowledgeGraphBuilder
 from .knowledge_graph import (
-    KnowledgeGraph,
-    VectorDatabase,
-    KGNode,
-    KGEdge,
-    NodeType,
     EdgeType,
+    KGEdge,
+    KGNode,
+    KnowledgeGraph,
+    NodeType,
+    VectorDatabase,
 )
 
 __all__ = [

@@ -8,8 +8,9 @@ pipeline can consume them uniformly.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 from drug_discovery.external_tooling import canonicalize_smiles, molecular_design_script_available
 from drug_discovery.integrations import get_integration_status
@@ -37,7 +38,7 @@ class GenerationResult:
         }
 
     @classmethod
-    def failure(cls, backend: str, error: str, warnings: list[str] | None = None) -> "GenerationResult":
+    def failure(cls, backend: str, error: str, warnings: list[str] | None = None) -> GenerationResult:
         return cls(backend=backend, success=False, molecules=[], warnings=warnings or [], info={}, error=error)
 
 

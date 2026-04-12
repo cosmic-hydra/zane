@@ -555,8 +555,8 @@ def run_boltzgen(args):
 def run_generation(args):
     """Generate molecules using optional backends."""
     from drug_discovery.generation.backends import (
-        GT4SDBackend,
         GenerationManager,
+        GT4SDBackend,
         MolecularDesignBackend,
         MolformerBackend,
         ReinventBackend,

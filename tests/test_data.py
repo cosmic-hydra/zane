@@ -5,6 +5,7 @@ Tests for Data Collection Module
 from pathlib import Path
 
 import pandas as pd
+
 from drug_discovery.data import DataCollector
 
 

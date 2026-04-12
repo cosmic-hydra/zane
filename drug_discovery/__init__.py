@@ -52,8 +52,8 @@ def __getattr__(name: str) -> Any:
         return BoltzGenRunner
     if name in {"GenerationManager", "ReinventBackend", "GT4SDBackend", "MolformerBackend", "MolecularDesignBackend"}:
         from .generation.backends import (
-            GT4SDBackend,
             GenerationManager,
+            GT4SDBackend,
             MolecularDesignBackend,
             MolformerBackend,
             ReinventBackend,

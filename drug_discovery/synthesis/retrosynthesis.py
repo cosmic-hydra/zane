@@ -6,11 +6,16 @@ Retrosynthesis Planning and Synthesis Feasibility Scoring
 
 import logging
 import os
-from typing import Iterable, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
-from drug_discovery.synthesis.backends import AiZynthFinderBackend, BackendResult, BaseRetrosynthesisBackend, RouteCandidate
+from drug_discovery.synthesis.backends import (
+    AiZynthFinderBackend,
+    BackendResult,
+    BaseRetrosynthesisBackend,
+    RouteCandidate,
+)
 from drug_discovery.web_scraping import AISynthesisChat, InternetSearchClient, OnlineResourceReader
 
 logger = logging.getLogger(__name__)

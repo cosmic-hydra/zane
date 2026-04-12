@@ -21,7 +21,6 @@ from rich import box
 from rich.align import Align
 from rich.columns import Columns
 from rich.console import Console, Group
-from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
@@ -798,8 +797,6 @@ def _compute_combo_rankings(
         efficacy_proxy = (float(left["qed"]) + float(right["qed"])) / 2.0
         risk_proxy = (float(left["risk_proxy"]) + float(right["risk_proxy"])) / 2.0
         match_score = (float(left["match"]) + float(right["match"])) / 2.0
-        combo_score = (0.45 * match_score) + (0.40 * efficacy_proxy) - (0.25 * risk_proxy)
-
         combo_rows.append(
             {
                 "combo": f"{left['name']} + {right['name']}",

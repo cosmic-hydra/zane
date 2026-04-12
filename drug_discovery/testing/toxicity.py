@@ -11,12 +11,12 @@ Uses cross-dataset validation and confidence scoring.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Descriptors, rdMolDescriptors
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ class ToxicityPredictor:
                     "rf": RandomForestClassifier(n_estimators=100, random_state=42),
                 }
 
-    def _compute_molecular_descriptors(self, smiles: str) -> Optional[np.ndarray]:
+    def _compute_molecular_descriptors(self, smiles: str) -> np.ndarray | None:
         """Compute molecular descriptors for toxicity prediction."""
         try:
             mol = Chem.MolFromSmiles(smiles)
@@ -89,7 +89,7 @@ class ToxicityPredictor:
         self,
         smiles: str,
         return_confidence: bool = True,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Predict cytotoxicity (general cell toxicity).
 
@@ -133,7 +133,7 @@ class ToxicityPredictor:
         self,
         smiles: str,
         return_confidence: bool = True,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Predict hepatotoxicity (liver toxicity).
 
@@ -175,7 +175,7 @@ class ToxicityPredictor:
         smiles: str,
         include_herg: bool = True,
         return_confidence: bool = True,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Predict cardiotoxicity including hERG inhibition.
 
@@ -227,7 +227,7 @@ class ToxicityPredictor:
         self,
         smiles: str,
         return_confidence: bool = True,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Predict mutagenicity (Ames test prediction).
 
@@ -288,7 +288,7 @@ class ToxicityPredictor:
         self,
         smiles: str,
         return_confidence: bool = True,
-    ) -> Dict[str, Dict[str, float]]:
+    ) -> dict[str, dict[str, float]]:
         """
         Predict all toxicity endpoints simultaneously.
 
@@ -326,7 +326,7 @@ class ToxicityPredictor:
 
     def batch_predict(
         self,
-        smiles_list: List[str],
+        smiles_list: list[str],
         return_confidence: bool = True,
     ) -> pd.DataFrame:
         """
@@ -367,7 +367,7 @@ class ToxicityPredictor:
 
         return df
 
-    def get_toxicity_pass_rate(self, predictions: pd.DataFrame, threshold: float = 0.5) -> Dict[str, float]:
+    def get_toxicity_pass_rate(self, predictions: pd.DataFrame, threshold: float = 0.5) -> dict[str, float]:
         """
         Calculate toxicity pass rates from batch predictions.
 

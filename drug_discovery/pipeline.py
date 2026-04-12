@@ -4,8 +4,9 @@ Orchestrates the entire AI drug discovery process
 """
 
 import os
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -13,7 +14,13 @@ import torch
 from torch.utils.data import DataLoader
 from torch_geometric.loader import DataLoader as GeometricDataLoader
 
-from .data import DataCollector, MolecularDataset, MolecularFeaturizer, murcko_scaffold_split_molecular, train_test_split_molecular
+from .data import (
+    DataCollector,
+    MolecularDataset,
+    MolecularFeaturizer,
+    murcko_scaffold_split_molecular,
+    train_test_split_molecular,
+)
 from .evaluation import ADMETPredictor, ModelEvaluator, PropertyPredictor
 from .models import EnsembleModel, MolecularGNN, MolecularTransformer
 from .training import SelfLearningTrainer

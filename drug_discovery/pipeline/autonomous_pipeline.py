@@ -10,18 +10,17 @@ Implements a production-grade data pipeline with:
 - Resource management and backpressure handling
 """
 
-import logging
 import asyncio
-import hashlib
 import json
-from pathlib import Path
-from typing import Dict, List, Optional, Callable, Any, AsyncIterator
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-import pandas as pd
-import numpy as np
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+import logging
 import time
+from collections.abc import AsyncIterator, Callable
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +33,8 @@ class PipelineCheckpoint:
     timestamp: str
     processed_count: int
     failed_count: int
-    last_processed_id: Optional[str]
-    metadata: Dict[str, Any]
+    last_processed_id: str | None
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -45,7 +44,7 @@ class DataBatch:
     data: pd.DataFrame
     source: str
     timestamp: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class DataQualityMonitor:
@@ -59,9 +58,9 @@ class DataQualityMonitor:
             alert_threshold: Threshold for quality degradation alerts
         """
         self.alert_threshold = alert_threshold
-        self.quality_history: List[Dict[str, float]] = []
+        self.quality_history: list[dict[str, float]] = []
 
-    def check_quality(self, data: pd.DataFrame) -> Dict[str, Any]:
+    def check_quality(self, data: pd.DataFrame) -> dict[str, Any]:
         """
         Check data quality metrics.
 
@@ -205,7 +204,7 @@ class StreamingDataPipeline:
         self.processed_count = 0
         self.failed_count = 0
         self.current_stage = "initialized"
-        self.last_checkpoint: Optional[PipelineCheckpoint] = None
+        self.last_checkpoint: PipelineCheckpoint | None = None
 
         # Load checkpoint if exists
         self._load_checkpoint()
@@ -216,7 +215,7 @@ class StreamingDataPipeline:
 
         if checkpoint_path.exists():
             try:
-                with open(checkpoint_path, "r") as f:
+                with open(checkpoint_path) as f:
                     data = json.load(f)
                     self.last_checkpoint = PipelineCheckpoint(**data)
                     self.processed_count = self.last_checkpoint.processed_count
@@ -227,7 +226,7 @@ class StreamingDataPipeline:
             except Exception as e:
                 logger.error(f"Failed to load checkpoint: {e}")
 
-    def _save_checkpoint(self, stage: str, last_processed_id: Optional[str] = None) -> None:
+    def _save_checkpoint(self, stage: str, last_processed_id: str | None = None) -> None:
         """
         Save pipeline checkpoint.
 
@@ -267,7 +266,7 @@ class StreamingDataPipeline:
         process_function: Callable[[pd.DataFrame], pd.DataFrame],
         output_sink: Callable[[pd.DataFrame], None],
         enable_checkpointing: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Stream and process data in batches.
 
@@ -334,10 +333,10 @@ class StreamingDataPipeline:
 
     async def parallel_process_batches(
         self,
-        batches: List[pd.DataFrame],
+        batches: list[pd.DataFrame],
         process_function: Callable[[pd.DataFrame], pd.DataFrame],
         max_concurrent: int = 4,
-    ) -> List[pd.DataFrame]:
+    ) -> list[pd.DataFrame]:
         """
         Process multiple batches in parallel.
 
@@ -406,7 +405,7 @@ class StreamingDataPipeline:
 
         return stream_generator()
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get pipeline statistics."""
         return {
             "pipeline_id": self.pipeline_id,
@@ -423,13 +422,13 @@ class PipelineOrchestrator:
 
     def __init__(self):
         """Initialize pipeline orchestrator."""
-        self.pipelines: Dict[str, StreamingDataPipeline] = {}
-        self.schedules: Dict[str, Dict[str, Any]] = {}
+        self.pipelines: dict[str, StreamingDataPipeline] = {}
+        self.schedules: dict[str, dict[str, Any]] = {}
 
     def register_pipeline(
         self,
         pipeline: StreamingDataPipeline,
-        schedule: Optional[Dict[str, Any]] = None,
+        schedule: dict[str, Any] | None = None,
     ) -> None:
         """
         Register a pipeline for orchestration.
@@ -445,7 +444,7 @@ class PipelineOrchestrator:
 
         logger.info(f"Registered pipeline: {pipeline.pipeline_id}")
 
-    async def run_all_pipelines(self) -> Dict[str, Dict[str, Any]]:
+    async def run_all_pipelines(self) -> dict[str, dict[str, Any]]:
         """
         Run all registered pipelines.
 
@@ -474,7 +473,7 @@ class PipelineOrchestrator:
 
         return results
 
-    def get_orchestrator_status(self) -> Dict[str, Any]:
+    def get_orchestrator_status(self) -> dict[str, Any]:
         """Get orchestrator status."""
         return {
             "total_pipelines": len(self.pipelines),

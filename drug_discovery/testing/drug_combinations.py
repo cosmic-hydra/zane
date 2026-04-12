@@ -10,13 +10,12 @@ Uses Bliss independence model, Loewe additivity, and ML models.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from rdkit import Chem
-from rdkit import DataStructs
+from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Descriptors
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
 from drug_discovery.external_tooling import canonicalize_smiles, gt4sd_properties
 
@@ -51,7 +50,7 @@ class DrugCombinationTester:
         self,
         smiles1: str,
         smiles2: str,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Compute features for drug combination.
 
@@ -128,7 +127,7 @@ class DrugCombinationTester:
         smiles2: str,
         effect1: float,
         effect2: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Predict synergy using Bliss independence model.
 
@@ -188,7 +187,7 @@ class DrugCombinationTester:
         dose2: float,
         ic50_1: float,
         ic50_2: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Predict synergy using Loewe additivity model.
 
@@ -227,7 +226,7 @@ class DrugCombinationTester:
         self,
         smiles1: str,
         smiles2: str,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Predict synergy using ML models.
 
@@ -280,7 +279,7 @@ class DrugCombinationTester:
         smiles2: str,
         method: str = "bliss",
         **kwargs,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Test drug combination using specified method.
 
@@ -314,7 +313,7 @@ class DrugCombinationTester:
 
     def batch_test_combinations(
         self,
-        combinations: List[Tuple[str, str]],
+        combinations: list[tuple[str, str]],
         method: str = "ml",
     ) -> pd.DataFrame:
         """
@@ -353,9 +352,9 @@ class DrugCombinationTester:
 
     def find_synergistic_pairs(
         self,
-        smiles_list: List[str],
+        smiles_list: list[str],
         threshold: float = 0.5,
-        max_pairs: Optional[int] = None,
+        max_pairs: int | None = None,
     ) -> pd.DataFrame:
         """
         Find potentially synergistic drug pairs from a list.

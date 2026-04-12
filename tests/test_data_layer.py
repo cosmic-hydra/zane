@@ -9,17 +9,17 @@ Tests for:
 - Streaming pipeline
 """
 
-import pytest
+import shutil
+import tempfile
+
 import numpy as np
 import pandas as pd
-import tempfile
-import shutil
-from pathlib import Path
+import pytest
 
-from drug_discovery.data.normalizer import DataNormalizer
-from drug_discovery.data.feature_store import FeatureStore
-from drug_discovery.data.versioning import DatasetVersioning
 from drug_discovery.data.dataset import MolecularDataset
+from drug_discovery.data.feature_store import FeatureStore
+from drug_discovery.data.normalizer import DataNormalizer
+from drug_discovery.data.versioning import DatasetVersioning
 
 
 class TestDataNormalizer:

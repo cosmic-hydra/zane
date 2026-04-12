@@ -31,7 +31,7 @@ class BenchmarkResult:
         }
 
     @classmethod
-    def failure(cls, suite: str, error: str, warnings: list[str] | None = None) -> "BenchmarkResult":
+    def failure(cls, suite: str, error: str, warnings: list[str] | None = None) -> BenchmarkResult:
         return cls(suite=suite, success=False, metrics={}, warnings=warnings or [], error=error)
 
 
