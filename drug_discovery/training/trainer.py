@@ -6,7 +6,7 @@ Automatically trains models with continuous learning capabilities
 import os
 from collections.abc import Callable
 from datetime import datetime
-from typing import Any, cast
+from typing import Any, List, cast
 
 import numpy as np
 import torch
@@ -30,6 +30,9 @@ class SelfLearningTrainer:
         weight_decay: float = 1e-5,
         patience: int = 10,
         save_dir: str = "./checkpoints",
+        normalize_targets: bool = True,
+        energy_regularization_weight: float = 0.0,
+        energy_function=None,
     ):
         """
         Args:
@@ -46,6 +49,9 @@ class SelfLearningTrainer:
         self.weight_decay = weight_decay
         self.patience = patience
         self.save_dir = save_dir
+        self.normalize_targets = normalize_targets
+        self.energy_regularization_weight = energy_regularization_weight
+        self.energy_function = energy_function
 
         os.makedirs(save_dir, exist_ok=True)
 
@@ -63,7 +69,22 @@ class SelfLearningTrainer:
             "learning_rate": [],
             "best_val_loss": float("inf"),
             "epochs_without_improvement": 0,
+            "calibration_ece": [],
         }
+        self._target_mean: torch.Tensor | None = None
+        self._target_std: torch.Tensor | None = None
+
+    def _normalize_targets(self, predictions: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        if not self.normalize_targets:
+            return predictions, targets
+        with torch.no_grad():
+            if self._target_mean is None or self._target_std is None:
+                self._target_mean = targets.mean()
+                std = targets.std()
+                self._target_std = std if std > 1e-6 else torch.tensor(1.0, device=targets.device)
+        norm_preds = (predictions - self._target_mean) / self._target_std
+        norm_targets = (targets - self._target_mean) / self._target_std
+        return norm_preds, norm_targets
 
     def train_epoch(self, train_loader: DataLoader, loss_fn: Callable, is_graph: bool = False) -> float:
         """
@@ -106,8 +127,18 @@ class SelfLearningTrainer:
             if targets is not None:
                 # Filter out missing values
                 mask = targets != -1
-                if mask.sum() > 0:
-                    loss = loss_fn(predictions[mask], targets[mask])
+                if mask.sum() > 0 and torch.isfinite(targets[mask]).all():
+                    preds_masked = predictions[mask]
+                    targets_masked = targets[mask]
+                    preds_masked, targets_masked = self._normalize_targets(preds_masked, targets_masked)
+                    loss = loss_fn(preds_masked, targets_masked)
+                    if self.energy_regularization_weight > 0.0 and callable(self.energy_function):
+                        try:
+                            energy_penalty = self.energy_function(batch)
+                            if energy_penalty is not None:
+                                loss = loss + float(self.energy_regularization_weight) * energy_penalty
+                        except Exception:
+                            pass
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
                     self.optimizer.step()
@@ -156,8 +187,11 @@ class SelfLearningTrainer:
 
                 if targets is not None:
                     mask = targets != -1
-                    if mask.sum() > 0:
-                        loss = loss_fn(predictions[mask], targets[mask])
+                    if mask.sum() > 0 and torch.isfinite(targets[mask]).all():
+                        preds_masked = predictions[mask]
+                        targets_masked = targets[mask]
+                        preds_masked, targets_masked = self._normalize_targets(preds_masked, targets_masked)
+                        loss = loss_fn(preds_masked, targets_masked)
                         total_loss += loss.item()
                         num_batches += 1
 
@@ -200,6 +234,36 @@ class SelfLearningTrainer:
             # Validate
             val_loss = self.validate(val_loader, loss_fn, is_graph)
             self.history["val_loss"].append(val_loss)
+            # Track simple calibration gap using a small validation subset
+            if self._target_mean is not None and self._target_std is not None:
+                cal_pred: List[torch.Tensor] = []
+                cal_true: List[torch.Tensor] = []
+                with torch.no_grad():
+                    for i, batch_val in enumerate(val_loader):
+                        if i >= 2:
+                            break
+                        if is_graph:
+                            batch_val = batch_val.to(self.device)
+                            preds_val = self.model(batch_val)
+                            targets_val = batch_val.y
+                        else:
+                            if isinstance(batch_val, (list, tuple)) and len(batch_val) == 2:
+                                features_v, targets_v = batch_val
+                                features_v = features_v.to(self.device)
+                                targets_val = targets_v.to(self.device)
+                                preds_val = self.model(features_v)
+                            else:
+                                continue
+                        mask = targets_val != -1
+                        if mask.sum() == 0:
+                            continue
+                        cal_pred.append(preds_val[mask].detach().cpu())
+                        cal_true.append(targets_val[mask].detach().cpu())
+                if cal_pred and cal_true:
+                    gap = torch.mean(torch.abs(torch.cat(cal_pred) - torch.cat(cal_true))).item()
+                    self.history["calibration_ece"].append(float(gap))
+                else:
+                    self.history["calibration_ece"].append(0.0)
 
             # Learning rate
             current_lr = self.optimizer.param_groups[0]["lr"]

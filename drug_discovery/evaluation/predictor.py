@@ -40,6 +40,22 @@ class PropertyPredictor:
             predictions = self.model(features)
             return predictions.cpu().numpy()
 
+    def predict_with_uncertainty(self, features: torch.Tensor, samples: int = 8) -> tuple[np.ndarray, np.ndarray]:
+        """Predict with MC dropout-based uncertainty."""
+        preds = []
+        was_training = self.model.training
+        self.model.train()
+        with torch.no_grad():
+            for _ in range(max(1, samples)):
+                preds.append(self.model(features.to(self.device)).cpu())
+        self.model.eval()
+        if was_training:
+            self.model.train()
+        stacked = torch.stack(preds, dim=0)
+        mean = stacked.mean(dim=0)
+        std = stacked.std(dim=0)
+        return mean.numpy(), std.numpy()
+
     def predict_from_smiles(self, smiles: str, featurizer) -> float | None:
         """Predict property from SMILES string.
 
@@ -58,6 +74,15 @@ class PropertyPredictor:
         prediction = self.predict(features)
 
         return float(prediction[0])
+
+    def predict_from_smiles_with_uncertainty(self, smiles: str, featurizer, samples: int = 8) -> tuple[float | None, float]:
+        """Predict property and uncertainty from SMILES."""
+        features = featurizer.smiles_to_fingerprint(smiles)
+        if features is None:
+            return None, 0.0
+        features = torch.FloatTensor(features).unsqueeze(0)
+        mean, std = self.predict_with_uncertainty(features, samples=samples)
+        return float(mean[0]), float(std[0])
 
 
 class ADMETPredictor:
@@ -273,6 +298,19 @@ class ModelEvaluator:
 
         self.metrics = metrics
         return metrics
+
+    @staticmethod
+    def enrichment_factor(y_true: np.ndarray, y_score: np.ndarray, top_fraction: float = 0.05) -> float:
+        """Compute enrichment factor at given top fraction."""
+        if len(y_true) == 0:
+            return 0.0
+        n_top = max(1, int(len(y_true) * top_fraction))
+        order = np.argsort(-y_score.reshape(-1))
+        top_idx = order[:n_top]
+        hits_top = float(np.sum(y_true.reshape(-1)[top_idx] > 0))
+        hit_rate = hits_top / n_top
+        baseline = float(np.mean(y_true.reshape(-1) > 0)) if np.mean(y_true) != 0 else 1e-8
+        return float(hit_rate / baseline)
 
     def expected_calibration_error_regression(
         self,

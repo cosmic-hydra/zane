@@ -20,12 +20,16 @@ from .data import (
     MolecularFeaturizer,
     murcko_scaffold_split_molecular,
     train_test_split_molecular,
+    time_split_molecular,
 )
 from .evaluation import ADMETPredictor, ModelEvaluator, PropertyPredictor, TorchDrugScorer
 from .models import EnsembleModel, MolecularGNN, MolecularTransformer
 from .physics import DiffDockAdapter, OpenFoldAdapter, OpenMMAdapter
+from .optimization.selection import CandidateSelectionConfig, CandidateSelector
+from .synthesis.retrosynthesis import RetrosynthesisPlanner, SynthesisFeasibilityScorer
 from .synthesis import MolecularTransformerAdapter, PistachioDatasets
 from .training import SelfLearningTrainer
+from drug_discovery.native import compute_energy
 
 
 class DrugDiscoveryPipeline:
@@ -140,6 +144,7 @@ class DrugDiscoveryPipeline:
         seed: int | None = None,
         split_strategy: str = "random",
         num_workers: int | None = None,
+        time_split_col: str | None = None,
     ) -> tuple[DataLoader, DataLoader]:
         """
         Prepare train and test dataloaders
@@ -150,6 +155,7 @@ class DrugDiscoveryPipeline:
             target_col: Column name for target variable
             test_size: Fraction for test set
             batch_size: Batch size
+            time_split_col: Optional column name for chronological split
 
         Returns:
             Train and test dataloaders
@@ -168,6 +174,10 @@ class DrugDiscoveryPipeline:
         # Split dataset
         if split_strategy == "scaffold":
             train_dataset, test_dataset = murcko_scaffold_split_molecular(dataset, test_size=test_size, seed=seed)
+        elif split_strategy == "time" or time_split_col:
+            train_dataset, test_dataset = time_split_molecular(
+                dataset, time_column=time_split_col or "timestamp", test_size=test_size
+            )
         else:
             train_dataset, test_dataset = train_test_split_molecular(dataset, test_size=test_size, seed=seed)
 
@@ -237,6 +247,7 @@ class DrugDiscoveryPipeline:
         val_loader: DataLoader,
         num_epochs: int = 100,
         learning_rate: float = 1e-4,
+        energy_weight: float = 0.0,
         **trainer_kwargs,
     ) -> dict[str, Any]:
         """
@@ -261,11 +272,23 @@ class DrugDiscoveryPipeline:
             raise RuntimeError("Model is not initialized.")
 
         # Initialize trainer
+        def _energy_penalty(batch):
+            coords = getattr(batch, "pos", None)
+            if coords is None:
+                return None
+            try:
+                return torch.mean(compute_energy(coords.to(self.device), reduce=False))
+            except Exception:
+                return None
+
         self.trainer = SelfLearningTrainer(
             model=self.model,
             device=self.device,
             learning_rate=learning_rate,
             save_dir=self.checkpoint_dir,
+            normalize_targets=True,
+            energy_regularization_weight=energy_weight,
+            energy_function=_energy_penalty,
             **trainer_kwargs,
         )
 
@@ -345,35 +368,48 @@ class DrugDiscoveryPipeline:
         print("\n=== Generating Drug Candidates ===")
         print(f"Target: {target_protein or 'General'}")
 
-        # For demonstration, we'll use molecules from the database
-        # In a real implementation, this would use generative models
+        selector = CandidateSelector(CandidateSelectionConfig(top_k=num_candidates, high_uncertainty=max(1, num_candidates // 5)))
+        feasibility_scorer = SynthesisFeasibilityScorer()
+        retro_planner = RetrosynthesisPlanner()
+
         print("Note: Using existing molecules. Generative models not yet implemented.")
 
-        # Load some molecules
         cache_file = os.path.join(self.cache_dir, "approved_drugs.csv")
-        if os.path.exists(cache_file):
-            df = pd.read_csv(cache_file)
-            candidates = df.head(num_candidates).copy()
-
-            # Add predictions for each candidate
-            predictions = []
-            for smiles in candidates["smiles"]:
-                try:
-                    pred = self.predict_properties(smiles, include_admet=True)
-                    predictions.append(pred)
-                except Exception:
-                    predictions.append({})
-
-            # Merge predictions
-            for i, pred in enumerate(predictions):
-                for key, value in pred.items():
-                    if key != "smiles":
-                        candidates.loc[i, key] = value
-
-            return candidates
-        else:
+        if not os.path.exists(cache_file):
             print("No cached data available. Run collect_data() first.")
             return pd.DataFrame()
+
+        df = pd.read_csv(cache_file)
+        candidates_raw = df.head(max(num_candidates * 3, num_candidates)).copy()
+
+        enriched_candidates: list[dict] = []
+        for _, row in candidates_raw.iterrows():
+            smiles = row.get("smiles", "")
+            try:
+                pred = self.predict_properties(smiles, include_admet=True)
+            except Exception:
+                pred = {"smiles": smiles}
+            uncertainty = 0.0
+            if self.property_predictor is not None:
+                try:
+                    _, uncertainty = self.property_predictor.predict_from_smiles_with_uncertainty(
+                        smiles, self.featurizer, samples=6
+                    )
+                except Exception:
+                    uncertainty = 0.0
+            retro = retro_planner.plan_synthesis(smiles, max_depth=3)
+            feas = feasibility_scorer.score_feasibility(smiles, retro_plan=retro if retro.get("success") else None)
+            if feas.get("overall", 0.0) < 5.0 or not retro.get("success", True):
+                continue  # reject infeasible or invalid pathway
+            pred["uncertainty"] = uncertainty
+            pred["synthesis_feasibility"] = feas.get("overall", 0.0)
+            pred["retro_backend"] = retro.get("backend_used")
+            enriched_candidates.append(pred)
+
+        selected = selector.select(enriched_candidates)
+        if not selected:
+            return pd.DataFrame()
+        return pd.DataFrame(selected)
 
     def evaluate(self, test_loader: DataLoader, is_graph: bool | None = None) -> dict[str, float]:
         """
@@ -416,6 +452,12 @@ class DrugDiscoveryPipeline:
 
         # Evaluate
         metrics = self.evaluator.evaluate_regression(y_true_filtered, y_pred_filtered)
+        if set(np.unique(y_true_filtered.flatten())) <= {0, 1}:
+            cls_metrics = self.evaluator.evaluate_classification(y_true_filtered.flatten(), y_pred_filtered.flatten())
+            metrics.update(cls_metrics)
+            metrics["enrichment_factor"] = self.evaluator.enrichment_factor(
+                y_true_filtered.flatten(), y_pred_filtered.flatten()
+            )
         self.evaluator.print_metrics()
 
         return metrics

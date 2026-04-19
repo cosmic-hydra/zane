@@ -5,6 +5,7 @@ Optimizes binding, ADMET, toxicity, and synthesis simultaneously
 
 from .bayesian import ActiveLearner, BayesianOptimizer, UncertaintyEstimator
 from .multi_objective import ConstraintFilter, MultiObjectiveOptimizer, ParetoOptimizer
+from .selection import CandidateSelectionConfig, CandidateSelector
 
 __all__ = [
     "MultiObjectiveOptimizer",
@@ -13,4 +14,6 @@ __all__ = [
     "BayesianOptimizer",
     "UncertaintyEstimator",
     "ActiveLearner",
+    "CandidateSelector",
+    "CandidateSelectionConfig",
 ]

@@ -880,6 +880,10 @@ zane dashboard --refresh 1.0 --iterations 60 \
   - Probable composition splits (active %, stabilizer %, carrier %)
   - Beta dose index (simulation-only metric)
   - Usage profile tags (consumable-screening vs controlled-screening)
+- **Native physics backend**: C++/CUDA force-field with ``compute_energy``, ``compute_forces``, and ``run_fep`` bindings drives OpenMM and MD simulators with automatic GPU fallback.
+- **Protein-aware diffusion**: Diffusion generator now accepts protein/pocket embeddings via cross-attention + FiLM and supports classifier-free guidance for conditioned/unconditioned passes.
+- **Joint interaction head**: Protein–ligand interaction model yields binding affinity plus contact maps for pocket-aware ranking.
+- **Smarter triage**: Candidate selection blends MC-dropout uncertainty, EHVI, Tanimoto diversity, and retrosynthesis feasibility to keep both top-K and high-uncertainty explorers.
 
 ### Intelligence Integration
 - **Web/PDF Evidence**: Automatic collection and ranking awareness

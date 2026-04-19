@@ -19,6 +19,8 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/cosmic-hydra/zane",
     packages=find_packages(),
+    package_data={"drug_discovery.native": ["*.cpp"]},
+    include_package_data=True,
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",

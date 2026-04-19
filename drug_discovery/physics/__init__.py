@@ -8,6 +8,7 @@ from .docking import DockingEngine
 from .md_simulator import EnergyCalculator, MolecularDynamicsSimulator
 from .openmm_adapter import MDSimulationResult, OpenMMAdapter
 from .protein_structure import OpenFoldAdapter, StructurePrediction
+from drug_discovery.native import compute_energy, compute_forces, run_fep
 
 __all__ = [
     "DockingEngine",
@@ -20,4 +21,7 @@ __all__ = [
     "StructurePrediction",
     "OpenMMAdapter",
     "MDSimulationResult",
+    "compute_energy",
+    "compute_forces",
+    "run_fep",
 ]

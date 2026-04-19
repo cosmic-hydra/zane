@@ -379,6 +379,33 @@ def murcko_scaffold_split_molecular(dataset: MolecularDataset, test_size: float 
     return Subset(dataset, train_indices), Subset(dataset, test_indices)
 
 
+def time_split_molecular(
+    dataset: MolecularDataset,
+    time_column: str = "timestamp",
+    test_size: float = 0.2,
+) -> tuple[Subset, Subset]:
+    """Time-based split to mimic chronological evaluation."""
+    if time_column not in dataset.data.columns or len(dataset) == 0:
+        return train_test_split_molecular(dataset, test_size=test_size, seed=None)
+
+    entries: list[tuple[int, float]] = []
+    for local_idx, row_idx in enumerate(dataset._valid_indices):
+        ts = dataset.data.loc[row_idx, time_column]
+        try:
+            ts_val = float(ts)
+        except Exception:
+            # fallback to deterministic order
+            ts_val = float(local_idx)
+        entries.append((local_idx, ts_val))
+
+    entries.sort(key=lambda x: x[1])
+    n = len(entries)
+    split_point = max(1 if n > 1 else 0, int(round(n * (1 - float(test_size)))))
+    train_idx = [idx for idx, _ in entries[:split_point]]
+    test_idx = [idx for idx, _ in entries[split_point:]]
+    return Subset(dataset, train_idx), Subset(dataset, test_idx)
+
+
 def murcko_scaffold_kfold_split_molecular(
     dataset: MolecularDataset,
     n_splits: int = 5,
