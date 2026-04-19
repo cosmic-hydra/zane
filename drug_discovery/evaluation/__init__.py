@@ -1,8 +1,11 @@
-"""
-Evaluation Module
-"""
+"""ZANE Evaluation — Unified evaluation with uncertainty, ADMET, and validation."""
 
-from .predictor import ADMETPredictor, ModelEvaluator, PropertyPredictor
-from .torchdrug_scorer import PropertyScoreResult, TorchDrugScorer
+from drug_discovery.evaluation.uncertainty import (
+    MCDropoutPredictor, DeepEnsemble, ConformalPredictor,
+    UncertaintyConfig, expected_calibration_error, regression_calibration_error)
+from drug_discovery.evaluation.advanced_admet import (
+    AdvancedADMETPredictor, ADMETConfig, ADMET_ENDPOINTS, compute_admet_profile)
 
-__all__ = ["PropertyPredictor", "ADMETPredictor", "ModelEvaluator", "TorchDrugScorer", "PropertyScoreResult"]
+__all__ = ["MCDropoutPredictor", "DeepEnsemble", "ConformalPredictor",
+    "UncertaintyConfig", "expected_calibration_error", "regression_calibration_error",
+    "AdvancedADMETPredictor", "ADMETConfig", "ADMET_ENDPOINTS", "compute_admet_profile"]
