@@ -40,6 +40,8 @@ The repository is intended for scientific teams that need a repeatable, extensib
 1. Platform Scope
 2. Key Capabilities
 3. 2026 Upgrade Highlights
+3A. Scientific Visualization Atlas (2026-04)
+3B. Flow Dynamics and Orchestration Charts
 4. Architecture
 5. Repository Layout
 6. Installation
@@ -254,6 +256,70 @@ python -m drug_discovery.cli physics-gen \
   --target-protein "EGFR" \
   --pharmacophore '{"min_hba":2,"max_rings":3}' \
   --known-smiles "CCO" "CCN"
+```
+
+### 3A. Scientific Visualization Atlas (2026-04)
+
+The latest analytical figures are generated from the curated JSON artifacts under `outputs/reports/` (transformer benchmark, GNN validation, and protocol GNN runs). All figures are deterministic and reproducible from those artifacts.
+
+#### Performance envelopes (RMSE/MAE)
+
+![Predictive performance atlas](docs/assets/analytics/performance_metrics.png)
+
+- Transformer benchmark: RMSE 0.496, MAE 0.429 (scaffold split, 64 samples).
+- GNN validation: RMSE 0.062, MAE 0.062 (approved_drugs slice, 3 epochs, scaffold split).
+- GNN protocol: RMSE 0.535, MAE 0.535 (approved_drugs + pubchem, 140 epochs, scaffold split).
+
+#### Loss landscape snapshots
+
+![Training vs validation loss (terminal epochs)](docs/assets/analytics/loss_snapshots.png)
+
+- Benchmarked transformer converges with closely aligned train/val loss.
+- GNN validation run shows tight generalization on the small protocol slice.
+- Protocol GNN maintains sub-0.30 terminal validation loss after prolonged training.
+
+#### ADMET-quality surrogate metrics
+
+![ADMET surrogate errors](docs/assets/analytics/admet_surrogates.png)
+
+Lower values imply tighter ADMET-proxy error bounds (RMSE/MAE) derived from the evaluation outputs.
+
+#### Test system status (current constrained run)
+
+![PyTest status snapshot](docs/assets/analytics/pytest_status.png)
+
+- Command: `python -m pytest -q` (2026-04-19).
+- Outcome: 258 tests discovered, 14 collection errors.
+- Blocking factors: missing scientific kernels (`torch`, `rdkit`) and downstream imports (`ADMETPredictor`, `DrugDiscoveryPipeline`). Installing the full scientific dependency stack is required for a clean run.
+
+### 3B. Flow Dynamics and Orchestration Charts
+
+#### Data-to-decision telemetry
+
+```mermaid
+graph TD
+    A[Multi-source molecular ingestion] --> B[Standardization & featurization<br/>scaffold splits, descriptor tensors]
+    B --> C[Model training loop<br/>GNN / Transformer / Ensemble]
+    C --> D[Evaluation & calibration<br/>RMSE, MAE, Pearson-r, ECE]
+    D --> E[ADMET inference + risk modulation<br/>toxicity, reactivity, SA]
+    E --> F[Physics hooks<br/>docking proxy, MD stability, conformer filters]
+    F --> G[Composite scoring & ranking<br/>multi-objective weighted fusion]
+    G --> H[Dashboard & reporting surfaces<br/>static frames, live telemetry, artifacts]
+```
+
+#### Execution and instrumentation control
+
+```mermaid
+flowchart LR
+    CLI[CLI entrypoint: python -m drug_discovery.cli] -->|commands| Gen[Generation & retrosynthesis modules]
+    CLI --> Dash[Terminal dashboard renderer]
+    CLI --> Bench[Benchmark harness (GuacaMol/MOSES)]
+    Gen --> Integrations[Integration registry<br/>external tool availability checks]
+    Integrations --> Physics[Physics-aware adapters<br/>DiffDock, MD, OpenMM]
+    Dash --> Telemetry[Runtime telemetry stream<br/>KPI panel, epoch monitor]
+    Telemetry --> Artifacts[Reports & metrics persisted under outputs/]
+    Bench --> Reports[JSON benchmark artifacts]
+    Reports --> Analytics[Scientific Visualization Atlas charts]
 ```
 
 ## 4. Architecture
@@ -518,9 +584,11 @@ zane dashboard --static --custom-characteristics "consumable hydrocarbon" --cust
 
 ### Dashboard Feature and Function Screenshot Gallery
 
+Refreshed static captures (2026-04) rendered from the current dashboard theme pack.
+
 #### 1. Default Simple Overview
 
-![Dashboard default overview](docs/assets/dashboard/01-overview-lab.svg)
+![Dashboard default overview](docs/assets/dashboard_latest/01-overview-lab.svg)
 
 ```bash
 zane dashboard --static
@@ -528,7 +596,7 @@ zane dashboard --static
 
 #### 2. Simulated Combination Ranking Panel
 
-![Dashboard combinations panel](docs/assets/dashboard/02-combinations.svg)
+![Dashboard combinations panel](docs/assets/dashboard_latest/02-combinations.svg)
 
 ```bash
 zane dashboard --static --detail-panels combinations
@@ -536,7 +604,7 @@ zane dashboard --static --detail-panels combinations
 
 #### 3. Composition / Beta Testing Panel
 
-![Dashboard composition panel](docs/assets/dashboard/03-composition.svg)
+![Dashboard composition panel](docs/assets/dashboard_latest/03-composition.svg)
 
 ```bash
 zane dashboard --static --detail-panels composition
@@ -544,7 +612,7 @@ zane dashboard --static --detail-panels composition
 
 #### 4. Analytics and Runtime Telemetry
 
-![Dashboard analytics panel](docs/assets/dashboard/04-analytics.svg)
+![Dashboard analytics panel](docs/assets/dashboard_latest/04-analytics.svg)
 
 ```bash
 zane dashboard --static --detail-panels analytics
@@ -552,7 +620,7 @@ zane dashboard --static --detail-panels analytics
 
 #### 5. AI Copilot Panel
 
-![Dashboard AI copilot panel](docs/assets/dashboard/05-ai-copilot.svg)
+![Dashboard AI copilot panel](docs/assets/dashboard_latest/05-ai-copilot.svg)
 
 ```bash
 zane dashboard --static --detail-panels ai --with-ai
@@ -560,7 +628,7 @@ zane dashboard --static --detail-panels ai --with-ai
 
 #### 6. Full Dashboard Function Set (All Panels)
 
-![Dashboard all panels](docs/assets/dashboard/06-all-panels.svg)
+![Dashboard all panels](docs/assets/dashboard_latest/06-all-panels.svg)
 
 ```bash
 zane dashboard --static --detail-panels all --with-ai
@@ -568,7 +636,7 @@ zane dashboard --static --detail-panels all --with-ai
 
 #### 7. Custom Compound Generation Function
 
-![Dashboard custom compounds](docs/assets/dashboard/07-custom-compounds.svg)
+![Dashboard custom compounds](docs/assets/dashboard_latest/07-custom-compounds.svg)
 
 ```bash
 zane dashboard --static --detail-panels all \
@@ -578,7 +646,7 @@ zane dashboard --static --detail-panels all \
 
 #### 8. No-Simulated-Combinations Mode
 
-![Dashboard no simulated combos](docs/assets/dashboard/08-no-sim-combos.svg)
+![Dashboard no simulated combos](docs/assets/dashboard_latest/08-no-sim-combos.svg)
 
 ```bash
 zane dashboard --static --detail-panels combinations composition analytics --no-sim-combos
@@ -586,7 +654,7 @@ zane dashboard --static --detail-panels combinations composition analytics --no-
 
 #### 9. Neon Theme
 
-![Dashboard neon theme](docs/assets/dashboard/09-theme-neon.svg)
+![Dashboard neon theme](docs/assets/dashboard_latest/09-theme-neon.svg)
 
 ```bash
 zane dashboard --static --detail-panels all --theme neon
@@ -594,7 +662,7 @@ zane dashboard --static --detail-panels all --theme neon
 
 #### 10. Classic Theme
 
-![Dashboard classic theme](docs/assets/dashboard/10-theme-classic.svg)
+![Dashboard classic theme](docs/assets/dashboard_latest/10-theme-classic.svg)
 
 ```bash
 zane dashboard --static --detail-panels all --theme classic
@@ -813,6 +881,11 @@ Expected quality posture:
 - Tests must pass for core modules.
 - Lint and format checks should be clean.
 - User-facing behavior changes should be documented.
+
+Current validation snapshot (2026-04-19):
+
+- PyTest collection discovered 258 tests; 14 collection errors were observed due to absent heavy scientific dependencies (`torch`, `rdkit`) and downstream imports (`ADMETPredictor`, `DrugDiscoveryPipeline`). See `docs/assets/analytics/pytest_status.png` for the visual trace.
+- Full green execution requires installing the complete dependency stack from `requirements.txt` (including GPU-enabled PyTorch and RDKit wheels or conda packages).
 
 ## 13. Security and Responsible Use
 
