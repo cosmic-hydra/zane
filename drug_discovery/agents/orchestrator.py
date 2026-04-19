@@ -317,3 +317,10 @@ class AgentOrchestrator:
 
         logger.info(f"\nClosed-loop optimization complete: {num_cycles} cycles")
         return results
+
+
+# Backwards-compatible alias expected by tests
+class Orchestrator(AgentOrchestrator):
+    """Alias to maintain legacy API surface."""
+
+    pass

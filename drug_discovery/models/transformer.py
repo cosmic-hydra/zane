@@ -23,6 +23,8 @@ class MolecularTransformer(nn.Module):
         dropout: float = 0.1,
         output_dim: int = 1,
         max_seq_len: int = 512,
+        model_dim: int | None = None,
+        **_: object,
     ):
         """
         Args:
@@ -37,19 +39,19 @@ class MolecularTransformer(nn.Module):
         super().__init__()
 
         self.input_dim = input_dim
-        self.hidden_dim = hidden_dim
+        self.hidden_dim = model_dim if model_dim is not None else hidden_dim
 
         # Input embedding
-        self.input_projection = nn.Linear(input_dim, hidden_dim)
+        self.input_projection = nn.Linear(input_dim, self.hidden_dim)
 
         # Positional encoding
-        self.pos_encoding = PositionalEncoding(hidden_dim, dropout, max_seq_len)
+        self.pos_encoding = PositionalEncoding(self.hidden_dim, dropout, max_seq_len)
 
         # Transformer encoder
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=hidden_dim,
+            d_model=self.hidden_dim,
             nhead=num_heads,
-            dim_feedforward=hidden_dim * 4,
+            dim_feedforward=self.hidden_dim * 4,
             dropout=dropout,
             activation="gelu",
             batch_first=True,
@@ -57,8 +59,8 @@ class MolecularTransformer(nn.Module):
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
 
         # Output layers
-        self.fc1 = nn.Linear(hidden_dim, hidden_dim // 2)
-        self.fc2 = nn.Linear(hidden_dim // 2, output_dim)
+        self.fc1 = nn.Linear(self.hidden_dim, self.hidden_dim // 2)
+        self.fc2 = nn.Linear(self.hidden_dim // 2, output_dim)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):

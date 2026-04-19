@@ -18,6 +18,8 @@ class EnsembleModel(nn.Module):
         """
         super().__init__()
 
+        if not models:
+            raise ValueError("EnsembleModel requires at least one base model")
         self.models = nn.ModuleList(models)
         self.num_models = len(models)
 
@@ -35,7 +37,10 @@ class EnsembleModel(nn.Module):
         predictions = []
 
         for model in self.models:
-            pred = model(*args, **kwargs)
+            try:
+                pred = model(*args, **kwargs)
+            except TypeError:
+                pred = model(*args)
             predictions.append(pred)
 
         # Stack predictions
@@ -68,7 +73,7 @@ class MultiTaskModel(nn.Module):
     """Multi-task learning model for predicting multiple properties."""
 
     def __init__(
-        self, base_model: nn.Module, num_tasks: int, shared_dim: int = 128, task_specific_dim: int = 64
+        self, base_model: nn.Module, num_tasks: int, shared_dim: int | None = None, task_specific_dim: int = 64
     ):
         """Initialize multi-task model.
 
@@ -82,12 +87,22 @@ class MultiTaskModel(nn.Module):
 
         self.base_model = base_model
         self.num_tasks = num_tasks
+        base_out_dim = (
+            getattr(base_model, "output_dim", None)
+            or getattr(getattr(base_model, "linear", None), "out_features", None)
+            or shared_dim
+            or 128
+        )
+        resolved_shared = shared_dim or int(base_out_dim)
+        self._projection = None
+        if base_out_dim != resolved_shared:
+            self._projection = nn.Linear(int(base_out_dim), resolved_shared)
 
         # Task-specific heads
         self.task_heads = nn.ModuleList(
             [
                 nn.Sequential(
-                    nn.Linear(shared_dim, task_specific_dim),
+                    nn.Linear(resolved_shared, task_specific_dim),
                     nn.ReLU(),
                     nn.Dropout(0.2),
                     nn.Linear(task_specific_dim, 1),
@@ -104,6 +119,8 @@ class MultiTaskModel(nn.Module):
         """
         # Get shared representation
         shared_features = self.base_model(*args, **kwargs)
+        if self._projection is not None:
+            shared_features = self._projection(shared_features)
 
         # Task-specific predictions
         predictions = {}
@@ -117,7 +134,11 @@ class HybridModel(nn.Module):
     """Hybrid model combining GNN and Transformer."""
 
     def __init__(
-        self, gnn_model: nn.Module, transformer_model: nn.Module, fusion_dim: int = 128, output_dim: int = 1
+        self,
+        gnn_model: nn.Module,
+        transformer_model: nn.Module,
+        fusion_dim: int = 128,
+        output_dim: int = 1,
     ):
         """Initialize hybrid model.
 
@@ -132,9 +153,21 @@ class HybridModel(nn.Module):
         self.gnn_model = gnn_model
         self.transformer_model = transformer_model
 
+        gnn_dim = (
+            getattr(gnn_model, "output_dim", None)
+            or getattr(getattr(gnn_model, "linear", None), "out_features", None)
+            or fusion_dim
+        )
+        transformer_dim = (
+            getattr(transformer_model, "output_dim", None)
+            or getattr(getattr(transformer_model, "linear", None), "out_features", None)
+            or fusion_dim
+        )
+        fusion_input = int(gnn_dim) + int(transformer_dim)
+
         # Fusion layers
         self.fusion = nn.Sequential(
-            nn.Linear(2, fusion_dim),  # Combine 2 model outputs
+            nn.Linear(fusion_input, fusion_dim),  # Combine model outputs
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(fusion_dim, fusion_dim // 2),
@@ -154,6 +187,11 @@ class HybridModel(nn.Module):
         """
         gnn_pred = self.gnn_model(graph_data)
         transformer_pred = self.transformer_model(fingerprint_data)
+
+        if gnn_pred.dim() > 2:
+            gnn_pred = gnn_pred.reshape(gnn_pred.size(0), -1)
+        if transformer_pred.dim() > 2:
+            transformer_pred = transformer_pred.reshape(transformer_pred.size(0), -1)
 
         # Concatenate predictions
         combined = torch.cat([gnn_pred, transformer_pred], dim=-1)

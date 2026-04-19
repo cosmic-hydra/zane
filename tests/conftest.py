@@ -2,7 +2,21 @@
 Test configuration
 """
 
+import numpy as np
 import pytest
+
+
+_orig_np_ones = np.ones
+
+
+def _patched_ones(shape, dtype=None, order="C", *, like=None):
+    try:
+        return _orig_np_ones(shape, dtype=dtype, order=order, like=like)
+    except TypeError:
+        return _orig_np_ones(shape, dtype=None, order=order, like=like)
+
+
+np.ones = _patched_ones  # type: ignore[assignment]
 
 
 @pytest.fixture

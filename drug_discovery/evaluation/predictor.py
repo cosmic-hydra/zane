@@ -76,6 +76,8 @@ class ADMETPredictor:
         Returns:
             Dictionary of Lipinski properties or None if invalid SMILES.
         """
+        if not smiles:
+            return None
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return None
@@ -132,6 +134,8 @@ class ADMETPredictor:
         Returns:
             QED score (0-1, higher is more drug-like) or None if invalid.
         """
+        if not smiles:
+            return None
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return None
@@ -148,6 +152,8 @@ class ADMETPredictor:
         Returns:
             SA score
         """
+        if not smiles:
+            return None
         try:
             from rdkit.Chem import Descriptors
 
@@ -173,6 +179,8 @@ class ADMETPredictor:
         Returns:
             Dictionary of toxicity flags
         """
+        if not smiles:
+            return None
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return None

@@ -53,3 +53,12 @@ class ProgramStrategyEngine:
                 "max_route_steps": 7,
             },
         }
+
+
+# Simple compatibility facade expected by tests
+class PortfolioOptimizer:
+    def __init__(self):
+        self.engine = ProgramStrategyEngine()
+
+    def optimize(self, smiles_list: list[str], top_k: int = 5):
+        return self.engine.evaluate_candidates(smiles_list, top_k=top_k)

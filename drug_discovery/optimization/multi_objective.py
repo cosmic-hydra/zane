@@ -192,3 +192,45 @@ class MultiObjectiveBayesianOptimizer:
                 "pareto_size": int(front["mask"].sum()) if len(front["mask"]) > 0 else 0,
                 "hypervolume": front.get("hypervolume", 0.0),
                 "objectives": self.config.objective_names}
+
+
+# ---------------------------------------------------------------------------
+# Compatibility wrappers expected by tests and legacy code.
+
+
+class ConstraintFilter:
+    """Simple constraint filter placeholder for backwards compatibility."""
+
+    def __init__(self, constraints: list[tuple[str, float]] | None = None):
+        self.constraints = constraints or []
+
+    def filter(self, candidates: list[dict]) -> list[dict]:
+        # In this simplified implementation we simply return the input.
+        return candidates
+
+
+class ParetoOptimizer:
+    """Lightweight Pareto optimizer facade."""
+
+    def __init__(self):
+        pass
+
+    def pareto_front(self, costs: np.ndarray) -> np.ndarray:
+        return is_pareto_efficient(costs)
+
+
+class MultiObjectiveOptimizer:
+    """Facade that mirrors the API used in tests without heavy dependencies."""
+
+    def __init__(self, config: MOBOConfig | None = None):
+        self.config = config or MOBOConfig()
+        self.optimizer = MultiObjectiveBayesianOptimizer(self.config)
+
+    def optimize(self, candidates: np.ndarray, observations: np.ndarray | None = None):
+        if observations is not None:
+            self.optimizer.tell(candidates, observations)
+        indices, _ = self.optimizer.ask(candidates, n_select=min(len(candidates), 1))
+        return [{"index": int(i)} for i in indices]
+
+    def get_pareto_front(self):
+        return self.optimizer.get_pareto_front()

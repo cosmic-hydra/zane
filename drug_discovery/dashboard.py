@@ -226,11 +226,9 @@ def _animated_bar(ratio: float, tick: int, width: int = 26) -> str:
         Animated progress bar string.
     """
     ratio = max(0.0, min(1.0, ratio))
-    filled = int(ratio * width)
-    head = min(width - 1, max(0, filled))
+    filled = int(round(ratio * width))
+    filled = min(width, max(0, filled))
     chars = ["█" if i < filled else "░" for i in range(width)]
-    if width > 0:
-        chars[head] = "▓" if (tick % 2 == 0) else "▒"
     return "".join(chars)
 
 

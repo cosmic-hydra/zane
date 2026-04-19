@@ -183,3 +183,10 @@ class PistachioDatasets:
             if file_path.is_file():
                 results.append(self.load(str(file_path)))
         return results
+
+
+# Compatibility alias expected by tests
+class PistachioDataset(PistachioDatasets):
+    """Alias for PistachioDatasets loader."""
+
+    pass

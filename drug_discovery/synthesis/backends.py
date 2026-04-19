@@ -123,3 +123,11 @@ class AiZynthFinderBackend(BaseRetrosynthesisBackend):
             )
         except Exception as exc:  # pragma: no cover - depends on external lib
             return BackendResult.failure(self.name, f"AiZynthFinder error: {exc}")
+
+
+# Backwards compatibility alias expected by tests
+class Backend(BaseRetrosynthesisBackend):
+    """Alias pointing to BaseRetrosynthesisBackend."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)

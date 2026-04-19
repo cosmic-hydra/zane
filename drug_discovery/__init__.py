@@ -27,6 +27,7 @@ __all__ = [
     "GuacamolBenchmarkBackend",
     "EliteStackPipeline",
     "ProgramStrategyEngine",
+    "optimization",
 ]
 
 
@@ -84,4 +85,8 @@ def __getattr__(name: str) -> Any:
         from .strategy import ProgramStrategyEngine
 
         return ProgramStrategyEngine
+    if name == "optimization":
+        from . import optimization as optimization_module
+
+        return optimization_module
     raise AttributeError(f"module 'drug_discovery' has no attribute {name!r}")

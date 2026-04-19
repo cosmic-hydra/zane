@@ -24,6 +24,8 @@ class MolecularGNN(nn.Module):
         dropout: float = 0.2,
         output_dim: int = 1,
         pooling: str = "mean",  # 'mean', 'max', or 'attention'
+        input_dim: int | None = None,
+        **_: object,
     ):
         """
         Args:
@@ -38,13 +40,14 @@ class MolecularGNN(nn.Module):
         """
         super().__init__()
 
-        self.node_features = node_features
+        resolved_nodes = input_dim if input_dim is not None else node_features
+        self.node_features = resolved_nodes
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.pooling = pooling
 
         # Initial node embedding
-        self.node_encoder = nn.Linear(node_features, hidden_dim)
+        self.node_encoder = nn.Linear(resolved_nodes, hidden_dim)
 
         # Edge embedding
         self.edge_encoder = nn.Linear(edge_features, hidden_dim)

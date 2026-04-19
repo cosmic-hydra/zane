@@ -533,3 +533,10 @@ class ContinuousImprovementSystem:
         }
 
         return status
+
+
+# Backwards-compatible alias expected by tests
+class DriftDetector(DataDriftDetector):
+    """Alias for DataDriftDetector."""
+
+    pass

@@ -115,3 +115,10 @@ class MolecularTransformerAdapter:
             List of :class:`ReactionPrediction` objects in input order.
         """
         return [self.predict(r) for r in reactants_list]
+
+
+# Compatibility alias expected by tests
+class ReactionPredictor(ReactionPrediction):
+    """Alias for ReactionPrediction."""
+
+    pass

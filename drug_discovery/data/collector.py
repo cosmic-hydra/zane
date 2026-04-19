@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, TypeVar, cast
 
 import pandas as pd
+import requests
 
 logger = logging.getLogger(__name__)
 

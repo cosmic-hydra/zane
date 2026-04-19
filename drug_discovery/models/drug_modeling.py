@@ -122,3 +122,10 @@ class DrugModeler:
     def model_candidates(self, smiles_list: list[str]) -> list[dict]:
         """Convenience method returning dictionaries for CLI/JSON workflows."""
         return [result.to_dict() for result in self.rank_candidates(smiles_list)]
+
+
+# Compatibility alias expected by tests
+class DrugModel(DrugModeler):
+    """Alias for DrugModeler."""
+
+    pass

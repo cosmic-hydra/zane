@@ -118,6 +118,22 @@ def diffdock_predict_binding(ligand_smiles: str, protein_pdb_path: str, num_pose
         return {"available": False, "poses": [], "error": str(exc)}
 
 
+class ExternalToolRegistry:
+    """Minimal registry facade for registering and executing external tools."""
+
+    def __init__(self):
+        self.tools: dict[str, Any] = {}
+
+    def register(self, name: str, handler: Any):
+        self.tools[name] = handler
+
+    def execute(self, name: str, *args, **kwargs):
+        fn = self.tools.get(name)
+        if fn is None:
+            raise ValueError(f"Unknown tool '{name}'")
+        return fn(*args, **kwargs)
+
+
 def torchdrug_score_properties(smiles: str, tasks: tuple[str, ...] = ("tox21",)) -> dict[str, Any]:
     """Score molecular properties using TorchDrug GNN models when available.
 

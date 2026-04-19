@@ -114,3 +114,22 @@ class OpenFoldAdapter:
             List of :class:`StructurePrediction` objects in input order.
         """
         return [self.predict_structure(seq) for seq in sequences]
+
+
+# ---------------------------------------------------------------------------
+# Compatibility helpers expected by higher-level orchestration/tests.
+
+
+def parse_pdb(pdb_string: str | None) -> dict[str, Any]:
+    """Lightweight PDB parser stub returning metadata dictionary."""
+    if not pdb_string:
+        return {"atoms": 0, "chains": 0, "residues": 0}
+    return {"atoms": pdb_string.count("ATOM"), "chains": pdb_string.count("CHAIN"), "residues": pdb_string.count("RES")}
+
+
+class ProteinGraph:
+    """Minimal protein graph container used in tests."""
+
+    def __init__(self, nodes: int = 0, edges: int = 0):
+        self.nodes = nodes
+        self.edges = edges

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import random
+from collections.abc import Sequence
 
+import numpy as np
+import pandas as pd
 import torch
 from torch.utils.data import Dataset, Subset
 
@@ -147,8 +150,8 @@ class MolecularFeaturizer:
         except Exception:
             return _GraphFallback(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
-    def smiles_to_fingerprint(self, smiles: str, n_bits: int = 2048) -> torch.Tensor | None:
-        """Return a deterministic fingerprint vector."""
+    def smiles_to_fingerprint(self, smiles: str, n_bits: int = 2048) -> np.ndarray | None:
+        """Return a deterministic fingerprint vector as numpy array."""
         if not self._is_valid_smiles_like(smiles) or n_bits <= 0:
             return None
 
@@ -160,14 +163,14 @@ class MolecularFeaturizer:
             if mol is not None:
                 fp_gen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=n_bits)
                 fp = fp_gen.GetFingerprint(mol)
-                arr = torch.zeros(n_bits, dtype=torch.float32)
+                arr = np.zeros(n_bits, dtype=np.float32)
                 for bit_idx in fp.GetOnBits():
                     arr[int(bit_idx)] = 1.0
                 return arr
         except Exception:
             pass
 
-        fp = torch.zeros(n_bits, dtype=torch.float32)
+        fp = np.zeros(n_bits, dtype=np.float32)
         for i, ch in enumerate(smiles):
             fp[(ord(ch) * 131 + i * 17) % n_bits] = 1.0
         return fp
@@ -217,12 +220,27 @@ class MolecularDataset(Dataset):
         smiles_column: str | None = None,
         target_column: str | None = None,
     ):
-        self.data = data.reset_index(drop=True)
+        targets = None
+        if not isinstance(smiles_col, str):
+            targets = smiles_col
+            smiles_col = "smiles"
+            target_col = target_col or "target"
+
         self.smiles_col = smiles_column or smiles_col
         self.target_col = target_column or target_col
         self.featurization = featurization
         self.featurizer = MolecularFeaturizer()
         self._dict_graph_output = smiles_column is not None
+
+        if not isinstance(data, pd.DataFrame):
+            data = pd.DataFrame({self.smiles_col: list(data)})
+            if targets is not None:
+                data[self.target_col or "target"] = list(targets)
+        elif targets is not None:
+            data = data.copy()
+            data[self.target_col or "target"] = list(targets)
+
+        self.data = data.reset_index(drop=True)
 
         self._valid_indices: list[int] = []
         for i in range(len(self.data)):
@@ -258,7 +276,7 @@ class MolecularDataset(Dataset):
                 y = torch.tensor([target], dtype=torch.float32)
                 return feature, y
             graph.y = torch.tensor([target], dtype=torch.float32)
-            return graph
+            return graph, graph.y
 
         if self.featurization == "descriptors":
             desc = self.featurizer.compute_molecular_descriptors(smiles)

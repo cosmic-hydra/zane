@@ -99,3 +99,11 @@ class ManufacturingStrategyPlanner:
             green_chemistry_score=green,
             supply_chain_risk=supply_chain,
         )
+
+
+# Compatibility shim used in tests
+class ManufacturingStrategy(ManufacturingStrategyPlanner):
+    """Alias for backward compatibility with earlier API."""
+
+    def plan_strategy(self, smiles: str, max_depth: int = 6) -> ManufacturingPlan:
+        return super().plan(smiles, max_depth=max_depth)

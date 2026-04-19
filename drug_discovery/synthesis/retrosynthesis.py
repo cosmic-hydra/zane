@@ -313,3 +313,10 @@ class SynthesisFeasibilityScorer:
         logger.info(f"Found {len(feasible)} synthesizable molecules from {len(smiles_list)}")
 
         return feasible
+
+
+# Compatibility alias expected by tests
+class RetrosynthesisEngine(RetrosynthesisPlanner):
+    """Alias for RetrosynthesisPlanner."""
+
+    pass

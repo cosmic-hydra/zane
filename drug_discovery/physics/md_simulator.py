@@ -312,3 +312,22 @@ class EnergyCalculator:
         except Exception as e:
             logger.error(f"Geometry optimization error: {e}")
             return None, None
+
+
+# ---------------------------------------------------------------------------
+# Compatibility alias expected by tests
+
+
+class MDSimulator(MolecularDynamicsSimulator):
+    """Backward-compatible simulator facade used in unit tests."""
+
+    def run(self, *args, **kwargs):
+        return self.simulate_ligand(*args, **kwargs)
+
+    def set_temperature(self, temperature: float):
+        self.temperature = temperature
+        return True
+
+    def set_pressure(self, pressure: float):
+        self.pressure = pressure
+        return True
