@@ -73,42 +73,17 @@ This release adds deep external-ecosystem interoperability and upgrades simulati
 
 ### 3.1 External Ecosystem Integration Layer
 
-- Added centralized integration registry in `drug_discovery/integrations.py`.
-- Added external tooling bridge in `drug_discovery/external_tooling.py`.
-- Added runtime status introspection command:
+The external integration layer is anchored by a centralized registry in `drug_discovery/integrations.py` and an external tooling bridge in `drug_discovery/external_tooling.py`, with an accompanying status command:
 
 ```bash
 python -m drug_discovery.cli integrations
 ```
 
-This command reports:
-
-- Submodule registration status
-- Local checkout presence
-- Python import availability
-- Effective integration availability
+When executed, the command reports submodule registration status, whether local checkouts exist, Python import availability, and whether an integration is effectively runnable in the current environment.
 
 ### 3.2 Integrated Repositories
 
-Tracked under `external/` as submodules:
-
-- AiZynthFinder (retrosynthesis core)
-- REINVENT4 (RL molecule generation)
-- GT4SD molecular-design (multi-model generation pipeline)
-- GT4SD core framework (property/scoring/generation ecosystem)
-- RDKit (core cheminformatics toolkit)
-- IBM Molformer (transformer chemistry models)
-- MOSES (molecule quality benchmarking)
-- GuacaMol (drug design benchmark tasks)
-
-New elite integrations added for multi-stage chemistry + biology + physics workflows:
-
-- Molecular Transformer (reaction outcome prediction)
-- DiffDock (diffusion docking)
-- TorchDrug (GNN property scoring)
-- OpenFold (protein structure prediction)
-- OpenMM (molecular dynamics)
-- Pistachio (reaction dataset tooling)
+The `external/` directory tracks interoperable research stacks as submodules, including AiZynthFinder for retrosynthesis, REINVENT4 and GT4SD (molecular-design and core frameworks) for generation, RDKit for cheminformatics, IBM Molformer for transformer chemistry, and benchmarking suites such as MOSES and GuacaMol. Additional elite integrations extend the workflow with Molecular Transformer for reaction outcomes, DiffDock for diffusion docking, TorchDrug for GNN-based scoring, OpenFold for protein structures, OpenMM for molecular dynamics, and Pistachio for reaction dataset support, creating a single runway for chemistry, biology, and physics-aware modeling.
 
 Sync them locally into `external/`:
 
@@ -202,7 +177,21 @@ python -m drug_discovery.cli synthesis-research "CCO" --max-results 3
 
 ### 3.7 Physics-Aware Generation Stack
 
-The `physics-gen` CLI assembles BRICS/RECAP fragments, refines candidates with conformer-ensemble diffusion, and ranks them via multi-objective guidance that blends binding affinity proxies, ADMET surrogates, synthesizability, novelty, and MD stability. It explores energy landscapes using Boltzmann-weighted conformer scoring, steric-fit estimation, and pharmacophore-aware constraint checks, while risk-aware routing factors toxicity, reactivity, and synthetic difficulty alongside retrosynthesis-informed reaction likelihood to steer toward feasible, lower-risk molecules. Quantum and lightweight descriptors (HOMO–LUMO proxies, partial charges), scaffold hopping, chemical-space diversity metrics, and temperature-controlled exploration knobs are available, and outputs are structured for generate → dock/simulate → score → retrain loops.
+The `physics-gen` CLI assembles BRICS/RECAP fragments, refines candidates with conformer-ensemble diffusion, and ranks them via multi-objective guidance that blends binding affinity proxies, ADMET surrogates, synthesizability, novelty, and MD stability. It explores energy landscapes using Boltzmann-weighted conformer scoring, steric-fit estimation, and pharmacophore-aware constraint checks, while risk-aware routing factors toxicity, reactivity, and synthetic difficulty alongside retrosynthesis-informed reaction likelihood to steer toward feasible, lower-risk molecules. Quantum and lightweight descriptors (HOMO–LUMO proxies, partial charges), scaffold hopping, chemical-space diversity metrics, and temperature-controlled exploration knobs are available, and outputs are structured for generate → dock/simulate → score → retrain loops. The multi-objective ranker follows a weighted fusion:
+
+$$
+S_{\\text{composite}} = w_{\\text{admet}}\\, S_{\\text{admet}} + w_{\\text{bind}}\\, S_{\\text{dock}} + w_{\\text{syn}}\\, S_{\\text{sa}} + w_{\\text{novel}}\\, S_{\\text{div}} + w_{\\text{md}}\\, S_{\\text{stability}}
+$$
+
+and the docking/MD-informed energy channels are normalized through a Boltzmann-weighted conformer aggregation:
+
+$$
+E_{\\text{eff}} = -k_B T \\log \\left( \\sum_i \\exp\\left(-\\frac{E_i}{k_B T}\\right) \\right)
+$$
+
+which feeds into the same composite score after scaling.
+
+![Modeling funnel and composite objective](docs/assets/analytics/modeling_funnel.svg)
 
 Example:
 
