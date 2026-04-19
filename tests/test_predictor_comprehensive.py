@@ -153,6 +153,47 @@ class TestPropertyPredictorFromSMILES:
         assert all(isinstance(r, float) for r in results)
 
 
+class MockDropoutModel(torch.nn.Module):
+    """Mock model with dropout and batchnorm to test MC dropout behaviour."""
+
+    def __init__(self, input_dim=6, output_dim=1):
+        super().__init__()
+        self.bn = torch.nn.BatchNorm1d(input_dim)
+        self.dropout = torch.nn.Dropout(p=0.5)
+        self.linear = torch.nn.Linear(input_dim, output_dim)
+
+    def forward(self, x):
+        x = self.bn(x)
+        x = self.dropout(x)
+        return self.linear(x)
+
+
+class TestPropertyPredictorUncertainty:
+    def test_predict_with_uncertainty_preserves_eval_state(self):
+        model = MockDropoutModel()
+        predictor = PropertyPredictor(model)
+        features = torch.randn(8, 6)
+
+        mean, std = predictor.predict_with_uncertainty(features, samples=4)
+
+        assert mean.shape == (8, 1)
+        assert std.shape == (8, 1)
+        assert predictor.model.training is False
+        assert predictor.model.bn.training is False
+        assert float(std.mean().item()) >= 0.0
+
+    def test_predict_from_smiles_with_uncertainty(self):
+        model = MockDropoutModel()
+        predictor = PropertyPredictor(model)
+
+        mock_featurizer = MagicMock()
+        mock_featurizer.smiles_to_fingerprint.return_value = np.random.randn(6)
+
+        val, unc = predictor.predict_from_smiles_with_uncertainty("CCO", mock_featurizer, samples=3)
+        assert isinstance(val, float) or val is None
+        assert isinstance(unc, float)
+
+
 class TestADMETPredictorBasics:
     """Test basic ADMET predictor functionality"""
 
@@ -198,6 +239,32 @@ class TestADMETPredictorBasics:
         props = predictor.calculate_lipinski_properties(smiles)
 
         assert props is not None
+
+
+class TestEnrichmentFactor:
+    def test_enrichment_factor_empty(self):
+        assert PropertyPredictor.enrichment_factor(np.array([]), np.array([])) == 0.0
+
+    def test_enrichment_factor_all_negative(self):
+        y_true = np.zeros(5)
+        y_score = np.arange(5)
+        assert PropertyPredictor.enrichment_factor(y_true, y_score) == 0.0
+
+    def test_enrichment_factor_length_mismatch(self):
+        with pytest.raises(ValueError):
+            PropertyPredictor.enrichment_factor(np.array([1, 0]), np.array([0.5]))
+
+    def test_enrichment_factor_small_sample(self):
+        y_true = np.array([1, 0, 0])
+        y_score = np.array([0.9, 0.5, 0.1])
+        ef = PropertyPredictor.enrichment_factor(y_true, y_score, top_fraction=0.5)
+        assert pytest.approx(ef, rel=1e-6) == 3.0
+
+    def test_enrichment_factor_all_positive(self):
+        y_true = np.ones(4)
+        y_score = np.array([0.2, 0.4, 0.6, 0.8])
+        ef = PropertyPredictor.enrichment_factor(y_true, y_score, top_fraction=0.25)
+        assert pytest.approx(ef, rel=1e-6) == 1.0
         assert 190 < props["molecular_weight"] < 200
 
     def test_calculate_lipinski_properties_invalid_smiles(self):

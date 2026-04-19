@@ -168,10 +168,15 @@ def run_fep(
     """
     Estimate free energy perturbation for a ligand–protein pair.
     """
+    native_lambda_schedule = (
+        lambda_schedule
+        if lambda_schedule is not None
+        else torch.empty(0, device=ligand_coords.device, dtype=ligand_coords.dtype)
+    )
     backend = _load_ext()
     if backend is not None:
         try:
-            delta_f = backend.run_fep(ligand_coords, protein_coords, lambda_schedule, sigma, epsilon)
+            delta_f = backend.run_fep(ligand_coords, protein_coords, native_lambda_schedule, sigma, epsilon)
         except Exception as exc:  # pragma: no cover
             logger.warning("Native FEP failed, falling back to torch: %s", exc)
             delta_f = _torch_fep(ligand_coords, protein_coords, lambda_schedule, sigma=sigma, epsilon=epsilon)

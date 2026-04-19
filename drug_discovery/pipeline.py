@@ -29,7 +29,6 @@ from .optimization.selection import CandidateSelectionConfig, CandidateSelector
 from .synthesis.retrosynthesis import RetrosynthesisPlanner, SynthesisFeasibilityScorer
 from .synthesis import MolecularTransformerAdapter, PistachioDatasets
 from .training import SelfLearningTrainer
-from drug_discovery.native import compute_energy
 
 
 class DrugDiscoveryPipeline:
@@ -174,10 +173,10 @@ class DrugDiscoveryPipeline:
         # Split dataset
         if split_strategy == "scaffold":
             train_dataset, test_dataset = murcko_scaffold_split_molecular(dataset, test_size=test_size, seed=seed)
-        elif split_strategy == "time" or time_split_col:
-            train_dataset, test_dataset = time_split_molecular(
-                dataset, time_column=time_split_col or "timestamp", test_size=test_size
-            )
+        elif split_strategy == "time":
+            if not time_split_col:
+                raise ValueError("time_split_col must be provided when split_strategy == 'time'")
+            train_dataset, test_dataset = time_split_molecular(dataset, time_column=time_split_col, test_size=test_size)
         else:
             train_dataset, test_dataset = train_test_split_molecular(dataset, test_size=test_size, seed=seed)
 
@@ -271,15 +270,9 @@ class DrugDiscoveryPipeline:
         if self.model is None:
             raise RuntimeError("Model is not initialized.")
 
-        # Initialize trainer
-        def _energy_penalty(batch):
-            coords = getattr(batch, "pos", None)
-            if coords is None:
-                return None
-            try:
-                return torch.mean(compute_energy(coords.to(self.device), reduce=False))
-            except Exception:
-                return None
+        # Initialize trainer (energy regularization is disabled to avoid gradient-less penalties)
+        if energy_weight and energy_weight != 0.0:
+            print("Energy regularization term is ignored because it is input-only and does not affect gradients.")
 
         self.trainer = SelfLearningTrainer(
             model=self.model,
@@ -287,8 +280,8 @@ class DrugDiscoveryPipeline:
             learning_rate=learning_rate,
             save_dir=self.checkpoint_dir,
             normalize_targets=True,
-            energy_regularization_weight=energy_weight,
-            energy_function=_energy_penalty,
+            energy_regularization_weight=0.0,
+            energy_function=None,
             **trainer_kwargs,
         )
 
@@ -407,6 +400,7 @@ class DrugDiscoveryPipeline:
             enriched_candidates.append(pred)
 
         selected = selector.select(enriched_candidates)
+        selected = selected[:num_candidates]
         if not selected:
             return pd.DataFrame()
         return pd.DataFrame(selected)

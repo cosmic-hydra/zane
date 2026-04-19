@@ -176,6 +176,9 @@ class MolecularDynamicsSimulator:
 
             temperature_trace = [float(self.temperature + rng.normal(0.0, 0.7)) for _ in range(num_frames)]
 
+            coord_list = coord_tensor.cpu().tolist() if coord_tensor is not None else None
+            opt_coord_list = opt_coords.cpu().tolist() if opt_coords is not None else None
+
             results = {
                 "success": True,
                 "initial_energy": float(initial_energy),
@@ -195,8 +198,8 @@ class MolecularDynamicsSimulator:
                     "radius_of_gyration": rg_trajectory,
                     "temperature": temperature_trace,
                 },
-                "coordinates": coord_tensor if coord_tensor is not None else None,
-                "optimized_coordinates": opt_coords if opt_coords is not None else None,
+                "coordinates": coord_list,
+                "optimized_coordinates": opt_coord_list,
             }
 
             return results
@@ -256,6 +259,8 @@ class MolecularDynamicsSimulator:
             stability = "stable" if ligand_result.get("stability_index", 0.0) >= 0.6 and ligand_rmsd < 2.5 else "unstable"
 
             ligand_coords = ligand_result.get("optimized_coordinates") or ligand_result.get("coordinates")
+            if ligand_coords is not None and not torch.is_tensor(ligand_coords):
+                ligand_coords = torch.tensor(ligand_coords, dtype=torch.float32)
             protein_coords = self._coords_from_pdb(protein_pdb) if protein_pdb else None
             fep_delta = None
             if ligand_coords is None and protein_coords is not None:

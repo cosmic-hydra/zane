@@ -94,12 +94,21 @@ def _dense_from_batch(features, batch):
     max_nodes = int(counts.max().item()) if counts.numel() > 0 else 0
     dense = features.new_zeros((batch_size, max_nodes, features.size(-1)))
     padding_mask = torch.ones((batch_size, max_nodes), device=features.device, dtype=torch.bool)
-    cursor = torch.zeros((batch_size,), device=features.device, dtype=torch.long)
-    for idx, b in enumerate(batch):
-        pos = cursor[b].item()
-        dense[b, pos] = features[idx]
-        padding_mask[b, pos] = False
-        cursor[b] += 1
+
+    if batch.numel() > 0:
+        perm = torch.argsort(batch, stable=True)
+        sorted_batch = batch[perm]
+        sorted_idx = torch.arange(batch.numel(), device=batch.device, dtype=torch.long)
+        group_start = torch.ones_like(sorted_batch, dtype=torch.bool)
+        group_start[1:] = sorted_batch[1:] != sorted_batch[:-1]
+        start_idx = torch.where(group_start, sorted_idx, torch.zeros_like(sorted_idx))
+        start_idx = torch.cummax(start_idx, dim=0).values
+        pos_sorted = sorted_idx - start_idx
+        pos = torch.empty_like(pos_sorted)
+        pos[perm] = pos_sorted
+
+        dense[batch, pos] = features
+        padding_mask[batch, pos] = False
     return dense, padding_mask
 
 
@@ -107,11 +116,10 @@ def _flatten_from_dense(dense, padding_mask):
     """Flatten dense batch back to ragged representation."""
     keep = ~padding_mask
     flat = dense[keep]
-    batch = []
-    for b_idx in range(dense.size(0)):
-        n = int(keep[b_idx].sum().item())
-        batch.extend([b_idx] * n)
-    batch_tensor = torch.tensor(batch, device=dense.device, dtype=torch.long)
+    counts = keep.sum(dim=1, dtype=torch.long)
+    batch_tensor = torch.repeat_interleave(
+        torch.arange(dense.size(0), device=dense.device, dtype=torch.long), counts
+    )
     return flat, batch_tensor
 
 
@@ -198,7 +206,6 @@ class DiffusionMoleculeGenerator:
         self.model = MolecularDiffusionModel(config).to(self.device)
         betas = torch.linspace(config.beta_start, config.beta_end, config.noise_steps)
         self.alpha_bar = torch.cumprod(1.0 - betas, dim=0).to(self.device)
-        self._uncond_prob = float(config.uncond_dropout_prob)
 
     def _prepare_condition(self, protein_context, num_molecules: int):
         if protein_context is None:
@@ -206,8 +213,17 @@ class DiffusionMoleculeGenerator:
         ctx = torch.as_tensor(protein_context, device=self.device, dtype=torch.float32)
         if ctx.dim() == 2:
             ctx = ctx.unsqueeze(0).expand(num_molecules, -1, -1)
-        elif ctx.dim() == 3 and ctx.size(0) != num_molecules:
-            ctx = ctx.expand(num_molecules, -1, -1)
+        elif ctx.dim() == 3:
+            if ctx.size(0) == num_molecules:
+                pass
+            elif ctx.size(0) == 1:
+                ctx = ctx.expand(num_molecules, -1, -1)
+            else:
+                raise ValueError(
+                    f"protein_context batch size must be 1 or match num_molecules ({num_molecules}), got {ctx.size(0)}"
+                )
+        else:
+            raise ValueError(f"protein_context must have 2 or 3 dimensions, got {ctx.dim()}")
         protein_mask = torch.zeros(ctx.shape[:2], dtype=torch.bool, device=self.device)
         return ctx, protein_mask
 
@@ -239,21 +255,14 @@ class DiffusionMoleculeGenerator:
                 protein_mask=cond_mask,
             )
             if cond_ctx is not None:
-                with torch.no_grad():
-                    if torch.rand(1, device=self.device).item() < self._uncond_prob:
-                        eff_cond_ctx = None
-                        eff_cond_mask = None
-                    else:
-                        eff_cond_ctx = cond_ctx
-                        eff_cond_mask = cond_mask
                 uncond_pos, uncond_atom = self.model(
                     atom_types,
                     pos,
                     edge_index,
                     t,
                     batch,
-                    protein_context=eff_cond_ctx,
-                    protein_mask=eff_cond_mask,
+                    protein_context=None,
+                    protein_mask=None,
                 )
                 eps_pos = uncond_pos + g_scale * (cond_pos - uncond_pos)
                 eps_atom = uncond_atom + g_scale * (cond_atom - uncond_atom)

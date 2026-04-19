@@ -40,17 +40,36 @@ class PropertyPredictor:
             predictions = self.model(features)
             return predictions.cpu().numpy()
 
+    def _enable_mc_dropout(self) -> list[tuple[torch.nn.Module, bool]]:
+        """Enable dropout layers while keeping other modules (e.g., BatchNorm) in eval mode."""
+        dropout_types = (
+            torch.nn.Dropout,
+            torch.nn.Dropout1d,
+            torch.nn.Dropout2d,
+            torch.nn.Dropout3d,
+            torch.nn.AlphaDropout,
+            torch.nn.FeatureAlphaDropout,
+        )
+        dropout_states = []
+        for module in self.model.modules():
+            if isinstance(module, dropout_types):
+                dropout_states.append((module, module.training))
+                module.train()
+        return dropout_states
+
     def predict_with_uncertainty(self, features: torch.Tensor, samples: int = 8) -> tuple[np.ndarray, np.ndarray]:
         """Predict with MC dropout-based uncertainty."""
         preds = []
+        features = features.to(self.device)
         was_training = self.model.training
-        self.model.train()
+        self.model.eval()
+        dropout_states = self._enable_mc_dropout()
         with torch.no_grad():
             for _ in range(max(1, samples)):
-                preds.append(self.model(features.to(self.device)).cpu())
-        self.model.eval()
-        if was_training:
-            self.model.train()
+                preds.append(self.model(features).cpu())
+        for module, module_was_training in dropout_states:
+            module.train(module_was_training)
+        self.model.train(was_training)
         stacked = torch.stack(preds, dim=0)
         mean = stacked.mean(dim=0)
         std = stacked.std(dim=0)
@@ -301,15 +320,31 @@ class ModelEvaluator:
 
     @staticmethod
     def enrichment_factor(y_true: np.ndarray, y_score: np.ndarray, top_fraction: float = 0.05) -> float:
-        """Compute enrichment factor at given top fraction."""
-        if len(y_true) == 0:
+        """Compute enrichment factor at given top fraction.
+
+        The enrichment factor is the hit rate among the top-ranked subset
+        divided by the baseline hit rate.
+        """
+        y_true_flat = np.asarray(y_true).reshape(-1)
+        y_score_flat = np.asarray(y_score).reshape(-1)
+
+        if y_true_flat.size == 0 or y_score_flat.size == 0:
             return 0.0
-        n_top = max(1, int(len(y_true) * top_fraction))
-        order = np.argsort(-y_score.reshape(-1))
+        if y_true_flat.size != y_score_flat.size:
+            raise ValueError("y_true and y_score must have the same number of elements")
+
+        n_samples = y_true_flat.size
+        n_top = min(n_samples, max(1, int(n_samples * top_fraction)))
+
+        positives = y_true_flat > 0
+        baseline = float(np.mean(positives))
+        if baseline == 0.0:
+            return 0.0
+
+        order = np.argsort(-y_score_flat, kind="mergesort")
         top_idx = order[:n_top]
-        hits_top = float(np.sum(y_true.reshape(-1)[top_idx] > 0))
+        hits_top = float(np.sum(positives[top_idx]))
         hit_rate = hits_top / n_top
-        baseline = float(np.mean(y_true.reshape(-1) > 0)) if np.mean(y_true) != 0 else 1e-8
         return float(hit_rate / baseline)
 
     def expected_calibration_error_regression(

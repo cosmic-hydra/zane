@@ -37,8 +37,9 @@ def _fingerprint(smiles: str, n_bits: int = 512) -> np.ndarray:
 
 
 def expected_hypervolume_improvement(values: np.ndarray, reference_point: Sequence[float]) -> np.ndarray:
+    """Compute EHVI assuming objectives are maximized (greater is better)."""
     ref = np.asarray(reference_point, dtype=np.float32)
-    improvements = np.maximum(ref - values, 0.0)
+    improvements = np.maximum(values - ref, 0.0)
     return np.prod(improvements, axis=1)
 
 
@@ -85,14 +86,12 @@ class CandidateSelector:
             metric_values.append([base_metric, float(cand.get("qed_score", 0.0))])
             unc = float(cand.get("uncertainty", 0.0))
             div = diversity[idx]
-            scores.append(
-                self.config.ehvi_weight * base_metric + self.config.uncertainty_weight * unc + self.config.diversity_weight * div
-            )
+            scores.append(self.config.uncertainty_weight * unc + self.config.diversity_weight * div)
         metric_arr = np.asarray(metric_values, dtype=np.float32)
         ehvi = expected_hypervolume_improvement(metric_arr, reference_point=self.config.reference_point)
         ranked = []
         for idx, score in enumerate(scores):
-            combined = float(score + 0.1 * ehvi[idx])
+            combined = float(score + self.config.ehvi_weight * ehvi[idx])
             ranked.append((combined, candidates[idx]))
             candidates[idx]["diversity"] = diversity[idx]
             candidates[idx]["ehvi"] = float(ehvi[idx])
@@ -102,4 +101,7 @@ class CandidateSelector:
         merged = {id(c): c for c in top}
         for cand in high_unc:
             merged[id(cand)] = cand
-        return list(merged.values())
+        merged_list = list(merged.values())
+        if len(merged_list) > self.config.top_k:
+            merged_list = merged_list[: self.config.top_k]
+        return merged_list

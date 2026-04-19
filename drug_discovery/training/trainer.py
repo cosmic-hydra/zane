@@ -3,6 +3,7 @@ Self-Learning Training Pipeline
 Automatically trains models with continuous learning capabilities
 """
 
+import logging
 import os
 from collections.abc import Callable
 from datetime import datetime
@@ -14,6 +15,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+logger = logging.getLogger(__name__)
 
 
 class SelfLearningTrainer:
@@ -69,7 +72,7 @@ class SelfLearningTrainer:
             "learning_rate": [],
             "best_val_loss": float("inf"),
             "epochs_without_improvement": 0,
-            "calibration_ece": [],
+            "calibration_mae": [],
         }
         self._target_mean: torch.Tensor | None = None
         self._target_std: torch.Tensor | None = None
@@ -81,7 +84,7 @@ class SelfLearningTrainer:
             if self._target_mean is None or self._target_std is None:
                 self._target_mean = targets.mean()
                 std = targets.std()
-                self._target_std = std if std > 1e-6 else torch.tensor(1.0, device=targets.device)
+                self._target_std = std.clamp_min(1e-6)
         norm_preds = (predictions - self._target_mean) / self._target_std
         norm_targets = (targets - self._target_mean) / self._target_std
         return norm_preds, norm_targets
@@ -137,8 +140,8 @@ class SelfLearningTrainer:
                             energy_penalty = self.energy_function(batch)
                             if energy_penalty is not None:
                                 loss = loss + float(self.energy_regularization_weight) * energy_penalty
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.warning("Energy regularization skipped due to error: %s", exc)
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
                     self.optimizer.step()
@@ -261,9 +264,9 @@ class SelfLearningTrainer:
                         cal_true.append(targets_val[mask].detach().cpu())
                 if cal_pred and cal_true:
                     gap = torch.mean(torch.abs(torch.cat(cal_pred) - torch.cat(cal_true))).item()
-                    self.history["calibration_ece"].append(float(gap))
+                    self.history["calibration_mae"].append(float(gap))
                 else:
-                    self.history["calibration_ece"].append(0.0)
+                    self.history["calibration_mae"].append(0.0)
 
             # Learning rate
             current_lr = self.optimizer.param_groups[0]["lr"]
