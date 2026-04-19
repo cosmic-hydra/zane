@@ -43,53 +43,29 @@ The repository is intended for scientific teams that need a repeatable, extensib
 
 ## 1. Platform Scope
 
-ZANE is designed to support the full loop of computational triage:
-
-1. Gather molecules from multiple sources.
-2. Convert molecules to model-ready representations.
-3. Train and evaluate predictive models.
-4. Estimate ADMET and related quality signals.
-5. Incorporate simulation evidence where available.
-6. Rank and export candidates for expert review.
+ZANE is designed to support the full loop of computational triage, beginning with molecule acquisition from public and proprietary sources, normalizing each structure into model-ready graph and sequence representations, and running training plus evaluation cycles on predictive models. Downstream stages estimate ADMET and related developability signals, fold in simulation evidence such as docking proxies or MD stability when available, and finish by ranking and exporting candidates for expert review with the same provenance and scoring context preserved end to end.
 
 ## 2. Key Capabilities
 
 ### Data Intelligence
 
-- Multi-source collection pipelines (PubChem, ChEMBL, approved drugs)
-- Deduplicated dataset merging and caching
-- Structured molecular featurization workflows
+Multi-source collection pipelines span PubChem, ChEMBL, and approved-drug corpora, merging and deduplicating datasets before caching structured featurizations. Standardized workflows convert molecules into graph tensors and sequence/fingerprint views so downstream learners receive consistent, high-quality inputs.
 
 ### Modeling
 
-- Graph Neural Networks for structure-aware learning
-- Transformer pipelines for sequence/fingerprint modeling
-- Ensemble mode for robust aggregate scoring
-- Training with detailed epoch-level progress (100/100 epochs, 100% completion tracking)
+Structure-aware Graph Neural Networks, transformer pipelines for sequence and fingerprint modeling, and ensemble configurations run side by side, with training telemetry exposing detailed epoch-level progress (including 100/100 completion tracking) to verify convergence and model health.
 
 ### Evaluation and Ranking
 
-- Property prediction support
-- ADMET and quality indicators (including QED and SA)
-- Simulation-only drug composition analysis for beta testing
-- Custom compound generation from user-defined characteristics (consumability, performance, usage profiles)
-- Candidate-level result aggregation for triage
+Property prediction combines ADMET indicators such as QED and SA with simulation-only composition analysis, allowing beta-mode assessment of probable active, stabilizer, and carrier contributions. Custom compound generation accepts user-defined characteristics related to consumability, performance, and usage profiles, then aggregates candidate-level results into triage-ready rankings.
 
 ### Operations
 
-- Unified CLI command surface with aliases (`start`, `go`)
-- Professional Rich terminal dashboard with ZANE ASCII branding
-- Simple-by-default dashboard with command-driven detail panels (`--detail-panels`)
-- Simulation-only custom hydrocarbon/carbon compound generation (`--custom-characteristics`)
-- Interactive guided setup mode (`--guided`)
-- Artifact-friendly execution model
+A unified CLI surface (aliases like `start` and `go`) feeds a Rich-powered dashboard that renders ZANE ASCII branding and keeps the default view uncluttered while enabling command-driven detail panels (`--detail-panels`). Simulation-only hydrocarbon and carbon compound design (`--custom-characteristics`), guided setup (`--guided`), and artifact-friendly execution ensure reproducible runs with controllable output surfaces.
 
 ### AI Assistance
 
-- Meta Llama-backed assistant for strategy and interpretation support
-- Context-injected prompting for research workflows
-- Query-driven ranking and filtering
-- Web/PDF evidence collection and Cerebras API integration
+A Meta Llama-backed assistant supports strategy and interpretation, injecting context into research prompts, handling query-driven ranking and filtering, and collecting web/PDF evidence through Cerebras API integration to keep decision support inside the same workflow.
 
 ## 3. 2026 Upgrade Highlights
 
@@ -226,11 +202,7 @@ python -m drug_discovery.cli synthesis-research "CCO" --max-results 3
 
 ### 3.7 Physics-Aware Generation Stack
 
-- New `physics-gen` CLI pipeline that assembles BRICS/RECAP fragments, refines with conformer-ensemble diffusion, and ranks candidates with multi-objective guidance (binding, ADMET, synthesizability, novelty, MD stability).
-- Energy landscape exploration with Boltzmann-weighted conformer scoring, steric-fit estimation, and pharmacophore-aware constraint checks.
-- Risk-aware routing (toxicity, reactivity, synthetic difficulty) plus retrosynthesis-informed reaction likelihood to bias toward low-risk, feasible candidates.
-- Quantum/lightweight descriptors (HOMO–LUMO proxy, partial charges), scaffold hopping, chemical-space diversity/novelty metrics, and temperature-controlled exploration knobs.
-- Loop-ready outputs for generate → dock/simulate → score → retrain experiments.
+The `physics-gen` CLI assembles BRICS/RECAP fragments, refines candidates with conformer-ensemble diffusion, and ranks them via multi-objective guidance that blends binding affinity proxies, ADMET surrogates, synthesizability, novelty, and MD stability. It explores energy landscapes using Boltzmann-weighted conformer scoring, steric-fit estimation, and pharmacophore-aware constraint checks, while risk-aware routing factors toxicity, reactivity, and synthetic difficulty alongside retrosynthesis-informed reaction likelihood to steer toward feasible, lower-risk molecules. Quantum and lightweight descriptors (HOMO–LUMO proxies, partial charges), scaffold hopping, chemical-space diversity metrics, and temperature-controlled exploration knobs are available, and outputs are structured for generate → dock/simulate → score → retrain loops.
 
 Example:
 
