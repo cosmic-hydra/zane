@@ -191,13 +191,21 @@ python -m drug_discovery.cli strategy-plan \\
   - ADME/simulation paths now use canonicalized SMILES and GT4SD property predictors when available.
   - Fully preserves fallback behavior when optional dependencies are unavailable.
 
-### 3.4 CLI and UX Upgrades
+### 3.4 Autonomous Discovery Stack (neural + symbolic)
+
+- Learnable docking engine (`drug_discovery.advanced.LearnableDockingEngine`) replaces external Vina calls with RMSD + interaction-energy supervision on PDBBind-style inputs.
+- Differentiable binding pipeline stitches diffusion → pose → QM-corrected energy → affinity with gradient flow for inverse design.
+- Memory-augmented search, adaptive compute routing, and failure-aware sampling keep generation diverse while focusing compute where uncertainty is high.
+- Reaction-conditioned generator and hybrid symbolic+neural validator bias outputs toward synthesizable pathways and hard safety constraints.
+- Workflow benchmark harness simulates generate → filter → synthesize → test drop-off so end-to-end optimization is tracked, not just per-module scores.
+
+### 3.5 CLI and UX Upgrades
 
 - Added `integrations` command for operational visibility.
 - Extended generation backend defaults to include `molecular-design`.
 - Improved CLI import behavior so non-dashboard commands do not require dashboard-only dependencies.
 
-### 3.5 Packaging and Dependency Upgrades
+### 3.6 Packaging and Dependency Upgrades
 
 - Added `integrations` extra in `setup.py` for optional ecosystem packages.
 
@@ -207,7 +215,7 @@ Example:
 pip install -e .[integrations]
 ```
 
-### 3.6 Suggested Validation Workflow
+### 3.7 Suggested Validation Workflow
 
 Run these commands after setup to validate upgraded features:
 

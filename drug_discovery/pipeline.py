@@ -65,6 +65,7 @@ class DrugDiscoveryPipeline:
         self.model = None
         self.trainer = None
         self.property_predictor = None
+        self.learnable_docking = None
 
         print("Drug Discovery Pipeline initialized")
         print(f"Model type: {model_type}")
@@ -560,6 +561,34 @@ class DrugDiscoveryPipeline:
         adapter = DiffDockAdapter(num_poses=num_poses)
         result = adapter.dock(ligand_smiles, protein_pdb_path)
         return result.as_dict()
+
+    def enable_learnable_docking(self, hidden: int = 128):
+        """Instantiate the learnable docking engine to replace classical Vina calls."""
+        from drug_discovery.advanced import LearnableDockingEngine, NeuralDockingModel
+
+        self.learnable_docking = LearnableDockingEngine(NeuralDockingModel(hidden=hidden), device=self.device)
+        return self.learnable_docking
+
+    def dock_learnable(
+        self,
+        ligand_coords: Any,
+        pocket_coords: Any,
+        ligand_mask: Any | None = None,
+    ) -> dict[str, Any]:
+        """Dock using the neural module with RMSD and energy consistency losses."""
+        import torch
+
+        if self.learnable_docking is None:
+            self.enable_learnable_docking()
+
+        ligand_tensor = torch.as_tensor(ligand_coords, dtype=torch.float32, device=self.learnable_docking.device)
+        pocket_tensor = torch.as_tensor(pocket_coords, dtype=torch.float32, device=self.learnable_docking.device)
+        mask_tensor = (
+            torch.as_tensor(ligand_mask, dtype=torch.float32, device=self.learnable_docking.device)
+            if ligand_mask is not None
+            else None
+        )
+        return self.learnable_docking.predict_pose(ligand_tensor, pocket_tensor, mask_tensor)
 
     def predict_protein_structure(self, sequence: str) -> dict[str, Any]:
         """Predict a protein's 3D structure using OpenFold.
