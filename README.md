@@ -10,6 +10,8 @@
 
 A production-minded, research-first platform for molecular intelligence workflows, from data acquisition and model training to simulation-aware candidate prioritization and AI-assisted decision support.
 
+> **License Notice:** This repository is not open-source. Viewing is limited to educational purposes; any other use requires prior written permission from Advaith Vaithianathan (advaithv.av7@gmail.com).
+
 **ZANE Features:**
 - **Professional Terminal Interface**: SOTA AI-driver KB721H66 branded dashboard with 7-line ASCII header
 - **Simple-by-Default Design**: Clean default view with click-through access to detailed analysis panels
