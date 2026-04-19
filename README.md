@@ -227,6 +227,25 @@ python -m drug_discovery.cli benchmark --suite moses
 python -m drug_discovery.cli synthesis-research "CCO" --max-results 3
 ```
 
+### 3.7 Physics-Aware Generation Stack
+
+- New `physics-gen` CLI pipeline that assembles BRICS/RECAP fragments, refines with conformer-ensemble diffusion, and ranks candidates with multi-objective guidance (binding, ADMET, synthesizability, novelty, MD stability).
+- Energy landscape exploration with Boltzmann-weighted conformer scoring, steric-fit estimation, and pharmacophore-aware constraint checks.
+- Risk-aware routing (toxicity, reactivity, synthetic difficulty) plus retrosynthesis-informed reaction likelihood to bias toward low-risk, feasible candidates.
+- Quantum/lightweight descriptors (HOMO–LUMO proxy, partial charges), scaffold hopping, chemical-space diversity/novelty metrics, and temperature-controlled exploration knobs.
+- Loop-ready outputs for generate → dock/simulate → score → retrain experiments.
+
+Example:
+
+```bash
+python -m drug_discovery.cli physics-gen \
+  --seed-smiles "c1ccccc1" "CC(=O)O" \
+  --num 6 \
+  --target-protein "EGFR" \
+  --pharmacophore '{"min_hba":2,"max_rings":3}' \
+  --known-smiles "CCO" "CCN"
+```
+
 ## 4. Architecture
 
 ZANE follows a layered architecture for maintainability and extension safety:

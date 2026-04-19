@@ -227,6 +227,52 @@ def main():
         help="Priority-ordered list of backends to try.",
     )
 
+    physics_generate_parser = subparsers.add_parser(
+        "physics-gen",
+        help="Physics-aware fragment assembly + conformer diffusion + risk-aware scoring",
+    )
+    physics_generate_parser.add_argument(
+        "--seed-smiles",
+        nargs="+",
+        default=None,
+        help="Seed SMILES for BRICS/RECAP fragment extraction.",
+    )
+    physics_generate_parser.add_argument("--num", type=int, default=8, help="Number of candidates to return.")
+    physics_generate_parser.add_argument(
+        "--target-protein",
+        default=None,
+        help="Target protein identifier or context (improves steric fit scoring).",
+    )
+    physics_generate_parser.add_argument(
+        "--pharmacophore",
+        default=None,
+        help='JSON object with constraints, e.g. \'{"min_hba":2,"max_rings":3}\'.',
+    )
+    physics_generate_parser.add_argument(
+        "--known-smiles",
+        nargs="+",
+        default=None,
+        help="Known actives to compute novelty/diversity against.",
+    )
+    physics_generate_parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.7,
+        help="Exploration temperature controlling fragment sampling diversity (0.2-1.5).",
+    )
+    physics_generate_parser.add_argument(
+        "--conformers", type=int, default=8, help="Max conformers per molecule for ensemble diffusion."
+    )
+    physics_generate_parser.add_argument(
+        "--max-candidates", type=int, default=20, help="Max intermediate assemblies before scoring."
+    )
+    physics_generate_parser.add_argument(
+        "--sim-temperature-k",
+        type=float,
+        default=300.0,
+        help="Target simulation temperature (K) for MD-aware scoring.",
+    )
+
     benchmark_parser = subparsers.add_parser("benchmark", help="Run benchmarking suites (MOSES, GuacaMol)")
     benchmark_parser.add_argument(
         "--suite",
@@ -296,6 +342,8 @@ def main():
         run_boltzgen(args)
     elif args.command == "generate":
         run_generation(args)
+    elif args.command == "physics-gen":
+        run_physics_generation(args)
     elif args.command == "benchmark":
         run_benchmark(args)
     elif args.command == "integrations":
@@ -609,6 +657,34 @@ def run_generation(args):
     selected = [backend_map[b] for b in args.backends if b in backend_map]
     manager = GenerationManager(backends=selected or None)
     result = manager.generate(prompt=args.prompt, num=args.num)
+    print(json.dumps(result, indent=2))
+    if not result.get("success"):
+        sys.exit(1)
+
+
+def run_physics_generation(args):
+    """Physics-aware fragment-based generation with conformer diffusion."""
+    from drug_discovery.generation.physics_aware import PhysicsAwareGenerator
+
+    constraints = None
+    if args.pharmacophore:
+        try:
+            constraints = json.loads(args.pharmacophore)
+        except Exception:
+            constraints = None
+    generator = PhysicsAwareGenerator(
+        exploration_temperature=args.temperature,
+        max_conformers=args.conformers,
+        max_candidates=args.max_candidates,
+        target_temperature_k=args.sim_temperature_k,
+    )
+    result = generator.generate(
+        seed_smiles=args.seed_smiles,
+        num_molecules=args.num,
+        target_protein=args.target_protein,
+        pharmacophore_constraints=constraints,
+        known_smiles=args.known_smiles,
+    )
     print(json.dumps(result, indent=2))
     if not result.get("success"):
         sys.exit(1)

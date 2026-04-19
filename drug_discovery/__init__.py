@@ -27,6 +27,7 @@ __all__ = [
     "GuacamolBenchmarkBackend",
     "EliteStackPipeline",
     "ProgramStrategyEngine",
+    "PhysicsAwareGenerator",
 ]
 
 
@@ -68,6 +69,10 @@ def __getattr__(name: str) -> Any:
             "MolformerBackend": MolformerBackend,
             "MolecularDesignBackend": MolecularDesignBackend,
         }[name]
+    if name == "PhysicsAwareGenerator":
+        from .generation.physics_aware import PhysicsAwareGenerator
+
+        return PhysicsAwareGenerator
     if name in {"BenchmarkRunner", "MosesBenchmarkBackend", "GuacamolBenchmarkBackend"}:
         from .benchmarking.backends import BenchmarkRunner, GuacamolBenchmarkBackend, MosesBenchmarkBackend
 
