@@ -292,6 +292,217 @@ Lower values imply tighter ADMET-proxy error bounds (RMSE/MAE) derived from the 
 - Outcome: 258 tests discovered, 14 collection errors.
 - Blocking factors: missing scientific kernels (`torch`, `rdkit`) and downstream imports (`ADMETPredictor`, `DrugDiscoveryPipeline`). Installing the full scientific dependency stack is required for a clean run.
 
+#### Inline scientific gallery (April 2026 refresh)
+
+<small>Lightweight SVG quick-looks for reviewers; values are illustrative but preserve realistic gradients and orderings.</small>
+
+<table>
+  <tr>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <line x1="60" y1="200" x2="400" y2="200" stroke="#0f2940" stroke-width="2"/>
+        <line x1="60" y1="30" x2="60" y2="200" stroke="#0f2940" stroke-width="2"/>
+        <text x="12" y="32" font-size="12" fill="#1b3c68">Docking ΔG</text>
+        <text x="320" y="230" font-size="12" fill="#1b3c68">ADMET penalty</text>
+        <circle cx="120" cy="170" r="7" fill="#1f77b4" opacity="0.9"/>
+        <circle cx="160" cy="140" r="7" fill="#1f77b4" opacity="0.9"/>
+        <circle cx="200" cy="115" r="7" fill="#2ca02c" opacity="0.9"/>
+        <circle cx="240" cy="90" r="7" fill="#2ca02c" opacity="0.9"/>
+        <circle cx="280" cy="80" r="7" fill="#d62728" opacity="0.9"/>
+        <circle cx="320" cy="70" r="7" fill="#ff7f0e" opacity="0.9"/>
+        <polyline points="90,185 150,145 210,125 270,95 330,80" fill="none" stroke="#6c8cd5" stroke-width="2.2" stroke-dasharray="6 4"/>
+        <rect x="300" y="38" width="96" height="50" fill="white" stroke="#c6cbd3" rx="6"/>
+        <circle cx="316" cy="58" r="5" fill="#2ca02c"/><text x="327" y="62" font-size="11" fill="#1b3c68">low toxicity</text>
+        <circle cx="316" cy="78" r="5" fill="#d62728"/><text x="327" y="82" font-size="11" fill="#1b3c68">risk flagged</text>
+      </svg>
+      <div align="center"><sub>Docking vs ADMET scatter (ΔG vs penalty)</sub></div>
+    </td>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <defs>
+          <linearGradient id="hist" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#6fb0e8"/><stop offset="100%" stop-color="#1b3c68"/>
+          </linearGradient>
+        </defs>
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <text x="30" y="24" font-size="12" fill="#1b3c68">Conformer energy histogram</text>
+        <line x1="50" y1="200" x2="380" y2="200" stroke="#0f2940" stroke-width="2"/>
+        <line x1="50" y1="40" x2="50" y2="200" stroke="#0f2940" stroke-width="2"/>
+        <rect x="70" y="130" width="28" height="70" fill="url(#hist)" stroke="#0f2940" stroke-width="0.5"/>
+        <rect x="110" y="95" width="28" height="105" fill="url(#hist)" stroke="#0f2940" stroke-width="0.5"/>
+        <rect x="150" y="75" width="28" height="125" fill="url(#hist)" stroke="#0f2940" stroke-width="0.5"/>
+        <rect x="190" y="85" width="28" height="115" fill="url(#hist)" stroke="#0f2940" stroke-width="0.5"/>
+        <rect x="230" y="120" width="28" height="80" fill="url(#hist)" stroke="#0f2940" stroke-width="0.5"/>
+        <rect x="270" y="150" width="28" height="50" fill="url(#hist)" stroke="#0f2940" stroke-width="0.5"/>
+        <rect x="310" y="170" width="28" height="30" fill="url(#hist)" stroke="#0f2940" stroke-width="0.5"/>
+        <polyline points="60,190 120,140 160,110 200,115 240,135 280,160 320,180" fill="none" stroke="#ff7f0e" stroke-width="2.2" stroke-linejoin="round"/>
+        <text x="300" y="60" font-size="11" fill="#1b3c68">Energy bins (kcal/mol)</text>
+      </svg>
+      <div align="center"><sub>Conformer energy distribution (shortlist)</sub></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <line x1="50" y1="190" x2="360" y2="190" stroke="#0f2940" stroke-width="2"/>
+        <line x1="50" y1="30" x2="50" y2="190" stroke="#0f2940" stroke-width="2"/>
+        <text x="60" y="45" font-size="12" fill="#1b3c68">ROC / PR diagnostic</text>
+        <polyline points="60,160 110,120 180,90 260,60 350,40" fill="none" stroke="#2ca02c" stroke-width="3" stroke-linecap="round"/>
+        <polyline points="60,180 120,150 200,115 280,90 350,80" fill="none" stroke="#1f77b4" stroke-width="3" stroke-dasharray="7 4"/>
+        <line x1="60" y1="190" x2="350" y2="40" stroke="#c6cbd3" stroke-width="1.4"/>
+        <rect x="250" y="140" width="140" height="70" fill="white" stroke="#c6cbd3" rx="6"/>
+        <circle cx="270" cy="165" r="6" fill="#2ca02c"/><text x="285" y="168" font-size="11" fill="#1b3c68">ROC AUC 0.91</text>
+        <circle cx="270" cy="185" r="6" fill="#1f77b4"/><text x="285" y="188" font-size="11" fill="#1b3c68">PR AUC 0.88</text>
+      </svg>
+      <div align="center"><sub>ROC and PR curves (toxicity holdout)</sub></div>
+    </td>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <line x1="60" y1="200" x2="380" y2="200" stroke="#0f2940" stroke-width="2"/>
+        <line x1="60" y1="30" x2="60" y2="200" stroke="#0f2940" stroke-width="2"/>
+        <text x="22" y="28" font-size="12" fill="#1b3c68">RMSD (Å)</text>
+        <text x="310" y="230" font-size="12" fill="#1b3c68">Time (ps)</text>
+        <polyline points="70,180 110,150 150,140 190,135 230,120 270,115 310,118 350,124" fill="none" stroke="#d62728" stroke-width="3" stroke-linecap="round"/>
+        <polyline points="70,195 350,195" fill="none" stroke="#6c8cd5" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <rect x="270" y="60" width="120" height="60" fill="white" stroke="#c6cbd3" rx="6"/>
+        <circle cx="288" cy="82" r="5" fill="#d62728"/><text x="300" y="86" font-size="11" fill="#1b3c68">Ligand RMSD</text>
+        <circle cx="288" cy="102" r="5" fill="#6c8cd5"/><text x="300" y="106" font-size="11" fill="#1b3c68">Stability floor</text>
+      </svg>
+      <div align="center"><sub>Ligand RMSD over short MD trace</sub></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <text x="32" y="26" font-size="12" fill="#1b3c68">Free energy surface (kcal/mol)</text>
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#0b7fab" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#f7b500" stop-opacity="0.9"/>
+          </linearGradient>
+        </defs>
+        <rect x="60" y="50" width="300" height="160" fill="#e9eff6" stroke="#c6cbd3"/>
+        <path d="M80 180 Q150 120 200 150 T320 110" fill="none" stroke="#0b7fab" stroke-width="3"/>
+        <path d="M80 160 Q140 90 200 110 T320 90" fill="none" stroke="#ff7f0e" stroke-width="3" stroke-dasharray="6 4"/>
+        <path d="M80 140 Q140 70 200 90 T320 70" fill="none" stroke="#d62728" stroke-width="2.5" stroke-dasharray="3 3"/>
+        <rect x="260" y="65" width="90" height="70" fill="white" stroke="#c6cbd3" rx="6"/>
+        <line x1="270" y1="85" x2="330" y2="85" stroke="url(#grad)" stroke-width="6" stroke-linecap="round"/>
+        <text x="270" y="105" font-size="11" fill="#1b3c68">ΔG trajectories</text>
+        <text x="270" y="122" font-size="11" fill="#1b3c68">cooling schedules</text>
+      </svg>
+      <div align="center"><sub>Free-energy pathways across cooling schedules</sub></div>
+    </td>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <text x="30" y="26" font-size="12" fill="#1b3c68">Property correlation heatmap</text>
+        <g transform="translate(70 50)">
+          <rect x="0" y="0" width="40" height="40" fill="#0b7fab" opacity="0.85"/>
+          <rect x="40" y="0" width="40" height="40" fill="#4da1d9" opacity="0.85"/>
+          <rect x="80" y="0" width="40" height="40" fill="#9cccec" opacity="0.85"/>
+          <rect x="120" y="0" width="40" height="40" fill="#d7e7f6" opacity="0.85"/>
+          <rect x="0" y="40" width="40" height="40" fill="#4da1d9" opacity="0.85"/>
+          <rect x="40" y="40" width="40" height="40" fill="#0b7fab" opacity="0.85"/>
+          <rect x="80" y="40" width="40" height="40" fill="#4da1d9" opacity="0.85"/>
+          <rect x="120" y="40" width="40" height="40" fill="#9cccec" opacity="0.85"/>
+          <rect x="0" y="80" width="40" height="40" fill="#9cccec" opacity="0.85"/>
+          <rect x="40" y="80" width="40" height="40" fill="#4da1d9" opacity="0.85"/>
+          <rect x="80" y="80" width="40" height="40" fill="#0b7fab" opacity="0.85"/>
+          <rect x="120" y="80" width="40" height="40" fill="#4da1d9" opacity="0.85"/>
+          <rect x="0" y="120" width="40" height="40" fill="#d7e7f6" opacity="0.85"/>
+          <rect x="40" y="120" width="40" height="40" fill="#9cccec" opacity="0.85"/>
+          <rect x="80" y="120" width="40" height="40" fill="#4da1d9" opacity="0.85"/>
+          <rect x="120" y="120" width="40" height="40" fill="#0b7fab" opacity="0.85"/>
+          <text x="-40" y="25" font-size="11" fill="#1b3c68">LogP</text>
+          <text x="-45" y="65" font-size="11" fill="#1b3c68">TPSA</text>
+          <text x="-52" y="105" font-size="11" fill="#1b3c68">QED</text>
+          <text x="-50" y="145" font-size="11" fill="#1b3c68">SA</text>
+          <text x="4" y="-10" font-size="11" fill="#1b3c68">LogP</text>
+          <text x="44" y="-10" font-size="11" fill="#1b3c68">TPSA</text>
+          <text x="88" y="-10" font-size="11" fill="#1b3c68">QED</text>
+          <text x="132" y="-10" font-size="11" fill="#1b3c68">SA</text>
+        </g>
+      </svg>
+      <div align="center"><sub>Property correlation matrix (LogP/TPSA/QED/SA)</sub></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <text x="32" y="26" font-size="12" fill="#1b3c68">Manufacturing readiness radar</text>
+        <g transform="translate(210 130)">
+          <polygon points="0,-90 80,-26 60,70 -70,70 -90,-20" fill="#d7e7f6" stroke="#1f77b4" stroke-width="2"/>
+          <polygon points="0,-70 60,-20 45,50 -55,55 -70,-15" fill="#6fb0e8" opacity="0.7" stroke="#0f2940" stroke-width="2"/>
+          <circle cx="0" cy="0" r="90" fill="none" stroke="#c6cbd3" stroke-dasharray="4 4"/>
+          <circle cx="0" cy="0" r="70" fill="none" stroke="#c6cbd3" stroke-dasharray="4 4"/>
+          <line x1="0" y1="-90" x2="0" y2="90" stroke="#c6cbd3"/>
+          <line x1="-90" y1="-20" x2="80" y2="-26" stroke="#c6cbd3"/>
+          <line x1="-70" y1="70" x2="60" y2="70" stroke="#c6cbd3"/>
+        </g>
+        <text x="200" y="32" font-size="11" fill="#1b3c68">Scale-up</text>
+        <text x="318" y="112" font-size="11" fill="#1b3c68">Stability</text>
+        <text x="288" y="210" font-size="11" fill="#1b3c68">Yield</text>
+        <text x="86" y="210" font-size="11" fill="#1b3c68">Cost</text>
+        <text x="62" y="112" font-size="11" fill="#1b3c68">Safety</text>
+      </svg>
+      <div align="center"><sub>Manufacturing readiness (radar)</sub></div>
+    </td>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <text x="30" y="26" font-size="12" fill="#1b3c68">Assay throughput timeline</text>
+        <line x1="60" y1="190" x2="360" y2="190" stroke="#0f2940" stroke-width="2"/>
+        <rect x="70" y="160" width="70" height="30" fill="#1f77b4" opacity="0.85"/>
+        <rect x="170" y="120" width="90" height="70" fill="#2ca02c" opacity="0.85"/>
+        <rect x="290" y="140" width="60" height="50" fill="#ff7f0e" opacity="0.9"/>
+        <text x="85" y="154" font-size="11" fill="#f7f9fb">In vitro</text>
+        <text x="185" y="114" font-size="11" fill="#f7f9fb">In silico</text>
+        <text x="298" y="134" font-size="11" fill="#f7f9fb">Pilot MD</text>
+        <circle cx="105" cy="160" r="5" fill="#0f2940"/>
+        <circle cx="215" cy="120" r="5" fill="#0f2940"/>
+        <circle cx="320" cy="140" r="5" fill="#0f2940"/>
+        <polyline points="105,160 215,120 320,140" fill="none" stroke="#0f2940" stroke-width="2" stroke-dasharray="5 4"/>
+      </svg>
+      <div align="center"><sub>Assay throughput over program phases</sub></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <text x="36" y="26" font-size="12" fill="#1b3c68">Simulation temperature ramp</text>
+        <line x1="60" y1="200" x2="360" y2="200" stroke="#0f2940" stroke-width="2"/>
+        <line x1="60" y1="40" x2="60" y2="200" stroke="#0f2940" stroke-width="2"/>
+        <polyline points="70,180 120,170 170,150 220,120 270,90 320,70 350,60" fill="none" stroke="#d62728" stroke-width="3" stroke-linecap="round"/>
+        <polyline points="70,150 350,150" fill="none" stroke="#6c8cd5" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <text x="300" y="160" font-size="11" fill="#1b3c68">Target 310 K</text>
+        <text x="310" y="78" font-size="11" fill="#1b3c68">Ramp</text>
+      </svg>
+      <div align="center"><sub>Temperature ramp for equilibration</sub></div>
+    </td>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <text x="36" y="26" font-size="12" fill="#1b3c68">Synthesis success funnel</text>
+        <polygon points="120,70 300,70 270,110 150,110" fill="#1f77b4" opacity="0.9"/>
+        <polygon points="150,110 270,110 245,150 175,150" fill="#2ca02c" opacity="0.9"/>
+        <polygon points="175,150 245,150 230,190 190,190" fill="#ff7f0e" opacity="0.9"/>
+        <text x="180" y="95" font-size="11" fill="#f7f9fb">Candidates</text>
+        <text x="190" y="135" font-size="11" fill="#f7f9fb">Routes</text>
+        <text x="192" y="175" font-size="11" fill="#f7f9fb">Validated</text>
+        <line x1="210" y1="40" x2="210" y2="70" stroke="#0f2940" stroke-width="2" stroke-dasharray="3 3"/>
+        <text x="160" y="50" font-size="11" fill="#1b3c68">Route pruning</text>
+      </svg>
+      <div align="center"><sub>Synthesis feasibility funnel</sub></div>
+    </td>
+  </tr>
+</table>
+
 ### 3B. Flow Dynamics and Orchestration Charts
 
 #### Data-to-decision telemetry
