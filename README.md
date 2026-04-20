@@ -673,17 +673,19 @@ The following protocol upgrades were applied and validated:
 
 ### Scientific Performance Benchmarking
 
-ZANE is validated using industry-standard MoleculeNet benchmarks (BACE, BBBP, Tox21) using scaffold splitting and multi-seed averaging.
+ZANE is currently undergoing re-benchmarking using the industry-standard MoleculeNet suite (BACE, BBBP, Tox21) to ensure scientific validity.
 
-- **Automated Verification**: Weekly CI runs ensure no regressions in predictive accuracy.
+- **Status**: Re-benchmarking in progress across multi-seed averages.
+- **Verification**: New metrics will be published once confirmed reproducible (Expected BACE R² > 0.70).
+- **Automated Verification**: Weekly CI runs ensure no future regressions in predictive accuracy.
 - **Reporting**: Analytical figures are generated from the curated JSON artifacts under `outputs/reports/`.
 
-Current Performance Metrics (MoleculeNet):
-- **BACE (Regression)**: R² ≈ 0.65 ± 0.04
-- **BBBP (Classification)**: ROC-AUC ≈ 0.88 ± 0.02
-- **Tox21**: ROC-AUC ≈ 0.79 ± 0.01
+Current Target Metrics (MoleculeNet):
+- **BACE (Regression)**: R² Target ≈ 0.70–0.85
+- **BBBP (Classification)**: ROC-AUC Target ≈ 0.88 ± 0.02
+- **Tox21**: ROC-AUC Target ≈ 0.79 ± 0.01
 
-*Note: Historical synthetic benchmarks (64 samples) have been deprecated in favor of rigorous MoleculeNet validation.*
+*Note: Historical synthetic benchmarks have been removed for non-compliance with scientific reporting standards.*
 
 ### Verification Status
 
