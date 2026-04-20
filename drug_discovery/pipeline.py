@@ -52,6 +52,11 @@ class DrugDiscoveryPipeline:
         self.cache_dir = cache_dir
         self.checkpoint_dir = checkpoint_dir
 
+        self.tokenizer = None
+        if model_type == "transformer":
+            from drug_discovery.models.transformer import get_smiles_tokenizer
+            self.tokenizer = get_smiles_tokenizer()
+
         os.makedirs(self.cache_dir, exist_ok=True)
         os.makedirs(self.checkpoint_dir, exist_ok=True)
 
@@ -160,11 +165,19 @@ class DrugDiscoveryPipeline:
         # Determine featurization based on model type
         if self.model_type == "gnn":
             featurization = "graph"
+        elif self.model_type == "transformer":
+            featurization = "smiles"
         else:
             featurization = "fingerprint"
 
         # Create dataset
-        dataset = MolecularDataset(data=data, smiles_col=smiles_col, target_col=target_col, featurization=featurization)
+        dataset = MolecularDataset(
+            data=data,
+            smiles_col=smiles_col,
+            target_col=target_col,
+            featurization=featurization,
+            tokenizer=self.tokenizer
+        )
 
         # Split dataset
         if split_strategy == "scaffold":
@@ -217,8 +230,14 @@ class DrugDiscoveryPipeline:
             print("Built Graph Neural Network model")
 
         elif self.model_type == "transformer":
-            self.model = MolecularTransformer(**model_kwargs)
-            print("Built Transformer model")
+            from drug_discovery.models import SMILESTransformer
+            # SMILESTransformer takes vocab_size, which ChemBERTa provides
+            vocab_size = 128
+            if self.tokenizer:
+                vocab_size = self.tokenizer.vocab_size
+            model_kwargs.setdefault("vocab_size", vocab_size)
+            self.model = SMILESTransformer(**model_kwargs)
+            print(f"Built SMILESTransformer model (vocab_size={vocab_size})")
 
         elif self.model_type == "ensemble":
             # Create ensemble of GNN and Transformer

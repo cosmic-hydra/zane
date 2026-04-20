@@ -6,6 +6,34 @@ import torch
 from torch_geometric.data import Data
 
 from drug_discovery.models import EnsembleModel, MolecularGNN, MolecularTransformer
+from drug_discovery.models.transformer import get_smiles_tokenizer, smiles_tokenize
+
+
+class TestSMILESTokenization:
+    """Test chemistry-aware SMILES tokenization"""
+
+    def test_chlorine_tokenization(self):
+        """Test that chlorine 'Cl' is kept as a single token"""
+        smiles = "ClCCl"
+        tokens = smiles_tokenize(smiles)
+        # Expected: ['Cl', 'C', 'Cl']
+        assert "Cl" in tokens
+        assert "C" in tokens
+        assert len(tokens) == 3
+        assert tokens == ["Cl", "C", "Cl"]
+
+    def test_aspirin_tokenization(self):
+        """Test tokenization of aspirin SMILES"""
+        aspirin = "CC(=O)OC1=CC=CC=C1C(=O)O"
+        tokens = smiles_tokenize(aspirin)
+        # Check for important fragments
+        assert "=" in tokens
+        assert "(" in tokens
+        assert ")" in tokens
+        assert "1" in tokens
+        # Ensure multi-character atoms would be handled (if any were present)
+        # Here we just check coherence
+        assert "".join(tokens) == aspirin
 
 
 class TestMolecularGNN:

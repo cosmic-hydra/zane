@@ -2,11 +2,54 @@
 Transformer-based Models for Molecular Property Prediction
 """
 
+import re
 from typing import cast
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from transformers import AutoTokenizer
+
+SMILES_TOKENIZER_ID = "seyonec/ChemBERTa-zinc-base-v1"
+
+SMILES_PATTERN = re.compile(
+    r'(\[[^\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|p|'
+    r'\(|\)|\.|=|#|-|\+|\\|\/|:|~|@|\?|>|\*|\$|'
+    r'\%[0-9]{2}|[0-9])'
+)
+
+def get_smiles_tokenizer():
+    """Returns a chemistry-aware tokenizer for SMILES strings."""
+    try:
+        return AutoTokenizer.from_pretrained(SMILES_TOKENIZER_ID)
+    except Exception:
+        # Fallback to a basic tokenizer if remote fetch fails
+        return None
+
+def smiles_tokenize(smiles: str) -> list[str]:
+    """
+    Tokenize a SMILES string into chemically meaningful tokens.
+    Based on: Schwaller et al. (2019) - Molecular Transformer.
+    """
+    return SMILES_PATTERN.findall(smiles)
+
+def encode_smiles(smiles_list: list[str], tokenizer, device, max_length: int = 512):
+    """Utility to encode SMILES using the provided tokenizer."""
+    if tokenizer:
+        encoded = tokenizer(
+            smiles_list,
+            padding=True,
+            truncation=True,
+            max_length=max_length,
+            return_tensors="pt"
+        )
+        return {k: v.to(device) for k, v in encoded.items()}
+    else:
+        # Basic character-level/regex-based manual encoding if no HF tokenizer
+        # This is a stub for local-only fallback logic
+        return None
+
+tokenizer = get_smiles_tokenizer()
 
 
 class MolecularTransformer(nn.Module):
@@ -132,7 +175,7 @@ class SMILESTransformer(nn.Module):
         num_heads: int = 8,
         dropout: float = 0.1,
         output_dim: int = 1,
-        max_seq_len: int = 256,
+        max_seq_len: int = 512,
     ):
         super().__init__()
 

@@ -26,11 +26,13 @@ def main():
     # Train command
     train_parser = subparsers.add_parser("train", help="Train a new model")
     train_parser.add_argument("--model", default="gnn", choices=["gnn", "transformer", "ensemble"])
+    train_parser.add_argument("--data", type=str, help="Path to CSV data file (optional)")
     train_parser.add_argument("--epochs", type=int, default=100)
     train_parser.add_argument("--batch-size", type=int, default=32)
     train_parser.add_argument("--seed", type=int, default=42)
     train_parser.add_argument("--split-strategy", default="random", choices=["random", "scaffold"])
     train_parser.add_argument("--num-workers", type=int, default=None, help="DataLoader workers (default: auto)")
+    train_parser.set_defaults(func=train_model)
 
     # Collect data command
     collect_parser = subparsers.add_parser("collect", help="Collect molecular data")
@@ -412,7 +414,12 @@ def train_model(args):
     pipeline = DrugDiscoveryPipeline(model_type=args.model)
 
     # Collect data
-    data = pipeline.collect_data()
+    if args.data:
+        import pandas as pd
+        data = pd.read_csv(args.data)
+        print(f"Loaded {len(data)} molecules from {args.data}")
+    else:
+        data = pipeline.collect_data()
 
     # Prepare datasets
     train_loader, test_loader = pipeline.prepare_datasets(

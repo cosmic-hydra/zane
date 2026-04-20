@@ -45,7 +45,7 @@ TRAINING_CONFIG = {
 
 # Data Collection Configurations
 DATA_CONFIG = {
-    'sources': ['pubchem', 'chembl', 'approved_drugs'],
+    'sources': ['pubchem', 'chembl', 'approved_drugs', 'web_scraping'],
     'limit_per_source': 1000,
     'cache_dir': './data/cache',
     'min_molecular_weight': 100,

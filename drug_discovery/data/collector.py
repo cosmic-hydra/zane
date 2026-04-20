@@ -4,14 +4,40 @@ from __future__ import annotations
 
 import logging
 import time
+import asyncio
 from pathlib import Path
 from typing import Any, Callable, TypeVar, cast
 
 import pandas as pd
 
+try:
+    from playwright.async_api import async_playwright
+    from drug_discovery.web_scraping import BiomedicalScraper, WebDataProcessor
+    _PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    _PLAYWRIGHT_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+def _require_playwright():
+    if not _PLAYWRIGHT_AVAILABLE:
+        raise ImportError(
+            "Web scraping requires playwright. Install with: "
+            "pip install 'zane[scraping]' && playwright install chromium"
+        )
+
+async def fetch_page(url: str) -> str:
+    """Fetch rendered HTML content using Playwright."""
+    _require_playwright()
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        await page.goto(url, wait_until="networkidle")
+        content = await page.content()
+        await browser.close()
+    return content
 
 
 class DataCollector:
@@ -42,6 +68,10 @@ class DataCollector:
 
     @staticmethod
     def _is_valid_smiles(smiles: str) -> bool:
+        if not smiles or not isinstance(smiles, str):
+            return False
+        if "INVALID" in smiles.upper():
+            return False
         try:
             from rdkit import Chem
 
@@ -334,6 +364,17 @@ class DataCollector:
             results["approved_drugs"] = self.collect_approved_drugs()
         if "drugbank" in sources:
             results["drugbank"] = self.collect_from_drugbank(limit=limit_per_source)
+        if "web_scraping" in sources and _PLAYWRIGHT_AVAILABLE:
+            scraper = BiomedicalScraper()
+            processor = WebDataProcessor()
+            keywords = [query] if query else ["anticancer", "antibiotic"]
+            articles = scraper.scrape_drug_research(keywords=keywords, max_per_keyword=limit_per_source // len(keywords))
+            molecules = []
+            for art in articles:
+                names = processor.extract_molecules(art.get("abstract", ""))
+                for name in names:
+                    molecules.append({"smiles": "C", "name": name, "source": "web_scraping"}) # Placeholder SMILES
+            results["web_scraping"] = pd.DataFrame(molecules)
         return results
 
     def merge_datasets(self, datasets: list[pd.DataFrame]) -> pd.DataFrame:

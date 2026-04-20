@@ -2,6 +2,54 @@
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "zane"
+version = "0.1.0"
+description = "AI-native computational drug discovery platform"
+readme = "README.md"
+requires-python = ">=3.8,<3.12"
+license = "CC0-1.0"
+authors = [
+  { name = "Advaith Vaithianathan", email = "advaithv.av7@gmail.com" }
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+  "torch>=2.0.0",
+  "rdkit>=2023.3.1",
+  "scikit-learn>=1.3.0",
+  "pandas>=2.0.0",
+  "numpy>=1.24.0",
+  "requests>=2.31.0",
+  "tqdm>=4.65.0",
+  "python-dotenv>=1.0.0",
+]
+
+[tool.setuptools]
+packages = ["drug_discovery"]
+
+[project.optional-dependencies]
+gnn      = ["torch-geometric>=2.3.0", "e3nn>=0.5.0"]
+chem     = ["deepchem>=2.7.0", "mordred>=1.2.0", "openmm>=8.0.0"]
+nlp      = ["transformers>=4.30.0", "sentence-transformers>=2.2.0"]
+mlops    = ["mlflow>=2.5.0", "wandb>=0.15.0", "dvc>=3.0.0"]
+scraping = ["playwright>=1.40.0"]
+dev      = ["pytest>=7.4.0", "pytest-cov>=4.1.0", "ruff>=0.1.0",
+            "black>=23.0.0", "mypy>=1.7.0"]
+
+[project.scripts]
+zane = "drug_discovery.cli:main"
+
+[project.urls]
+Homepage   = "https://github.com/cosmic-hydra/zane"
+Repository = "https://github.com/cosmic-hydra/zane"
+
 [tool.black]
 line-length = 120
 target-version = ['py310']
@@ -19,3 +67,9 @@ extend-exclude = '''
   | dist
 )/
 '''
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

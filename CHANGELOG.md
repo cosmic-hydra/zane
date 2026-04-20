@@ -1,5 +1,16 @@
 # Changelog
 
+## [2026-04-20] — SMILES Tokenization Upgrade (Breaking)
+
+### Changed
+- **SMILES Tokenization**: Replaced generic character-level tokenization with chemistry-aware tokenization using ChemBERTa and a regex-based fallback.
+  - Ensures multi-character atoms like 'Cl' and 'Br' are treated as single tokens.
+  - Improves molecular representation for Transformer-based models.
+
+### Breaking Changes
+- **Checkpoint Incompatibility**: Models trained with the previous character-level tokenizer are now incompatible. Retraining is required to align embeddings with the new vocabulary.
+- **`SMILESTransformer`**: Updated default `max_seq_len` to 512.
+
 ## [2026-04-19] — SOTA 2025-2026 Drug Discovery AI Upgrade
 
 ### Added

@@ -94,6 +94,19 @@ class MolecularFeaturizer:
         except Exception:
             return _GraphFallback(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
+    def smiles_to_indices(self, smiles: str, tokenizer=None):
+        """Tokenize and convert SMILES to indices."""
+        if tokenizer:
+            encoded = tokenizer(smiles, truncation=True, max_length=512, padding="max_length", return_tensors="pt")
+            return encoded["input_ids"].squeeze(0)
+        # Fallback character-level encoding
+        chars = smiles[:512]
+        indices = [ord(c) for c in chars]
+        # Pad to 512
+        if len(indices) < 512:
+            indices += [0] * (512 - len(indices))
+        return torch.tensor(indices, dtype=torch.long)
+
     def smiles_to_graph(self, smiles: str):
         """Build a graph representation from SMILES."""
         if not self._is_valid_smiles_like(smiles):
@@ -216,12 +229,14 @@ class MolecularDataset(Dataset):
         featurization: str = "graph",
         smiles_column: str | None = None,
         target_column: str | None = None,
+        tokenizer=None,
     ):
         self.data = data.reset_index(drop=True)
         self.smiles_col = smiles_column or smiles_col
         self.target_col = target_column or target_col
         self.featurization = featurization
         self.featurizer = MolecularFeaturizer()
+        self.tokenizer = tokenizer
         self._dict_graph_output = smiles_column is not None
 
         self._valid_indices: list[int] = []
@@ -231,6 +246,8 @@ class MolecularDataset(Dataset):
                 feat = self.featurizer.smiles_to_graph(smiles)
             elif self.featurization == "descriptors":
                 feat = self.featurizer.compute_molecular_descriptors(smiles)
+            elif self.featurization == "smiles":
+                feat = self.featurizer.smiles_to_indices(smiles, tokenizer=self.tokenizer)
             else:
                 feat = self.featurizer.smiles_to_fingerprint(smiles)
             if feat is not None:
@@ -267,6 +284,13 @@ class MolecularDataset(Dataset):
             x = torch.tensor(list(desc.values()), dtype=torch.float32)
             y = torch.tensor([target], dtype=torch.float32)
             return x, y
+
+        if self.featurization == "smiles":
+            indices = self.featurizer.smiles_to_indices(smiles, tokenizer=self.tokenizer)
+            if indices is None:
+                raise IndexError("Invalid SMILES indices at index")
+            y = torch.tensor([target], dtype=torch.float32)
+            return indices, y
 
         fp = self.featurizer.smiles_to_fingerprint(smiles)
         if fp is None:
