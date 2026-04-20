@@ -1,0 +1,36 @@
+name: Weekly Benchmark
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Every Monday 6AM UTC
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10" # Matching the project's env
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .[chem,mlops]
+          # Ensure deepchem is available
+          pip install deepchem>=2.7.0
+          
+      - name: Run MoleculeNet Benchmark
+        run: |
+          PYTHONPATH=. python -m drug_discovery.benchmarking.moleculenet_eval --ci-mode
+          
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: outputs/reports/

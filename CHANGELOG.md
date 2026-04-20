@@ -1,6 +1,11 @@
 # Changelog
 
-## [2026-04-20] — SMILES Tokenization Upgrade (Breaking)
+## [2026-04-20] — Scientific Benchmarking & Infrastructure
+
+### Added
+- **MoleculeNet Benchmarking Suite**: Implemented standard BACE, BBBP, and Tox21 benchmark evaluation in `drug_discovery/benchmarking/moleculenet_eval.py`.
+- **Automated Benchmarks**: Added weekly GitHub Action workflow for periodic predictive performance validation.
+- **Reporting**: Automated JSON reporting for scientific artifacts in `outputs/reports/`.
 
 ### Changed
 - **SMILES Tokenization**: Replaced generic character-level tokenization with chemistry-aware tokenization using ChemBERTa and a regex-based fallback.
@@ -10,6 +15,7 @@
 ### Breaking Changes
 - **Checkpoint Incompatibility**: Models trained with the previous character-level tokenizer are now incompatible. Retraining is required to align embeddings with the new vocabulary.
 - **`SMILESTransformer`**: Updated default `max_seq_len` to 512.
+- **Benchmark Baseline**: Synthetic 64-sample benchmarks have been deprecated and replaced by MoleculeNet standards.
 
 ## [2026-04-19] — SOTA 2025-2026 Drug Discovery AI Upgrade
 
