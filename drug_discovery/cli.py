@@ -34,6 +34,13 @@ def main():
     train_parser.add_argument("--num-workers", type=int, default=None, help="DataLoader workers (default: auto)")
     train_parser.set_defaults(func=train_model)
 
+    # Benchmark command
+    bench_parser = subparsers.add_parser("benchmark", help="Run MoleculeNet benchmark")
+    bench_parser.add_argument("--datasets", nargs="+", default=["bace", "bbbp"], choices=["bace", "bbbp", "tox21"])
+    bench_parser.add_argument("--epochs", type=int, default=50)
+    bench_parser.add_argument("--seeds", nargs="+", type=int, default=[42, 123, 456])
+    bench_parser.set_defaults(func=benchmark_model)
+
     # Collect data command
     collect_parser = subparsers.add_parser("collect", help="Collect molecular data")
     collect_parser.add_argument(
@@ -451,6 +458,33 @@ def train_model(args):
     # Save
     pipeline.save(f"./checkpoints/{args.model}_model.pt")
     print(f"\nModel saved to ./checkpoints/{args.model}_model.pt")
+
+
+def benchmark_model(args):
+    """Run MoleculeNet benchmark"""
+    from drug_discovery.benchmarking.moleculenet_eval import run_benchmark, save_results, DeepChemModelWrapper
+    
+    all_results = {}
+    for ds in args.datasets:
+        print(f"Running benchmark for {ds}...")
+        # DeepChemModelWrapper fulfills the model_factory/model_class requirement
+        all_results[ds] = run_benchmark(
+            ds, 
+            DeepChemModelWrapper,
+            seeds=tuple(args.seeds), 
+            epochs=args.epochs
+        )
+        
+        # Display summary for this dataset
+        if all_results[ds].get("r2_mean") is not None:
+            print(f"  {ds}: R\u00b2={all_results[ds]['r2_mean']:.3f} \u00b1 {all_results[ds]['r2_std']:.3f}")
+        elif all_results[ds].get("auc_mean") is not None:
+            print(f"  {ds}: AUC={all_results[ds]['auc_mean']:.3f} \u00b1 {all_results[ds]['auc_std']:.3f}")
+        else:
+            print(f"  {ds}: complete")
+
+    path = save_results(all_results)
+    print(f"\nFull benchmark results saved to {path}")
 
 
 def collect_data(args):

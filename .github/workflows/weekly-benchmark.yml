@@ -26,11 +26,28 @@ jobs:
           
       - name: Run MoleculeNet Benchmark
         run: |
-          PYTHONPATH=. python -m drug_discovery.benchmarking.moleculenet_eval --ci-mode
+          PYTHONPATH=. python -m drug_discovery.cli benchmark --datasets bace bbbp --epochs 50
           
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-results
+          name: benchmark-${{ github.run_id }}
           path: outputs/reports/
+
+      - name: Fail if R² < 0
+        run: |
+          python -c "
+          import json, glob, sys, os
+          files = sorted(glob.glob('outputs/reports/benchmark_*.json'))
+          if not files:
+              print('No benchmark results found.')
+              sys.exit(1)
+          f = files[-1]
+          data = json.load(open(f))
+          r2 = data.get('bace', {}).get('r2_mean', -1)
+          if r2 < 0:
+              print(f'FAIL: BACE R\u00b2={r2:.3f} (must be > 0)')
+              sys.exit(1)
+          print(f'OK: BACE R\u00b2={r2:.3f}')
+          "

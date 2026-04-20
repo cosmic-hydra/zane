@@ -89,19 +89,3 @@ class TestModelEvaluatorCalibration:
         coverage = self.evaluator.prediction_interval_coverage(y_true, y_pred, y_std)
         assert 0.0 <= coverage <= 1.0
 
-
-class TestScientificBenchmark:
-    """Validate scientific benchmark integrity."""
-
-    def test_r2_baseline_integrity(self):
-        """Ensure benchmarked models beat a simple mean baseline."""
-        from drug_discovery.benchmarking.moleculenet_eval import run_benchmark
-        # Run a small-scale benchmark (1 epoch, 1 seed) to check pipeline integrity
-        # In a real test, we might use a mock, but here we verify the logic flow.
-        result = run_benchmark("bace", seeds=(42,), nb_epoch=1)
-        
-        assert result is not None
-        assert "r2_mean" in result
-        # Critical assertion: Model should be better than predicting the mean
-        assert result["r2_mean"] > 0.0, "Model performance R² is below baseline; check data pipeline."
-
