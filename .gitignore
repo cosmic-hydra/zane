@@ -82,3 +82,4 @@ temp/
 # Test cache
 test_cache/
 test_pipeline.pt
+.venv-new/

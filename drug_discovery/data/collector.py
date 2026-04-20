@@ -28,9 +28,17 @@ def _require_playwright():
             "pip install 'zane[scraping]' && playwright install chromium"
         )
 
-async def fetch_page(url: str) -> str:
-    """Fetch rendered HTML content using Playwright."""
+async def fetch_page(url: str, browser=None) -> str:
+    """Fetch rendered HTML content using Playwright (reusable browser)."""
     _require_playwright()
+    
+    if browser:
+        page = await browser.new_page()
+        await page.goto(url, wait_until="networkidle")
+        content = await page.content()
+        await page.close()
+        return content
+        
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
@@ -369,11 +377,29 @@ class DataCollector:
             processor = WebDataProcessor()
             keywords = [query] if query else ["anticancer", "antibiotic"]
             articles = scraper.scrape_drug_research(keywords=keywords, max_per_keyword=limit_per_source // len(keywords))
+            
+            import pubchempy as pcp
+            
             molecules = []
+            seen_names = set()
             for art in articles:
                 names = processor.extract_molecules(art.get("abstract", ""))
                 for name in names:
-                    molecules.append({"smiles": "C", "name": name, "source": "web_scraping"}) # Placeholder SMILES
+                    if name.lower() in seen_names:
+                        continue
+                    seen_names.add(name.lower())
+                    
+                    smiles = None
+                    try:
+                        # Attempt to resolve name to SMILES via PubChem
+                        pcp_results = pcp.get_compounds(name, "name")
+                        if pcp_results:
+                            smiles = pcp_results[0].canonical_smiles
+                    except Exception:
+                        pass
+                    
+                    if smiles:
+                        molecules.append({"smiles": smiles, "name": name, "source": "web_scraping"})
             results["web_scraping"] = pd.DataFrame(molecules)
         return results
 

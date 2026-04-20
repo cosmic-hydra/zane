@@ -52,20 +52,20 @@ except ImportError:
     pass
 
 
-__all__ = ["get_model", "list_models", "MODEL_REGISTRY", "MolecularGNN", "MolecularMPNN", "MolecularTransformer", "SMILESTransformer", "EnsembleModel", "MultiTaskModel", "HybridModel"]
-
-try:
-    from drug_discovery.models.gnn import MolecularGNN, MolecularMPNN
-except ImportError:
-    pass
-try:
-    from drug_discovery.models.transformer import MolecularTransformer, SMILESTransformer
-except ImportError:
-    pass
-try:
-    from drug_discovery.models.ensemble import EnsembleModel, MultiTaskModel, HybridModel
-except ImportError:
-    pass
+__all__ = [
+    "get_model",
+    "list_models",
+    "MODEL_REGISTRY",
+    "MolecularGNN",
+    "MolecularMPNN",
+    "MolecularTransformer",
+    "SMILESTransformer",
+    "EnsembleModel",
+    "MultiTaskModel",
+    "HybridModel",
+    "GNNModel",
+    "TransformerModel"
+]
 
 def get_model(name, **kwargs):
     if name not in MODEL_REGISTRY:

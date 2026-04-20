@@ -416,8 +416,23 @@ def train_model(args):
     # Collect data
     if args.data:
         import pandas as pd
-        data = pd.read_csv(args.data)
-        print(f"Loaded {len(data)} molecules from {args.data}")
+        try:
+            data = pd.read_csv(args.data)
+            print(f"Loaded {len(data)} molecules from {args.data}")
+            
+            # Validation
+            if "smiles" not in data.columns:
+                print(f"Error: CSV file {args.data} must contain a 'smiles' column.")
+                return 1
+                
+            data = data.dropna(subset=["smiles"])
+            if data.empty:
+                print(f"Error: CSV file {args.data} contains no valid SMILES rows.")
+                return 1
+                
+        except Exception as e:
+            print(f"Error loading data from {args.data}: {e}")
+            return 1
     else:
         data = pipeline.collect_data()
 
