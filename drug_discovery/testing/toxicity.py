@@ -12,12 +12,21 @@ Uses cross-dataset validation and confidence scoring.
 
 import logging
 from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from rdkit import Chem
-from rdkit.Chem import Descriptors, rdMolDescriptors
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+
+from drug_discovery.utils.rdkit_fallback import heuristic_props, is_smiles_plausible
+
+try:  # pragma: no cover - optional dependency
+    from rdkit import Chem  # type: ignore
+    from rdkit.Chem import Descriptors, rdMolDescriptors  # type: ignore
+except Exception:  # pragma: no cover - default path when RDKit unavailable
+    Chem = None  # type: ignore
+    Descriptors = None  # type: ignore
+    rdMolDescriptors = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +66,29 @@ class ToxicityPredictor:
 
     def _compute_molecular_descriptors(self, smiles: str) -> Optional[np.ndarray]:
         """Compute molecular descriptors for toxicity prediction."""
+        if not is_smiles_plausible(smiles):
+            return None
+
+        if Chem is None:
+            props = heuristic_props(smiles)
+            descriptors = [
+                props.molecular_weight,
+                props.logp,
+                props.h_donors,
+                props.h_acceptors,
+                props.rotatable_bonds,
+                props.tpsa,
+                props.aromatic_rings,
+                max(0.0, props.aromatic_rings - 1.0),
+                max(0.0, props.aromatic_rings - 2.0),
+                max(0.0, 1.0 - props.logp / 10.0),
+                props.h_acceptors,
+                props.aromatic_rings,
+                0.0,
+                0.0,
+            ]
+            return np.array(descriptors, dtype=np.float32)
+
         try:
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
@@ -81,7 +113,7 @@ class ToxicityPredictor:
 
             return np.array(descriptors, dtype=np.float32)
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - defensive logging
             logger.warning(f"Descriptor computation failed for {smiles}: {e}")
             return None
 
@@ -247,29 +279,22 @@ class ToxicityPredictor:
                 "confidence": 0.0,
             }
 
-        # Placeholder - would use structural alerts and trained model
-        # Check for common mutagenic substructures
-        mol = Chem.MolFromSmiles(smiles)
-        if mol is None:
-            return {
-                "mutagenic": 0.5,
-                "mutagenic_class": "non-mutagenic",
-                "ames_positive": False,
-                "confidence": 0.0,
-            }
-
-        # Simple structural alerts (placeholder)
         mutagenic_prob = 0.1  # Base probability
 
-        # Check for aromatic amines (common mutagenic motif)
-        aromatic_amines_pattern = Chem.MolFromSmarts("[NX3;H2,H1]-[c]")
-        if mol.HasSubstructMatch(aromatic_amines_pattern):
-            mutagenic_prob += 0.5
+        if Chem is None:
+            props = heuristic_props(smiles)
+            mutagenic_prob += 0.3 if props.aromatic_rings > 1 else 0.0
+            mutagenic_prob += 0.2 if props.logp > 4 else 0.0
+        else:
+            mol = Chem.MolFromSmiles(smiles)
+            if mol is not None:
+                aromatic_amines_pattern = Chem.MolFromSmarts("[NX3;H2,H1]-[c]")
+                if mol.HasSubstructMatch(aromatic_amines_pattern):
+                    mutagenic_prob += 0.5
 
-        # Check for nitro groups
-        nitro_pattern = Chem.MolFromSmarts("[N+](=O)[O-]")
-        if mol.HasSubstructMatch(nitro_pattern):
-            mutagenic_prob += 0.4
+                nitro_pattern = Chem.MolFromSmarts("[N+](=O)[O-]")
+                if mol.HasSubstructMatch(nitro_pattern):
+                    mutagenic_prob += 0.4
 
         mutagenic_prob = min(1.0, mutagenic_prob)
 

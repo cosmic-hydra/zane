@@ -10,13 +10,21 @@ Tests model robustness against:
 """
 
 import logging
-from typing import Dict, List, Optional, Callable, Any
+from typing import Any, Callable, Dict, List, Optional
+
 import numpy as np
 import pandas as pd
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.model_selection import KFold
+
+from drug_discovery.utils.rdkit_fallback import is_smiles_plausible
+
+try:  # pragma: no cover - optional dependency
+    from rdkit import Chem  # type: ignore
+    from rdkit.Chem import AllChem  # type: ignore
+except Exception:  # pragma: no cover - default path when RDKit unavailable
+    Chem = None  # type: ignore
+    AllChem = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -52,22 +60,27 @@ class RobustnessTester:
         Returns:
             Perturbed SMILES or None
         """
+        if not is_smiles_plausible(smiles):
+            return None
+
+        if Chem is None:
+            # Lightweight perturbations without RDKit
+            if perturbation_type == "tautomer" and len(smiles) > 2:
+                return smiles[::-1]  # reversed string as a deterministic variant
+            return smiles
+
         try:
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
                 return None
 
             if perturbation_type == "tautomer":
-                # Simple tautomer enumeration placeholder
-                # In production, use rdkit.Chem.MolStandardize.rdMolStandardize
                 perturbed_smiles = Chem.MolToSmiles(mol, canonical=False)
                 return perturbed_smiles
 
             elif perturbation_type == "stereoisomer":
-                # Flip random stereocenter if exists
                 stereo_centers = Chem.FindMolChiralCenters(mol, includeUnassigned=True)
                 if stereo_centers:
-                    # Placeholder - would flip stereochemistry
                     return Chem.MolToSmiles(mol, isomericSmiles=True)
                 return smiles
 

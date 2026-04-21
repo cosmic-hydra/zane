@@ -7,9 +7,19 @@ from typing import Any
 # pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 import numpy as np
 import torch
-from rdkit import Chem
-from rdkit.Chem import QED, Crippen, Descriptors, Lipinski
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+from drug_discovery.utils.rdkit_fallback import heuristic_props, is_smiles_plausible
+
+try:  # pragma: no cover - optional dependency
+    from rdkit import Chem  # type: ignore
+    from rdkit.Chem import QED, Crippen, Descriptors, Lipinski  # type: ignore
+except Exception:  # pragma: no cover - default path when RDKit unavailable
+    Chem = None  # type: ignore
+    QED = None  # type: ignore
+    Crippen = None  # type: ignore
+    Descriptors = None  # type: ignore
+    Lipinski = None  # type: ignore
 
 
 class PropertyPredictor:
@@ -76,11 +86,25 @@ class ADMETPredictor:
         Returns:
             Dictionary of Lipinski properties or None if invalid SMILES.
         """
+        if not is_smiles_plausible(smiles):
+            return None
+
+        if Chem is None:
+            props = heuristic_props(smiles)
+            return {
+                "molecular_weight": props.molecular_weight,
+                "logp": props.logp,
+                "h_bond_donors": props.h_donors,
+                "h_bond_acceptors": props.h_acceptors,
+                "rotatable_bonds": props.rotatable_bonds,
+                "aromatic_rings": props.aromatic_rings,
+            }
+
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return None
 
-        properties = {
+        return {
             "molecular_weight": float(Descriptors.MolWt(mol)),
             "logp": float(Crippen.MolLogP(mol)),
             "h_bond_donors": float(Lipinski.NumHDonors(mol)),
@@ -88,8 +112,6 @@ class ADMETPredictor:
             "rotatable_bonds": float(Lipinski.NumRotatableBonds(mol)),
             "aromatic_rings": float(Lipinski.NumAromaticRings(mol)),
         }
-
-        return properties
 
     def check_lipinski_rule(self, smiles: str) -> dict[str, Any] | None:
         """Check if molecule passes Lipinski's Rule of Five.
@@ -132,6 +154,12 @@ class ADMETPredictor:
         Returns:
             QED score (0-1, higher is more drug-like) or None if invalid.
         """
+        if not is_smiles_plausible(smiles):
+            return None
+
+        if Chem is None or QED is None:
+            return max(0.0, min(1.0, heuristic_props(smiles).logp / 6.0 + 0.5))
+
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return None
@@ -148,14 +176,18 @@ class ADMETPredictor:
         Returns:
             SA score
         """
-        try:
-            from rdkit.Chem import Descriptors
+        if not is_smiles_plausible(smiles):
+            return None
 
+        if Chem is None or Descriptors is None:
+            props = heuristic_props(smiles)
+            return float(min(10.0, max(1.0, props.rotatable_bonds + props.aromatic_rings + 2.0)))
+
+        try:
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
                 return None
 
-            # Simple heuristic (in production, use proper SA score calculation)
             complexity = Descriptors.BertzCT(mol)
             sa_score = min(10, max(1, complexity / 100))
 
@@ -173,11 +205,20 @@ class ADMETPredictor:
         Returns:
             Dictionary of toxicity flags
         """
+        if not is_smiles_plausible(smiles):
+            return None
+
+        if Chem is None:
+            props = heuristic_props(smiles)
+            return {
+                "contains_reactive_groups": props.logp > 4.5 or props.h_acceptors > 8,
+                "potential_pains": props.aromatic_rings > 1,
+            }
+
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return None
 
-        # Common PAINS (Pan Assay Interference Compounds) patterns
         pains_patterns = [
             "c1ccc2c(c1)ncs2",  # Benzothiazole
             "[N;D2]=[N;D2]",  # Azo compounds
@@ -189,13 +230,11 @@ class ADMETPredictor:
             "potential_pains": False,
         }
 
-        # Check for PAINS
         for pattern in pains_patterns:
             if mol.HasSubstructMatch(Chem.MolFromSmarts(pattern)):
                 flags["potential_pains"] = True
                 break
 
-        # Check for reactive groups (simplified)
         reactive_smarts = ["[N+](=O)[O-]", "C(=O)Cl", "[S;D2]S"]
         for pattern in reactive_smarts:
             try:

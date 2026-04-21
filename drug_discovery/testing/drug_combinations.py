@@ -11,14 +11,22 @@ Uses Bliss independence model, Loewe additivity, and ML models.
 
 import logging
 from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from rdkit import Chem
-from rdkit import DataStructs
-from rdkit.Chem import AllChem, Descriptors
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
 from drug_discovery.external_tooling import canonicalize_smiles, gt4sd_properties
+from drug_discovery.utils.rdkit_fallback import heuristic_props, is_smiles_plausible
+
+try:  # pragma: no cover - optional dependency
+    from rdkit import Chem, DataStructs  # type: ignore
+    from rdkit.Chem import AllChem, Descriptors  # type: ignore
+except Exception:  # pragma: no cover - default path when RDKit unavailable
+    Chem = None  # type: ignore
+    DataStructs = None  # type: ignore
+    AllChem = None  # type: ignore
+    Descriptors = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -66,33 +74,50 @@ class DrugCombinationTester:
             smiles1 = canonicalize_smiles(smiles1) or smiles1
             smiles2 = canonicalize_smiles(smiles2) or smiles2
 
-            mol1 = Chem.MolFromSmiles(smiles1)
-            mol2 = Chem.MolFromSmiles(smiles2)
+            if Chem is None:
+                if not (is_smiles_plausible(smiles1) and is_smiles_plausible(smiles2)):
+                    return None
+                props1 = heuristic_props(smiles1)
+                props2 = heuristic_props(smiles2)
+                desc1 = np.array(
+                    [props1.molecular_weight, props1.logp, props1.h_donors, props1.h_acceptors, props1.tpsa]
+                )
+                desc2 = np.array(
+                    [props2.molecular_weight, props2.logp, props2.h_donors, props2.h_acceptors, props2.tpsa]
+                )
+                set1, set2 = set(smiles1), set(smiles2)
+                denom = len(set1 | set2) or 1
+                similarity = len(set1 & set2) / denom
+            else:
+                mol1 = Chem.MolFromSmiles(smiles1)
+                mol2 = Chem.MolFromSmiles(smiles2)
 
-            if mol1 is None or mol2 is None:
-                return None
+                if mol1 is None or mol2 is None:
+                    return None
 
-            # Compute descriptors for each drug
-            desc1 = np.array([
-                Descriptors.MolWt(mol1),
-                Descriptors.MolLogP(mol1),
-                Descriptors.NumHDonors(mol1),
-                Descriptors.NumHAcceptors(mol1),
-                Descriptors.TPSA(mol1),
-            ])
+                desc1 = np.array(
+                    [
+                        Descriptors.MolWt(mol1),
+                        Descriptors.MolLogP(mol1),
+                        Descriptors.NumHDonors(mol1),
+                        Descriptors.NumHAcceptors(mol1),
+                        Descriptors.TPSA(mol1),
+                    ]
+                )
 
-            desc2 = np.array([
-                Descriptors.MolWt(mol2),
-                Descriptors.MolLogP(mol2),
-                Descriptors.NumHDonors(mol2),
-                Descriptors.NumHAcceptors(mol2),
-                Descriptors.TPSA(mol2),
-            ])
+                desc2 = np.array(
+                    [
+                        Descriptors.MolWt(mol2),
+                        Descriptors.MolLogP(mol2),
+                        Descriptors.NumHDonors(mol2),
+                        Descriptors.NumHAcceptors(mol2),
+                        Descriptors.TPSA(mol2),
+                    ]
+                )
 
-            # Compute fingerprint similarity
-            fp1 = AllChem.GetMorganFingerprintAsBitVect(mol1, 2, nBits=2048)
-            fp2 = AllChem.GetMorganFingerprintAsBitVect(mol2, 2, nBits=2048)
-            similarity = float(DataStructs.TanimotoSimilarity(fp1, fp2))
+                fp1 = AllChem.GetMorganFingerprintAsBitVect(mol1, 2, nBits=2048)
+                fp2 = AllChem.GetMorganFingerprintAsBitVect(mol2, 2, nBits=2048)
+                similarity = float(DataStructs.TanimotoSimilarity(fp1, fp2))
 
             gt4sd_1 = gt4sd_properties(smiles1)
             gt4sd_2 = gt4sd_properties(smiles2)
@@ -107,14 +132,15 @@ class DrugCombinationTester:
                 ]
             )
 
-            # Combine features: individual descriptors + differences + similarity
-            features = np.concatenate([
-                desc1,
-                desc2,
-                desc2 - desc1,  # Differences
-                [similarity],
-                gt4sd_features,
-            ])
+            features = np.concatenate(
+                [
+                    desc1,
+                    desc2,
+                    desc2 - desc1,
+                    [similarity],
+                    gt4sd_features,
+                ]
+            )
 
             return features
 
