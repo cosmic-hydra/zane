@@ -10,3 +10,25 @@ try:
 except Exception:
     # Keep imports lazy when optional dependencies (e.g., torch-geometric) are unavailable.
     pass
+
+try:
+    from drug_discovery.drugmaking import (
+        CustomDrugmakingModule,
+        CompoundTestResult,
+        CandidateResult,
+        OptimizationConfig,
+        CounterSubstanceFinder,
+        CounterSubstanceResult,
+    )
+
+    __all__.extend([
+        "CustomDrugmakingModule",
+        "CompoundTestResult",
+        "CandidateResult",
+        "OptimizationConfig",
+        "CounterSubstanceFinder",
+        "CounterSubstanceResult",
+    ])
+except Exception:
+    # Keep drugmaking module lazy when dependencies are unavailable.
+    pass
