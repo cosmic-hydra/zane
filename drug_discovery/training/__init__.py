@@ -7,3 +7,10 @@ try:
     __all__.extend(["AdvancedTrainer", "AdvancedTrainingConfig", "WarmupScheduler", "EMA", "EarlyStopping"])
 except ImportError:
     pass
+
+try:
+    from drug_discovery.training.trainer import SelfLearningTrainer
+
+    __all__.append("SelfLearningTrainer")
+except Exception:
+    pass

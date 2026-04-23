@@ -11,14 +11,22 @@ Simulates biological responses to drug candidates including:
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from rdkit import Chem
-from rdkit.Chem import Descriptors, Crippen
 
 from drug_discovery.external_tooling import canonicalize_smiles, gt4sd_properties
+from drug_discovery.utils.rdkit_fallback import heuristic_props, is_smiles_plausible
+
+try:  # pragma: no cover - optional dependency
+    from rdkit import Chem  # type: ignore
+    from rdkit.Chem import Crippen, Descriptors  # type: ignore
+except Exception:  # pragma: no cover - default path when RDKit unavailable
+    Chem = None  # type: ignore
+    Crippen = None  # type: ignore
+    Descriptors = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -72,23 +80,35 @@ class ADMEPredictor:
             ADME properties or None
         """
         try:
-            smiles = canonicalize_smiles(smiles) or smiles
-            mol = Chem.MolFromSmiles(smiles)
-            if mol is None:
+            if not is_smiles_plausible(smiles):
                 return None
 
-            # Compute molecular descriptors
-            ext_props = gt4sd_properties(smiles)
+            smiles = canonicalize_smiles(smiles) or smiles
 
-            mol_weight = ext_props.get("molecular_weight", Descriptors.MolWt(mol))
-            logp = ext_props.get("logp", Crippen.MolLogP(mol))
-            tpsa = ext_props.get("tpsa", Descriptors.TPSA(mol))
-            num_hbd = Descriptors.NumHDonors(mol)
-            num_hba = Descriptors.NumHAcceptors(mol)
-            num_rotatable = Descriptors.NumRotatableBonds(mol)
+            if Chem is not None:
+                mol = Chem.MolFromSmiles(smiles)
+                if mol is None:
+                    return None
 
-            # Absorption (oral bioavailability estimate)
-            # Based on Lipinski's Rule of Five
+                ext_props = gt4sd_properties(smiles)
+                mol_weight = ext_props.get("molecular_weight", Descriptors.MolWt(mol))
+                logp = ext_props.get("logp", Crippen.MolLogP(mol))
+                tpsa = ext_props.get("tpsa", Descriptors.TPSA(mol))
+                num_hbd = Descriptors.NumHDonors(mol)
+                num_hba = Descriptors.NumHAcceptors(mol)
+                num_rotatable = Descriptors.NumRotatableBonds(mol)
+            else:
+                props = heuristic_props(smiles)
+                mol_weight = props.molecular_weight
+                logp = props.logp
+                tpsa = props.tpsa
+                num_hbd = props.h_donors
+                num_hba = props.h_acceptors
+                num_rotatable = props.rotatable_bonds
+                ext_props = {}
+
+            num_rotatable = ext_props.get("num_rotatable_bonds", locals().get("num_rotatable", 0.0))
+
             absorption = 1.0
             if mol_weight > 500:
                 absorption *= 0.7
@@ -101,26 +121,16 @@ class ADMEPredictor:
             if tpsa > 140:
                 absorption *= 0.5
 
-            # Distribution (volume of distribution estimate)
-            # Roughly correlated with lipophilicity
             vd = 0.5 + logp * 0.3  # L/kg
             vd = max(0.1, min(vd, 10.0))
 
-            # Metabolism (metabolic stability)
-            # Lower for highly lipophilic compounds
             metabolism = 0.8 - (logp - 2) * 0.1
             metabolism = max(0.1, min(metabolism, 1.0))
 
-            # Excretion (clearance rate)
-            # Higher for smaller, more polar compounds
-            clearance = 15.0 * (1.0 - logp / 10.0) * (500.0 / mol_weight)
+            clearance = 15.0 * (1.0 - logp / 10.0) * (500.0 / max(mol_weight, 1.0))
             clearance = max(1.0, min(clearance, 100.0))
 
-            # Half-life (elimination half-life)
-            # Derived from Vd and clearance
             half_life = (0.693 * vd * 70) / clearance  # hours (70kg person)
-
-            # Overall bioavailability
             bioavailability = absorption * metabolism
 
             return ADMEProperties(
@@ -147,17 +157,30 @@ class ADMEPredictor:
             Dictionary with drug-likeness assessment
         """
         try:
-            smiles = canonicalize_smiles(smiles) or smiles
-            mol = Chem.MolFromSmiles(smiles)
-            if mol is None:
+            if not is_smiles_plausible(smiles):
                 return {"drug_like": False, "violations": ["Invalid SMILES"]}
 
-            mol_weight = Descriptors.MolWt(mol)
-            logp = Crippen.MolLogP(mol)
-            num_hbd = Descriptors.NumHDonors(mol)
-            num_hba = Descriptors.NumHAcceptors(mol)
+            smiles = canonicalize_smiles(smiles) or smiles
 
-            # Lipinski's Rule of Five
+            if Chem is not None:
+                mol = Chem.MolFromSmiles(smiles)
+                if mol is None:
+                    return {"drug_like": False, "violations": ["Invalid SMILES"]}
+                mol_weight = Descriptors.MolWt(mol)
+                logp = Crippen.MolLogP(mol)
+                num_hbd = Descriptors.NumHDonors(mol)
+                num_hba = Descriptors.NumHAcceptors(mol)
+                num_rotatable = Descriptors.NumRotatableBonds(mol)
+                tpsa = Descriptors.TPSA(mol)
+            else:
+                props = heuristic_props(smiles)
+                mol_weight = props.molecular_weight
+                logp = props.logp
+                num_hbd = props.h_donors
+                num_hba = props.h_acceptors
+                num_rotatable = props.rotatable_bonds
+                tpsa = props.tpsa
+
             violations = []
             if mol_weight > 500:
                 violations.append("Molecular weight > 500")
@@ -168,16 +191,12 @@ class ADMEPredictor:
             if num_hba > 10:
                 violations.append("H-bond acceptors > 10")
 
-            # Veber rules
-            num_rotatable = Descriptors.NumRotatableBonds(mol)
-            tpsa = Descriptors.TPSA(mol)
-
             if num_rotatable > 10:
                 violations.append("Rotatable bonds > 10 (Veber)")
             if tpsa > 140:
                 violations.append("TPSA > 140 (Veber)")
 
-            drug_like = len(violations) <= 1  # Allow 1 violation
+            drug_like = len(violations) <= 1
 
             return {
                 "drug_like": drug_like,

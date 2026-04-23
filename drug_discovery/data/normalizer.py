@@ -6,9 +6,18 @@ Ensures consistent molecular representations across all data sources.
 
 import logging
 from typing import List, Set, Optional, Tuple
+
 import pandas as pd
-from rdkit import Chem
-from rdkit.Chem import Descriptors, AllChem
+
+from drug_discovery.utils.rdkit_fallback import heuristic_props, is_smiles_plausible, simple_inchikey
+
+try:  # pragma: no cover - optional dependency
+    from rdkit import Chem  # type: ignore
+    from rdkit.Chem import Descriptors, AllChem  # type: ignore
+except Exception:  # pragma: no cover - default path in slim environments
+    Chem = None  # type: ignore
+    Descriptors = None  # type: ignore
+    AllChem = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +47,22 @@ class DataNormalizer:
         Returns:
             Canonical SMILES or None if invalid
         """
+        if not smiles:
+            return None
+
+        if Chem is None:
+            # Heuristic fallback: drop salts and whitespace
+            stripped = str(smiles).strip()
+            if self.remove_salts:
+                stripped = max(stripped.split("."), key=len)
+            return stripped or None
+
         try:
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
                 return None
 
-            # Remove salts if requested
             if self.remove_salts:
-                # Keep largest fragment
                 frags = Chem.GetMolFrags(mol, asMols=True)
                 if len(frags) > 1:
                     mol = max(frags, key=lambda m: m.GetNumAtoms())
@@ -53,7 +70,7 @@ class DataNormalizer:
             canonical = Chem.MolToSmiles(mol, canonical=True)
             return canonical
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - defensive logging
             logger.warning(f"Failed to canonicalize SMILES '{smiles}': {e}")
             return None
 
@@ -67,12 +84,18 @@ class DataNormalizer:
         Returns:
             InChIKey or None if invalid
         """
+        if not smiles:
+            return None
+
+        if Chem is None:
+            return simple_inchikey(str(smiles))
+
         try:
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
                 return None
             return Chem.MolToInchiKey(mol)
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - defensive logging
             logger.warning(f"Failed to compute InChIKey for '{smiles}': {e}")
             return None
 
@@ -86,17 +109,18 @@ class DataNormalizer:
         Returns:
             True if valid, False otherwise
         """
+        if Chem is None:
+            return is_smiles_plausible(smiles)
+
         try:
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
                 return False
 
-            # Basic filters
             num_atoms = mol.GetNumAtoms()
-            if num_atoms < 3 or num_atoms > 150:  # Reasonable size range
+            if num_atoms < 3 or num_atoms > 150:
                 return False
 
-            # Check for valid valence
             try:
                 Chem.SanitizeMol(mol)
             except Exception:
@@ -162,15 +186,25 @@ class DataNormalizer:
 
             # Add molecular features if requested
             if add_features:
-                mol = Chem.MolFromSmiles(canonical_smiles)
-                if mol:
-                    new_row["mol_weight"] = Descriptors.MolWt(mol)
-                    new_row["logp"] = Descriptors.MolLogP(mol)
-                    new_row["num_h_donors"] = Descriptors.NumHDonors(mol)
-                    new_row["num_h_acceptors"] = Descriptors.NumHAcceptors(mol)
-                    new_row["num_rotatable_bonds"] = Descriptors.NumRotatableBonds(mol)
-                    new_row["tpsa"] = Descriptors.TPSA(mol)
-                    new_row["num_aromatic_rings"] = Descriptors.NumAromaticRings(mol)
+                if Chem is not None:
+                    mol = Chem.MolFromSmiles(canonical_smiles)
+                    if mol:
+                        new_row["mol_weight"] = Descriptors.MolWt(mol)
+                        new_row["logp"] = Descriptors.MolLogP(mol)
+                        new_row["num_h_donors"] = Descriptors.NumHDonors(mol)
+                        new_row["num_h_acceptors"] = Descriptors.NumHAcceptors(mol)
+                        new_row["num_rotatable_bonds"] = Descriptors.NumRotatableBonds(mol)
+                        new_row["tpsa"] = Descriptors.TPSA(mol)
+                        new_row["num_aromatic_rings"] = Descriptors.NumAromaticRings(mol)
+                else:
+                    props = heuristic_props(canonical_smiles)
+                    new_row["mol_weight"] = props.molecular_weight
+                    new_row["logp"] = props.logp
+                    new_row["num_h_donors"] = props.h_donors
+                    new_row["num_h_acceptors"] = props.h_acceptors
+                    new_row["num_rotatable_bonds"] = props.rotatable_bonds
+                    new_row["tpsa"] = props.tpsa
+                    new_row["num_aromatic_rings"] = props.aromatic_rings
 
             normalized_data.append(new_row)
 
