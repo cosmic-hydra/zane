@@ -347,3 +347,86 @@ class TestNormalHelpers:
         assert _normal_cdf(np.array([0.0]))[0] == pytest.approx(0.5, abs=1e-5)
         assert _normal_cdf(np.array([3.0]))[0] > 0.99
         assert _normal_cdf(np.array([-3.0]))[0] < 0.01
+
+
+# =========================================================================
+# Improvement tests: caching, warm-start, diverse candidates
+# =========================================================================
+class TestPhysicsOracleCache:
+    def test_cache_enabled_by_default(self):
+        oracle = PhysicsOracle()
+        stats = oracle.cache_stats
+        assert stats["enabled"] is True
+        assert stats["size"] == 0
+
+    def test_cache_disabled(self):
+        oracle = PhysicsOracle(enable_cache=False)
+        assert oracle.cache_stats["enabled"] is False
+
+    def test_clear_cache(self):
+        oracle = PhysicsOracle()
+        oracle._cache["test"] = FEPResult(smiles="test")
+        assert oracle.cache_stats["size"] == 1
+        oracle.clear_cache()
+        assert oracle.cache_stats["size"] == 0
+
+
+class TestSurrogateModelSerialization:
+    def test_save_and_load(self, tmp_path):
+        sm = SurrogateModel(fp_dim=32)
+        rng = np.random.default_rng(42)
+        for _ in range(5):
+            sm.observe(rng.standard_normal(32), rng.uniform(-10, 0))
+        sm.fit()
+
+        path = str(tmp_path / "surrogate.npz")
+        sm.save(path)
+
+        loaded = SurrogateModel.load(path)
+        assert loaded.n_observations == sm.n_observations
+        assert loaded.fp_dim == sm.fp_dim
+
+        # Predictions should match
+        test_fp = rng.standard_normal((3, 32))
+        m1, s1 = sm.predict(test_fp)
+        m2, s2 = loaded.predict(test_fp)
+        np.testing.assert_allclose(m1, m2, atol=1e-6)
+        np.testing.assert_allclose(s1, s2, atol=1e-6)
+
+    def test_save_empty_model(self, tmp_path):
+        sm = SurrogateModel(fp_dim=16)
+        path = str(tmp_path / "empty.npz")
+        sm.save(path)
+        loaded = SurrogateModel.load(path)
+        assert loaded.n_observations == 0
+
+    def test_fit_count_persisted(self, tmp_path):
+        sm = SurrogateModel(fp_dim=16)
+        rng = np.random.default_rng(0)
+        for _ in range(3):
+            sm.observe(rng.standard_normal(16), rng.uniform(-5, 0))
+        sm.fit()
+        sm.fit()
+        assert sm._fit_count == 2
+
+        path = str(tmp_path / "fitted.npz")
+        sm.save(path)
+        loaded = SurrogateModel.load(path)
+        # load auto-fits, so fit_count should be original + 1
+        assert loaded._fit_count >= 2
+
+
+class TestDiverseCandidateGeneration:
+    def test_candidates_are_diverse(self):
+        learner = ClosedLoopLearner()
+        candidates = learner._generate_candidates("protein_x", 20)
+        smiles_set = {c["smiles"] for c in candidates}
+        # With 20 candidates and 16 seed SMILES, we should have > 1 unique
+        assert len(smiles_set) > 1
+
+    def test_candidates_cycle_through_pool(self):
+        learner = ClosedLoopLearner()
+        candidates = learner._generate_candidates("protein_x", 32)
+        assert len(candidates) == 32
+        # First and 17th should be the same (16-element pool)
+        assert candidates[0]["smiles"] == candidates[16]["smiles"]

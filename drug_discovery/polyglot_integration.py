@@ -262,6 +262,8 @@ class PhysicsOracle:
         temperature: float = 300.0,
         timestep: float = 2.0,
         max_local_workers: int = 4,
+        enable_cache: bool = True,
+        max_retries: int = 2,
     ):
         self.protein_pdb_path = protein_pdb_path
         self.num_lambda_windows = num_lambda_windows
@@ -269,6 +271,26 @@ class PhysicsOracle:
         self.temperature = temperature
         self.timestep = timestep
         self.max_local_workers = max_local_workers
+        self.max_retries = max_retries
+        self._cache: dict[str, FEPResult] = {} if enable_cache else None  # type: ignore[assignment]
+
+    # ------------------------------------------------------------------
+    # Cache helpers
+    # ------------------------------------------------------------------
+    @property
+    def cache_stats(self) -> dict[str, int]:
+        """Return hit/miss counts for the result cache."""
+        if self._cache is None:
+            return {"enabled": False, "size": 0}
+        return {"enabled": True, "size": len(self._cache)}
+
+    def clear_cache(self) -> None:
+        """Drop all cached FEP results."""
+        if self._cache is not None:
+            self._cache.clear()
+
+    def _cache_key(self, smiles: str) -> str:
+        return f"{smiles}|{self.protein_pdb_path}|{self.num_lambda_windows}"
 
     # ------------------------------------------------------------------
     # Public API
@@ -276,14 +298,39 @@ class PhysicsOracle:
     async def score_batch(self, smiles_list: Sequence[str]) -> list[FEPResult]:
         """Score a batch of SMILES, returning delta-G for each.
 
+        Results are cached by SMILES so repeated molecules are not
+        re-simulated.  Failed simulations are retried up to
+        *max_retries* times.
+
         Dispatches to Ray when available; otherwise uses a thread pool.
         """
         if not smiles_list:
             return []
 
-        if _RAY_AVAILABLE and ray.is_initialized():
-            return await self._score_batch_ray(smiles_list)
-        return await self._score_batch_local(smiles_list)
+        # Separate cached from uncached
+        results: dict[int, FEPResult] = {}
+        to_compute: list[tuple[int, str]] = []
+        for idx, smi in enumerate(smiles_list):
+            if self._cache is not None:
+                key = self._cache_key(smi)
+                if key in self._cache:
+                    results[idx] = self._cache[key]
+                    continue
+            to_compute.append((idx, smi))
+
+        if to_compute:
+            uncached_smiles = [smi for _, smi in to_compute]
+            computed = await self._compute_with_retry(uncached_smiles)
+            for (idx, smi), result in zip(to_compute, computed):
+                results[idx] = result
+                if self._cache is not None and result.success:
+                    self._cache[self._cache_key(smi)] = result
+
+        cache_hits = len(smiles_list) - len(to_compute)
+        if cache_hits:
+            logger.info("FEP cache: %d hits, %d computed", cache_hits, len(to_compute))
+
+        return [results[i] for i in range(len(smiles_list))]
 
     def score_batch_sync(self, smiles_list: Sequence[str]) -> list[FEPResult]:
         """Synchronous convenience wrapper around :meth:`score_batch`."""
@@ -292,6 +339,37 @@ class PhysicsOracle:
             return loop.run_until_complete(self.score_batch(smiles_list))
         finally:
             loop.close()
+
+    # ------------------------------------------------------------------
+    # Retry logic
+    # ------------------------------------------------------------------
+    async def _compute_with_retry(self, smiles_list: list[str]) -> list[FEPResult]:
+        """Compute FEP results with automatic retry for failures."""
+        results = await self._dispatch(smiles_list)
+
+        for attempt in range(1, self.max_retries + 1):
+            failed_indices = [i for i, r in enumerate(results) if not r.success]
+            if not failed_indices:
+                break
+            logger.info(
+                "Retrying %d failed FEP tasks (attempt %d/%d)",
+                len(failed_indices),
+                attempt,
+                self.max_retries,
+            )
+            retry_smiles = [smiles_list[i] for i in failed_indices]
+            retry_results = await self._dispatch(retry_smiles)
+            for fi, rr in zip(failed_indices, retry_results):
+                if rr.success:
+                    results[fi] = rr
+
+        return results
+
+    async def _dispatch(self, smiles_list: list[str]) -> list[FEPResult]:
+        """Route to Ray or local thread pool."""
+        if _RAY_AVAILABLE and ray.is_initialized():
+            return await self._score_batch_ray(smiles_list)
+        return await self._score_batch_local(smiles_list)
 
     # ------------------------------------------------------------------
     # Ray path

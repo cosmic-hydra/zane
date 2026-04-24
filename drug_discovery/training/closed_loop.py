@@ -92,6 +92,7 @@ class SurrogateModel:
         self._gp_model: Any = None
         self._gp_likelihood: Any = None
         self._best_y: float = float("inf")
+        self._fit_count: int = 0
 
     # ------------------------------------------------------------------
     # Training data management
@@ -127,6 +128,7 @@ class SurrogateModel:
             self._fit_botorch(train_X, train_Y)
         else:
             self._fit_fallback(train_X, train_Y)
+        self._fit_count += 1
 
     def _fit_botorch(self, train_X: torch.Tensor, train_Y: torch.Tensor) -> None:
         """Fit a BoTorch SingleTaskGP."""
@@ -247,6 +249,45 @@ class SurrogateModel:
         k = min(k, len(smiles_list))
         top_indices = np.argsort(ei_values)[-k:][::-1]
         return [smiles_list[i] for i in top_indices]
+
+    # ------------------------------------------------------------------
+    # Serialization (warm-start)
+    # ------------------------------------------------------------------
+    def save(self, path: str) -> None:
+        """Persist training data and metadata to *path* for warm-starting.
+
+        The GP model itself is re-fitted on load; only the observations
+        and configuration are serialized.
+        """
+        state = {
+            "fp_dim": self.fp_dim,
+            "train_X": np.array(self._train_X) if self._train_X else np.empty((0, self.fp_dim)),
+            "train_Y": np.array(self._train_Y),
+            "best_y": self._best_y,
+            "fit_count": self._fit_count,
+        }
+        np.savez_compressed(path, **state)
+        logger.info("SurrogateModel saved to %s (%d observations)", path, self.n_observations)
+
+    @classmethod
+    def load(cls, path: str, device: str = "cpu") -> "SurrogateModel":
+        """Load a previously saved surrogate and re-fit.
+
+        Returns a new :class:`SurrogateModel` with all prior observations
+        restored.  Call :meth:`fit` to rebuild the GP.
+        """
+        data = np.load(path, allow_pickle=False)
+        fp_dim = int(data["fp_dim"])
+        model = cls(fp_dim=fp_dim, device=device)
+        train_X = data["train_X"]
+        train_Y = data["train_Y"]
+        for i in range(len(train_Y)):
+            model.observe(train_X[i], float(train_Y[i]))
+        model._fit_count = int(data.get("fit_count", 0))
+        if model.n_observations >= 2:
+            model.fit()
+        logger.info("SurrogateModel loaded from %s (%d observations)", path, model.n_observations)
+        return model
 
 
 # ---------------------------------------------------------------------------
@@ -428,12 +469,39 @@ class ClosedLoopLearner:
     # ------------------------------------------------------------------
     # Legacy helpers (preserved from original)
     # ------------------------------------------------------------------
+    # A small pool of drug-like SMILES used when no generative model is
+    # attached.  Provides structural diversity for the surrogate to learn from.
+    _SEED_SMILES = [
+        "CCO",
+        "c1ccccc1",
+        "CC(=O)O",
+        "CC(=O)Oc1ccccc1C(=O)O",  # aspirin
+        "CC(C)Cc1ccc(cc1)C(C)C(=O)O",  # ibuprofen
+        "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",  # caffeine
+        "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C",  # testosterone
+        "OC(=O)c1ccccc1O",  # salicylic acid
+        "c1ccc2c(c1)cc1ccc3cccc4ccc2c1c34",  # pyrene
+        "CC(=O)NC1=CC=C(C=C1)O",  # acetaminophen
+        "C1CCCCC1",  # cyclohexane
+        "c1ccncc1",  # pyridine
+        "C1=CC=C(C=C1)C(=O)O",  # benzoic acid
+        "OC1=CC=CC=C1",  # phenol
+        "c1ccc(cc1)N",  # aniline
+        "CC(C)(C)c1ccc(cc1)O",  # 4-tert-butylphenol
+    ]
+
     def _generate_candidates(self, target_protein: str, num_candidates: int) -> list[dict]:
-        """Generate drug candidates."""
+        """Generate drug candidates.
+
+        When no generative model is attached, samples from a pool of
+        drug-like seed SMILES to provide structural diversity.
+        """
         candidates = []
+        pool = self._SEED_SMILES
         for i in range(num_candidates):
+            smiles = pool[i % len(pool)]
             candidates.append(
-                {"id": f"iter_candidate_{i}", "smiles": "CCO", "generation_method": "active_learning"}
+                {"id": f"iter_candidate_{i}", "smiles": smiles, "generation_method": "active_learning"}
             )
         return candidates
 

@@ -1,8 +1,10 @@
-"""
-Apex Orchestrator for Asynchronous Drug Discovery
+"""Apex Orchestrator for Asynchronous Drug Discovery.
 
 Manages complex asynchronous dependencies between physics simulations,
 neuromorphic inference, and agentic workflows.
+
+Optionally integrates the :class:`~drug_discovery.polyglot_integration.PhysicsOracle`
+for FEP-based binding free-energy scoring when candidate SMILES are provided.
 """
 
 import asyncio
@@ -13,13 +15,16 @@ logger = logging.getLogger(__name__)
 
 
 class ApexOrchestrator:
-    """
-    High-level orchestrator for the ZANE pipeline.
+    """High-level orchestrator for the ZANE pipeline.
+
     Handles long-running tasks (e.g., FermiNet) vs fast tasks (e.g., Agent Swarm).
+    When a :class:`~drug_discovery.polyglot_integration.PhysicsOracle` is
+    supplied, the workflow includes a distributed FEP scoring step.
     """
 
-    def __init__(self, distributed_mode: bool = False):
+    def __init__(self, distributed_mode: bool = False, physics_oracle: Any | None = None):
         self.distributed_mode = distributed_mode
+        self.physics_oracle = physics_oracle
         self.tasks: dict[str, asyncio.Task] = {}
 
     async def run_comprehensive_workflow(self, drug_context: dict[str, Any]):
@@ -34,6 +39,9 @@ class ApexOrchestrator:
         # 2. Microgravity Simulation (Module 11)
         micro_g_task = asyncio.create_task(self._run_orbital_synthesis(drug_context))
 
+        # 2b. FEP binding free-energy scoring via PhysicsOracle (if available)
+        fep_task = asyncio.create_task(self._run_fep_scoring(drug_context))
+
         # 3. Clinical Trial Simulation (Module 10) -> Neuromorphic Inference (Module 12)
         trial_results = await self._run_clinical_trial(drug_context)
         neuromorphic_task = asyncio.create_task(self._run_neuromorphic_validation(trial_results))
@@ -42,11 +50,12 @@ class ApexOrchestrator:
         logger.info("Waiting for high-latency quantum simulations to complete...")
         qed_results = await qed_task
         orbital_results = await micro_g_task
+        fep_results = await fep_task
         neuromorphic_results = await neuromorphic_task
 
         # 4. Agentic Swarm & IND Generation (Module 14) - Fast final step
         final_report = await self._generate_ind_submission(
-            qed_results, orbital_results, trial_results, neuromorphic_results
+            qed_results, orbital_results, trial_results, neuromorphic_results, fep_results
         )
 
         return final_report
@@ -59,6 +68,24 @@ class ApexOrchestrator:
     async def _run_orbital_synthesis(self, context: dict[str, Any]):
         await asyncio.sleep(1.0)
         return {"crystal_purity": 0.999}
+
+    async def _run_fep_scoring(self, context: dict[str, Any]) -> dict[str, Any]:
+        """Run FEP binding free-energy scoring via the PhysicsOracle."""
+        smiles_list = context.get("candidate_smiles", [])
+        if not smiles_list or self.physics_oracle is None:
+            return {"fep_scores": [], "skipped": True}
+        try:
+            results = await self.physics_oracle.score_batch(smiles_list)
+            scores = [
+                {"smiles": r.smiles, "delta_g": r.delta_g, "converged": r.converged}
+                for r in results
+                if r.success
+            ]
+            logger.info("FEP scoring complete: %d/%d successful", len(scores), len(smiles_list))
+            return {"fep_scores": scores, "skipped": False}
+        except Exception as exc:
+            logger.warning("FEP scoring failed: %s", exc)
+            return {"fep_scores": [], "error": str(exc)}
 
     async def _run_clinical_trial(self, context: dict[str, Any]):
         return {"efficacy": 0.82, "safety": 0.95}
