@@ -13,18 +13,20 @@ Edges: treats, binds, inhibits, causes, participates_in, etc.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple, Set, Any
-from dataclasses import dataclass, field
 from collections import defaultdict
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from enum import Enum
 
 logger = logging.getLogger(__name__)
 
 
 class NodeType(Enum):
     """Types of nodes in the knowledge graph."""
+
     MOLECULE = "molecule"
     PROTEIN = "protein"
     DISEASE = "disease"
@@ -36,6 +38,7 @@ class NodeType(Enum):
 
 class EdgeType(Enum):
     """Types of edges in the knowledge graph."""
+
     TREATS = "treats"
     BINDS = "binds"
     INHIBITS = "inhibits"
@@ -50,21 +53,23 @@ class EdgeType(Enum):
 @dataclass
 class KGNode:
     """Node in the knowledge graph."""
+
     node_id: str
     node_type: NodeType
     name: str
-    properties: Dict[str, Any] = field(default_factory=dict)
-    embedding: Optional[np.ndarray] = None
+    properties: dict[str, Any] = field(default_factory=dict)
+    embedding: np.ndarray | None = None
 
 
 @dataclass
 class KGEdge:
     """Edge in the knowledge graph."""
+
     edge_id: str
     source_id: str
     target_id: str
     edge_type: EdgeType
-    properties: Dict[str, Any] = field(default_factory=dict)
+    properties: dict[str, Any] = field(default_factory=dict)
     weight: float = 1.0
     confidence: float = 1.0
 
@@ -80,14 +85,14 @@ class VectorDatabase:
             embedding_dim: Dimension of embeddings
         """
         self.embedding_dim = embedding_dim
-        self.vectors: Dict[str, np.ndarray] = {}
-        self.metadata: Dict[str, Dict[str, Any]] = {}
+        self.vectors: dict[str, np.ndarray] = {}
+        self.metadata: dict[str, dict[str, Any]] = {}
 
     def add_vector(
         self,
         vector_id: str,
         embedding: np.ndarray,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Add vector to database.
@@ -108,8 +113,8 @@ class VectorDatabase:
         self,
         query_embedding: np.ndarray,
         top_k: int = 10,
-        filter_func: Optional[callable] = None,
-    ) -> List[Tuple[str, float]]:
+        filter_func: callable | None = None,
+    ) -> list[tuple[str, float]]:
         """
         Search for similar vectors.
 
@@ -144,9 +149,9 @@ class VectorDatabase:
 
     def batch_search(
         self,
-        query_embeddings: List[np.ndarray],
+        query_embeddings: list[np.ndarray],
         top_k: int = 10,
-    ) -> List[List[Tuple[str, float]]]:
+    ) -> list[list[tuple[str, float]]]:
         """
         Batch search for similar vectors.
 
@@ -173,18 +178,18 @@ class KnowledgeGraph:
         Args:
             embedding_dim: Dimension for embeddings
         """
-        self.nodes: Dict[str, KGNode] = {}
-        self.edges: Dict[str, KGEdge] = {}
+        self.nodes: dict[str, KGNode] = {}
+        self.edges: dict[str, KGEdge] = {}
 
         # Adjacency lists for efficient traversal
-        self.outgoing_edges: Dict[str, List[str]] = defaultdict(list)
-        self.incoming_edges: Dict[str, List[str]] = defaultdict(list)
+        self.outgoing_edges: dict[str, list[str]] = defaultdict(list)
+        self.incoming_edges: dict[str, list[str]] = defaultdict(list)
 
         # Vector database for semantic search
         self.vector_db = VectorDatabase(embedding_dim=embedding_dim)
 
         # Indexes
-        self.nodes_by_type: Dict[NodeType, Set[str]] = defaultdict(set)
+        self.nodes_by_type: dict[NodeType, set[str]] = defaultdict(set)
 
     def add_node(self, node: KGNode) -> None:
         """
@@ -233,9 +238,9 @@ class KnowledgeGraph:
     def get_neighbors(
         self,
         node_id: str,
-        edge_type: Optional[EdgeType] = None,
+        edge_type: EdgeType | None = None,
         direction: str = "outgoing",
-    ) -> List[KGNode]:
+    ) -> list[KGNode]:
         """
         Get neighboring nodes.
 
@@ -279,7 +284,7 @@ class KnowledgeGraph:
         start_node_id: str,
         end_node_id: str,
         max_depth: int = 5,
-    ) -> Optional[List[Tuple[str, str]]]:
+    ) -> list[tuple[str, str]] | None:
         """
         Find shortest path between two nodes using BFS.
 
@@ -322,9 +327,9 @@ class KnowledgeGraph:
     def semantic_search(
         self,
         query_embedding: np.ndarray,
-        node_type: Optional[NodeType] = None,
+        node_type: NodeType | None = None,
         top_k: int = 10,
-    ) -> List[Tuple[KGNode, float]]:
+    ) -> list[tuple[KGNode, float]]:
         """
         Search for semantically similar nodes.
 
@@ -336,6 +341,7 @@ class KnowledgeGraph:
         Returns:
             List of (node, similarity_score) tuples
         """
+
         # Define filter function
         def filter_func(metadata):
             if node_type:
@@ -360,11 +366,11 @@ class KnowledgeGraph:
     def hybrid_search(
         self,
         query_embedding: np.ndarray,
-        start_node_ids: Optional[List[str]] = None,
+        start_node_ids: list[str] | None = None,
         max_hops: int = 2,
         top_k: int = 10,
         alpha: float = 0.5,
-    ) -> List[Tuple[KGNode, float]]:
+    ) -> list[tuple[KGNode, float]]:
         """
         Hybrid search combining graph structure and vector similarity.
 
@@ -411,13 +417,13 @@ class KnowledgeGraph:
         graph_scores = {}
         for node_id in graph_candidates:
             if start_node_ids:
-                min_dist = float('inf')
+                min_dist = float("inf")
                 for start_id in start_node_ids:
                     path = self.find_path(start_id, node_id, max_depth=max_hops)
                     if path:
                         min_dist = min(min_dist, len(path))
 
-                if min_dist < float('inf'):
+                if min_dist < float("inf"):
                     graph_scores[node_id] = 1.0 / (1.0 + min_dist)
                 else:
                     graph_scores[node_id] = 0.0
@@ -444,9 +450,9 @@ class KnowledgeGraph:
 
     def get_subgraph(
         self,
-        node_ids: List[str],
+        node_ids: list[str],
         include_edges: bool = True,
-    ) -> Tuple[List[KGNode], List[KGEdge]]:
+    ) -> tuple[list[KGNode], list[KGEdge]]:
         """
         Extract subgraph containing specified nodes.
 
@@ -468,22 +474,19 @@ class KnowledgeGraph:
 
         return nodes, edges
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get graph statistics."""
         stats = {
             "total_nodes": len(self.nodes),
             "total_edges": len(self.edges),
-            "nodes_by_type": {
-                node_type.value: len(node_ids)
-                for node_type, node_ids in self.nodes_by_type.items()
-            },
+            "nodes_by_type": {node_type.value: len(node_ids) for node_type, node_ids in self.nodes_by_type.items()},
             "avg_degree": len(self.edges) * 2 / len(self.nodes) if len(self.nodes) > 0 else 0,
             "nodes_with_embeddings": sum(1 for n in self.nodes.values() if n.embedding is not None),
         }
 
         return stats
 
-    def export_to_dataframe(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def export_to_dataframe(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         Export graph to DataFrames.
 

@@ -67,9 +67,7 @@ class EnsembleModel(nn.Module):
 class MultiTaskModel(nn.Module):
     """Multi-task learning model for predicting multiple properties."""
 
-    def __init__(
-        self, base_model: nn.Module, num_tasks: int, shared_dim: int = 128, task_specific_dim: int = 64
-    ):
+    def __init__(self, base_model: nn.Module, num_tasks: int, shared_dim: int = 128, task_specific_dim: int = 64):
         """Initialize multi-task model.
 
         Args:
@@ -116,9 +114,7 @@ class MultiTaskModel(nn.Module):
 class HybridModel(nn.Module):
     """Hybrid model combining GNN and Transformer."""
 
-    def __init__(
-        self, gnn_model: nn.Module, transformer_model: nn.Module, fusion_dim: int = 128, output_dim: int = 1
-    ):
+    def __init__(self, gnn_model: nn.Module, transformer_model: nn.Module, fusion_dim: int = 128, output_dim: int = 1):
         """Initialize hybrid model.
 
         Args:

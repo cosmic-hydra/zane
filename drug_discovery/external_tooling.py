@@ -35,7 +35,9 @@ def canonicalize_smiles(smiles: str) -> str | None:
         return None
 
 
-def gt4sd_properties(smiles: str, properties: tuple[str, ...] = ("qed", "logp", "molecular_weight", "tpsa")) -> dict[str, float]:
+def gt4sd_properties(
+    smiles: str, properties: tuple[str, ...] = ("qed", "logp", "molecular_weight", "tpsa")
+) -> dict[str, float]:
     """Compute molecular properties using GT4SD property predictors when available."""
     if not smiles:
         return {}

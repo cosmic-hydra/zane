@@ -18,13 +18,12 @@ Performs:
 
 import logging
 import re
-import hashlib
-from typing import Dict, List, Optional, Tuple, Set
-from datetime import datetime, timedelta
+from collections import Counter, defaultdict
 from dataclasses import dataclass
-import pandas as pd
+from datetime import datetime
+
 import numpy as np
-from collections import defaultdict, Counter
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -32,25 +31,27 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LiteratureDocument:
     """Represents a scientific document."""
+
     doc_id: str
     title: str
     abstract: str
-    authors: List[str]
+    authors: list[str]
     publication_date: str
     source: str  # 'pubmed', 'arxiv', 'biorxiv', 'patent'
-    doi: Optional[str]
-    pmid: Optional[str]
-    citations: List[str]
-    keywords: List[str]
-    full_text: Optional[str] = None
+    doi: str | None
+    pmid: str | None
+    citations: list[str]
+    keywords: list[str]
+    full_text: str | None = None
 
 
 @dataclass
 class ExtractedEntity:
     """Extracted named entity from text."""
+
     entity_type: str  # 'drug', 'protein', 'disease', 'gene'
     entity_text: str
-    entity_id: Optional[str]  # External ID (e.g., ChEMBL, UniProt)
+    entity_id: str | None  # External ID (e.g., ChEMBL, UniProt)
     confidence: float
     context: str  # Surrounding text
 
@@ -58,6 +59,7 @@ class ExtractedEntity:
 @dataclass
 class ExtractedRelationship:
     """Extracted relationship between entities."""
+
     subject: ExtractedEntity
     predicate: str  # 'treats', 'inhibits', 'binds', 'causes'
     object: ExtractedEntity
@@ -72,31 +74,31 @@ class BiomedicalNER:
         """Initialize NER system."""
         # Placeholder patterns - in production, use spaCy, BioBERT, or similar
         self.drug_patterns = [
-            r'\b\w+mab\b',  # Monoclonal antibodies
-            r'\b\w+tide\b',  # Peptides
-            r'\b\w+ine\b',  # Common drug suffix
-            r'\b\w+ol\b',  # Alcohols
+            r"\b\w+mab\b",  # Monoclonal antibodies
+            r"\b\w+tide\b",  # Peptides
+            r"\b\w+ine\b",  # Common drug suffix
+            r"\b\w+ol\b",  # Alcohols
         ]
 
         self.protein_patterns = [
-            r'\b[A-Z]{2,}[0-9]+\b',  # Gene symbols
-            r'\bp[0-9]{2,}\b',  # p53, p21, etc.
-            r'\b\w+ receptor\b',
-            r'\b\w+ kinase\b',
+            r"\b[A-Z]{2,}[0-9]+\b",  # Gene symbols
+            r"\bp[0-9]{2,}\b",  # p53, p21, etc.
+            r"\b\w+ receptor\b",
+            r"\b\w+ kinase\b",
         ]
 
         self.disease_patterns = [
-            r'\b\w+ cancer\b',
-            r'\b\w+ disease\b',
-            r'\b\w+ syndrome\b',
-            r'\b\w+ disorder\b',
+            r"\b\w+ cancer\b",
+            r"\b\w+ disease\b",
+            r"\b\w+ syndrome\b",
+            r"\b\w+ disorder\b",
         ]
 
     def extract_entities(
         self,
         text: str,
-        entity_types: Optional[List[str]] = None,
-    ) -> List[ExtractedEntity]:
+        entity_types: list[str] | None = None,
+    ) -> list[ExtractedEntity]:
         """
         Extract named entities from text.
 
@@ -108,49 +110,49 @@ class BiomedicalNER:
             List of extracted entities
         """
         if entity_types is None:
-            entity_types = ['drug', 'protein', 'disease']
+            entity_types = ["drug", "protein", "disease"]
 
         entities = []
 
         # Drug entities
-        if 'drug' in entity_types:
+        if "drug" in entity_types:
             for pattern in self.drug_patterns:
                 matches = re.finditer(pattern, text, re.IGNORECASE)
                 for match in matches:
                     entity = ExtractedEntity(
-                        entity_type='drug',
+                        entity_type="drug",
                         entity_text=match.group(0),
                         entity_id=None,
                         confidence=0.7,
-                        context=text[max(0, match.start() - 50):min(len(text), match.end() + 50)],
+                        context=text[max(0, match.start() - 50) : min(len(text), match.end() + 50)],
                     )
                     entities.append(entity)
 
         # Protein entities
-        if 'protein' in entity_types:
+        if "protein" in entity_types:
             for pattern in self.protein_patterns:
                 matches = re.finditer(pattern, text, re.IGNORECASE)
                 for match in matches:
                     entity = ExtractedEntity(
-                        entity_type='protein',
+                        entity_type="protein",
                         entity_text=match.group(0),
                         entity_id=None,
                         confidence=0.6,
-                        context=text[max(0, match.start() - 50):min(len(text), match.end() + 50)],
+                        context=text[max(0, match.start() - 50) : min(len(text), match.end() + 50)],
                     )
                     entities.append(entity)
 
         # Disease entities
-        if 'disease' in entity_types:
+        if "disease" in entity_types:
             for pattern in self.disease_patterns:
                 matches = re.finditer(pattern, text, re.IGNORECASE)
                 for match in matches:
                     entity = ExtractedEntity(
-                        entity_type='disease',
+                        entity_type="disease",
                         entity_text=match.group(0),
                         entity_id=None,
                         confidence=0.7,
-                        context=text[max(0, match.start() - 50):min(len(text), match.end() + 50)],
+                        context=text[max(0, match.start() - 50) : min(len(text), match.end() + 50)],
                     )
                     entities.append(entity)
 
@@ -166,32 +168,32 @@ class RelationshipExtractor:
         """Initialize relationship extractor."""
         # Relationship patterns
         self.relation_patterns = {
-            'treats': [
-                r'(\w+) treats (\w+)',
-                r'(\w+) for (\w+ (?:disease|cancer|syndrome))',
-                r'treatment of (\w+ (?:disease|cancer)) with (\w+)',
+            "treats": [
+                r"(\w+) treats (\w+)",
+                r"(\w+) for (\w+ (?:disease|cancer|syndrome))",
+                r"treatment of (\w+ (?:disease|cancer)) with (\w+)",
             ],
-            'inhibits': [
-                r'(\w+) inhibits (\w+)',
-                r'inhibition of (\w+) by (\w+)',
-                r'(\w+) inhibitor',
+            "inhibits": [
+                r"(\w+) inhibits (\w+)",
+                r"inhibition of (\w+) by (\w+)",
+                r"(\w+) inhibitor",
             ],
-            'binds': [
-                r'(\w+) binds (\w+)',
-                r'binding of (\w+) to (\w+)',
+            "binds": [
+                r"(\w+) binds (\w+)",
+                r"binding of (\w+) to (\w+)",
             ],
-            'causes': [
-                r'(\w+) causes (\w+)',
-                r'(\w+) induces (\w+)',
+            "causes": [
+                r"(\w+) causes (\w+)",
+                r"(\w+) induces (\w+)",
             ],
         }
 
     def extract_relationships(
         self,
         text: str,
-        entities: List[ExtractedEntity],
+        entities: list[ExtractedEntity],
         source_doc: str,
-    ) -> List[ExtractedRelationship]:
+    ) -> list[ExtractedRelationship]:
         """
         Extract relationships from text given known entities.
 
@@ -240,7 +242,7 @@ class RelationshipExtractor:
 class PubMedIngester:
     """Ingest literature from PubMed."""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """
         Initialize PubMed ingester.
 
@@ -254,8 +256,8 @@ class PubMedIngester:
         self,
         query: str,
         max_results: int = 100,
-        date_range: Optional[Tuple[str, str]] = None,
-    ) -> List[str]:
+        date_range: tuple[str, str] | None = None,
+    ) -> list[str]:
         """
         Search PubMed for articles.
 
@@ -275,7 +277,7 @@ class PubMedIngester:
 
         return pmids
 
-    async def fetch_article(self, pmid: str) -> Optional[LiteratureDocument]:
+    async def fetch_article(self, pmid: str) -> LiteratureDocument | None:
         """
         Fetch article metadata from PubMed.
 
@@ -306,9 +308,9 @@ class PubMedIngester:
 
     async def batch_fetch_articles(
         self,
-        pmids: List[str],
+        pmids: list[str],
         max_concurrent: int = 10,
-    ) -> List[LiteratureDocument]:
+    ) -> list[LiteratureDocument]:
         """
         Fetch multiple articles in parallel.
 
@@ -343,7 +345,7 @@ class ArXivIngester:
         query: str,
         category: str = "q-bio",
         max_results: int = 100,
-    ) -> List[LiteratureDocument]:
+    ) -> list[LiteratureDocument]:
         """
         Search arXiv for preprints.
 
@@ -384,7 +386,7 @@ class BiomedicalIntelligence:
         self,
         enable_pubmed: bool = True,
         enable_arxiv: bool = True,
-        pubmed_api_key: Optional[str] = None,
+        pubmed_api_key: str | None = None,
     ):
         """
         Initialize biomedical intelligence system.
@@ -399,21 +401,21 @@ class BiomedicalIntelligence:
 
         self.ingesters = {}
         if enable_pubmed:
-            self.ingesters['pubmed'] = PubMedIngester(api_key=pubmed_api_key)
+            self.ingesters["pubmed"] = PubMedIngester(api_key=pubmed_api_key)
         if enable_arxiv:
-            self.ingesters['arxiv'] = ArXivIngester()
+            self.ingesters["arxiv"] = ArXivIngester()
 
         # Storage
-        self.documents: Dict[str, LiteratureDocument] = {}
-        self.entities: Dict[str, List[ExtractedEntity]] = defaultdict(list)
-        self.relationships: List[ExtractedRelationship] = []
+        self.documents: dict[str, LiteratureDocument] = {}
+        self.entities: dict[str, list[ExtractedEntity]] = defaultdict(list)
+        self.relationships: list[ExtractedRelationship] = []
 
     async def ingest_literature(
         self,
         query: str,
-        sources: Optional[List[str]] = None,
+        sources: list[str] | None = None,
         max_results_per_source: int = 100,
-    ) -> Dict[str, int]:
+    ) -> dict[str, int]:
         """
         Ingest literature from multiple sources.
 
@@ -438,10 +440,10 @@ class BiomedicalIntelligence:
             ingester = self.ingesters[source]
 
             try:
-                if source == 'pubmed':
+                if source == "pubmed":
                     pmids = await ingester.search_pubmed(query, max_results=max_results_per_source)
                     documents = await ingester.batch_fetch_articles(pmids)
-                elif source == 'arxiv':
+                elif source == "arxiv":
                     documents = await ingester.search_arxiv(query, max_results=max_results_per_source)
                 else:
                     documents = []
@@ -462,8 +464,8 @@ class BiomedicalIntelligence:
 
     def process_documents(
         self,
-        doc_ids: Optional[List[str]] = None,
-    ) -> Dict[str, int]:
+        doc_ids: list[str] | None = None,
+    ) -> dict[str, int]:
         """
         Process documents with NER and relationship extraction.
 
@@ -539,7 +541,7 @@ class BiomedicalIntelligence:
 
         return df
 
-    def get_entity_statistics(self) -> Dict[str, Any]:
+    def get_entity_statistics(self) -> dict[str, Any]:
         """Get statistics about extracted entities."""
         all_entities = [e for entities in self.entities.values() for e in entities]
 
@@ -574,14 +576,16 @@ class BiomedicalIntelligence:
                 continue
 
             # Look for drug-disease relationships
-            if rel.predicate == 'treats':
-                if rel.subject.entity_type == 'drug' and rel.object.entity_type == 'disease':
-                    associations.append({
-                        "drug": rel.subject.entity_text,
-                        "disease": rel.object.entity_text,
-                        "confidence": rel.confidence,
-                        "source": rel.source_doc,
-                    })
+            if rel.predicate == "treats":
+                if rel.subject.entity_type == "drug" and rel.object.entity_type == "disease":
+                    associations.append(
+                        {
+                            "drug": rel.subject.entity_text,
+                            "disease": rel.object.entity_text,
+                            "confidence": rel.confidence,
+                            "source": rel.source_doc,
+                        }
+                    )
 
         df = pd.DataFrame(associations)
         logger.info(f"Found {len(df)} drug-disease associations")

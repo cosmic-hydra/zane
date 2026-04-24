@@ -10,11 +10,12 @@ Tests model robustness against:
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
 
 from drug_discovery.utils.rdkit_fallback import is_smiles_plausible
@@ -46,7 +47,7 @@ class RobustnessTester:
         self,
         smiles: str,
         perturbation_type: str = "tautomer",
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Create a perturbed version of SMILES.
 
@@ -94,10 +95,10 @@ class RobustnessTester:
     def test_smiles_perturbation_robustness(
         self,
         model: Callable,
-        smiles_list: List[str],
-        perturbation_types: List[str] = ["tautomer"],
+        smiles_list: list[str],
+        perturbation_types: list[str] = ["tautomer"],
         tolerance: float = 0.1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Test model robustness to SMILES perturbations.
 
@@ -168,11 +169,11 @@ class RobustnessTester:
     def test_distribution_shift(
         self,
         model: Callable,
-        train_smiles: List[str],
-        test_smiles: List[str],
-        train_labels: Optional[List[float]] = None,
-        test_labels: Optional[List[float]] = None,
-    ) -> Dict[str, float]:
+        train_smiles: list[str],
+        test_smiles: list[str],
+        train_labels: list[float] | None = None,
+        test_labels: list[float] | None = None,
+    ) -> dict[str, float]:
         """
         Test model performance under distribution shift.
 
@@ -237,7 +238,7 @@ class RobustnessTester:
         data: pd.DataFrame,
         target_column: str,
         n_splits: int = 5,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Test model stability across cross-validation folds.
 
@@ -308,7 +309,7 @@ class RobustnessTester:
         smiles: str,
         target_class: int = 1,
         max_attempts: int = 100,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Test model robustness to adversarial examples.
 
@@ -375,10 +376,10 @@ class RobustnessTester:
     def test_out_of_distribution_detection(
         self,
         model: Callable,
-        in_distribution_smiles: List[str],
-        out_distribution_smiles: List[str],
+        in_distribution_smiles: list[str],
+        out_distribution_smiles: list[str],
         confidence_threshold: float = 0.8,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Test model's ability to detect out-of-distribution inputs.
 

@@ -12,8 +12,8 @@ References:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # Optional imports with graceful fallback
 try:
     from rdkit import Chem
+
     RDKIT_AVAILABLE = True
 except ImportError:
     RDKIT_AVAILABLE = False
@@ -71,19 +72,23 @@ class MolecularOrbitals:
             self._infer_orbital_types()
 
         # Find active orbital indices
-        active_indices = [
-            i for i, t in enumerate(self.orbital_types) if t == "active"
-        ][:n_active_orbitals]
+        active_indices = [i for i, t in enumerate(self.orbital_types) if t == "active"][:n_active_orbitals]
 
         if len(active_indices) < n_active_orbitals:
-            logger.warning(
-                f"Only {len(active_indices)} active orbitals found, need {n_active_orbitals}"
-            )
+            logger.warning(f"Only {len(active_indices)} active orbitals found, need {n_active_orbitals}")
             active_indices = list(range(min(n_active_orbitals, self.num_orbitals)))
 
         # Extract active space data
-        active_energies = self.orbital_energies[active_indices] if self.orbital_energies is not None else np.array([0.0] * len(active_indices))
-        active_coeffs = self.orbital_coefficients[active_indices] if self.orbital_coefficients is not None else np.eye(len(active_indices))
+        active_energies = (
+            self.orbital_energies[active_indices]
+            if self.orbital_energies is not None
+            else np.array([0.0] * len(active_indices))
+        )
+        active_coeffs = (
+            self.orbital_coefficients[active_indices]
+            if self.orbital_coefficients is not None
+            else np.eye(len(active_indices))
+        )
 
         # Calculate active space occupation
         n_electrons_per_orbital = n_active_electrons / n_active_orbitals
@@ -264,14 +269,10 @@ class ActiveSpaceApproximator:
             )
 
             # Compute integrals (simplified)
-            one_e_int, two_e_int = self._compute_integrals(
-                active_energies, active_coeffs, n_active_orbitals
-            )
+            one_e_int, two_e_int = self._compute_integrals(active_energies, active_coeffs, n_active_orbitals)
 
             # Build qubit Hamiltonian (Jordan-Wigner mapping)
-            qubit_hamiltonian = self._build_qubit_hamiltonian(
-                one_e_int, two_e_int, n_active_orbitals
-            )
+            qubit_hamiltonian = self._build_qubit_hamiltonian(one_e_int, two_e_int, n_active_orbitals)
 
             # Calculate qubit requirements
             n_qubits = n_active_orbitals  # One qubit per spatial orbital
@@ -305,9 +306,7 @@ class ActiveSpaceApproximator:
         if RDKIT_AVAILABLE and mol is not None:
             # Simplified orbital model based on atomic properties
             num_atoms = mol.GetNumAtoms()
-            num_electrons = sum(
-                atom.GetTotalValence() for atom in mol.GetAtoms()
-            )
+            num_electrons = sum(atom.GetTotalValence() for atom in mol.GetAtoms())
 
             # Estimate orbital energies based on atom types
             orbital_energies = []
@@ -472,7 +471,7 @@ class ActiveSpaceApproximator:
             Best ActiveSpaceResult found.
         """
         best_result = None
-        best_score = float('-inf')
+        best_score = float("-inf")
 
         for n_orbs in range(2, max_orbitals + 1):
             result = self.approximate_active_space(

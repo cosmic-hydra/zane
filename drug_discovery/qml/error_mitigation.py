@@ -12,14 +12,15 @@ References:
 from __future__ import annotations
 
 import logging
-import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 
 try:
     import torch
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -78,7 +79,9 @@ class ZNEResult:
             "uncertainty": self.uncertainty,
             "noise_energies": self.noise_energies,
             "noise_factors": self.noise_factors,
-            "extrapolation_params": self.extrapolation_params.tolist() if self.extrapolation_params is not None else None,
+            "extrapolation_params": (
+                self.extrapolation_params.tolist() if self.extrapolation_params is not None else None
+            ),
             "confidence_interval": self.confidence_interval,
             "success": self.success,
             "error": self.error,
@@ -160,14 +163,10 @@ class ZeroNoiseExtrapolation:
                 noise_energies.append(avg_energy)
 
             # Extrapolate to zero noise
-            mitigated_energy, params = self._extrapolate(
-                noise_factors, noise_energies
-            )
+            mitigated_energy, params = self._extrapolate(noise_factors, noise_energies)
 
             # Compute uncertainty
-            uncertainty = self._compute_uncertainty(
-                noise_factors, noise_energies, mitigated_energy
-            )
+            uncertainty = self._compute_uncertainty(noise_factors, noise_energies, mitigated_energy)
 
             # Compute confidence interval
             confidence_interval = (
@@ -251,7 +250,7 @@ class ZeroNoiseExtrapolation:
             c0 = 0.5  # decay rate
 
             # Simple grid search for parameters
-            best_error = float('inf')
+            best_error = float("inf")
             best_params = (a0, b0, c0)
 
             for a in np.linspace(min(y), max(y), 10):
@@ -290,8 +289,8 @@ class ZeroNoiseExtrapolation:
             return float(np.polyval(coeffs, 0.0))
 
         # Use three points to estimate
-        x1, x2, x3 = x[0], x[len(x)//2], x[-1]
-        y1, y2, y3 = y[0], y[len(y)//2], y[-1]
+        x1, x2, x3 = x[0], x[len(x) // 2], x[-1]
+        y1, y2, y3 = y[0], y[len(y) // 2], y[-1]
 
         # Assume noise ~ λ^k
         # y(λ) = y(0) + a*λ^k
@@ -302,8 +301,8 @@ class ZeroNoiseExtrapolation:
             # Extrapolate to λ=0
             # y(0) = y1 - a*λ1^k where a = (y2 - y1) / λ2^k
             k = max(0.5, min(k, 3.0))  # Bound k
-            a = (y2 - y1) / (x2 ** k)
-            mitigated_energy = y1 - a * (x1 ** k)
+            a = (y2 - y1) / (x2**k)
+            mitigated_energy = y1 - a * (x1**k)
 
             return float(mitigated_energy)
 
@@ -341,7 +340,7 @@ class ZeroNoiseExtrapolation:
         residuals = y - y_pred
         n = len(x)
         p = len(coeffs)
-        rse = np.sqrt(np.sum(residuals ** 2) / (n - p))
+        rse = np.sqrt(np.sum(residuals**2) / (n - p))
 
         # Uncertainty in extrapolation to λ=0
         # Use error propagation
@@ -353,10 +352,11 @@ class ZeroNoiseExtrapolation:
         if ss_x == 0:
             return rse
 
-        se_y0 = rse * np.sqrt(1 + 1/n + (x0 - x_mean)**2 / ss_x)
+        se_y0 = rse * np.sqrt(1 + 1 / n + (x0 - x_mean) ** 2 / ss_x)
 
         # Scale by confidence level
         from scipy import stats
+
         t_val = stats.t.ppf((1 + self.config.confidence_level) / 2, n - p)
 
         return float(se_y0 * t_val)
@@ -376,9 +376,10 @@ class ZeroNoiseExtrapolation:
         Returns:
             ZNEResult with mitigated expectation value.
         """
+
         def noisy_energy(scale: float) -> float:
             result = noise_scaling_fn(scale)
-            if hasattr(result, 'expectation_value'):
+            if hasattr(result, "expectation_value"):
                 return result.expectation_value
             return float(result)
 

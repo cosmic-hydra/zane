@@ -10,12 +10,12 @@ Provides continuous monitoring and improvement with:
 """
 
 from drug_discovery.continuous_improvement.drift_detection import (
+    ConceptDriftDetector,
     ContinuousImprovementSystem,
     DataDriftDetector,
-    ConceptDriftDetector,
-    PerformanceMonitor,
     DriftReport,
     PerformanceMetric,
+    PerformanceMonitor,
 )
 
 __all__ = [

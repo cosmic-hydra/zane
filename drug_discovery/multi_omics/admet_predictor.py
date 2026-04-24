@@ -14,9 +14,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
-
-import numpy as np
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +22,10 @@ try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    from torch_geometric.nn import MessagePassing, global_mean_pool, global_max_pool
-    from torch_geometric.data import Data, Batch
+
+    from torch_geometric.data import Batch, Data
+    from torch_geometric.nn import MessagePassing, global_max_pool, global_mean_pool
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -36,7 +36,8 @@ except ImportError:
 
 try:
     from rdkit import Chem
-    from rdkit.Chem import AllChem, Descriptors, Crippen
+    from rdkit.Chem import AllChem, Crippen, Descriptors
+
     RDKIT_AVAILABLE = True
 except ImportError:
     RDKIT_AVAILABLE = False
@@ -70,11 +71,7 @@ class ADMETProfile:
 
     def is_druglike(self, threshold: float = 0.4) -> bool:
         """Check if molecule meets drug-likeness threshold."""
-        return (
-            self.overall_druglikeness >= threshold
-            and len(self.clinical_risk_flags) == 0
-            and self.toxicity < 0.6
-        )
+        return self.overall_druglikeness >= threshold and len(self.clinical_risk_flags) == 0 and self.toxicity < 0.6
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -169,10 +166,9 @@ class ADMETPredictor(nn.Module if TORCH_AVAILABLE else object):
         self.edge_lin = nn.Linear(4, self.config.hidden_dim)  # Bond type + stereo
 
         # Message passing layers
-        self.mp_layers = nn.ModuleList([
-            MPNNMessagePassing(self.config.hidden_dim, self.config.hidden_dim)
-            for _ in range(self.config.num_layers)
-        ])
+        self.mp_layers = nn.ModuleList(
+            [MPNNMessagePassing(self.config.hidden_dim, self.config.hidden_dim) for _ in range(self.config.num_layers)]
+        )
 
         # Global pooling
         self.global_lin = nn.Linear(self.config.hidden_dim * 2, self.config.hidden_dim)
@@ -235,9 +231,7 @@ class ADMETPredictor(nn.Module if TORCH_AVAILABLE else object):
         try:
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
-                return ADMETProfile(
-                    clinical_risk_flags=["Invalid SMILES"]
-                )
+                return ADMETProfile(clinical_risk_flags=["Invalid SMILES"])
 
             # Build graph
             graph = self._smiles_to_graph(mol)
@@ -288,9 +282,7 @@ class ADMETPredictor(nn.Module if TORCH_AVAILABLE else object):
 
         except Exception as e:
             logger.error(f"ADMET prediction failed: {e}")
-            return ADMETProfile(
-                clinical_risk_flags=[f"Prediction error: {str(e)}"]
-            )
+            return ADMETProfile(clinical_risk_flags=[f"Prediction error: {str(e)}"])
 
     def _smiles_to_graph(self, mol) -> Data:
         """Convert RDKit molecule to PyTorch Geometric Data."""
@@ -444,11 +436,7 @@ class ADMETPredictor(nn.Module if TORCH_AVAILABLE else object):
 
                 # Drug-likeness
                 druglikeness = (
-                    0.3 * absorption
-                    + 0.2 * distribution
-                    + 0.2 * metabolism
-                    + 0.1 * excretion
-                    + 0.2 * (1 - toxicity)
+                    0.3 * absorption + 0.2 * distribution + 0.2 * metabolism + 0.1 * excretion + 0.2 * (1 - toxicity)
                 )
 
                 # Risk flags
@@ -460,7 +448,7 @@ class ADMETPredictor(nn.Module if TORCH_AVAILABLE else object):
                 if num_h_donors > 5 or num_h_acceptors > 10:
                     risk_flags.append("Lipinski violation")
                 if toxicity > self.config.toxicity_threshold:
-                    risk_flags.append(f"Potential toxicity")
+                    risk_flags.append("Potential toxicity")
 
                 return ADMETProfile(
                     absorption=absorption,

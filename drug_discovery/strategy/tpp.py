@@ -35,14 +35,14 @@ class TPPScorer:
 
     @staticmethod
     def _fallback_value(smiles: str, key: str, low: float, high: float) -> float:
-        digest = sha256(f"{smiles}::{key}".encode("utf-8")).hexdigest()
+        digest = sha256(f"{smiles}::{key}".encode()).hexdigest()
         ratio = int(digest[:8], 16) / float(0xFFFFFFFF)
         return low + (high - low) * ratio
 
     def build_profile(self, smiles: str) -> CandidateProfile:
         try:
             from rdkit import Chem
-            from rdkit.Chem import Crippen, Descriptors, QED
+            from rdkit.Chem import QED, Crippen, Descriptors
 
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:

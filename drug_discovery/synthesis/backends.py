@@ -37,7 +37,7 @@ class BackendResult:
     error: str | None = None
 
     @classmethod
-    def failure(cls, backend: str, error: str, warnings: list[str] | None = None) -> "BackendResult":
+    def failure(cls, backend: str, error: str, warnings: list[str] | None = None) -> BackendResult:
         return cls(backend=backend, success=False, routes=[], warnings=warnings or [], info={}, error=error)
 
     def as_dict(self) -> dict[str, Any]:

@@ -43,7 +43,7 @@ class ManufacturingStrategyPlanner:
 
     @staticmethod
     def _hash_score(smiles: str, label: str) -> float:
-        digest = sha256(f"{smiles}:{label}".encode("utf-8")).hexdigest()
+        digest = sha256(f"{smiles}:{label}".encode()).hexdigest()
         return int(digest[:8], 16) / float(0xFFFFFFFF)
 
     @staticmethod
@@ -86,7 +86,9 @@ class ManufacturingStrategyPlanner:
         cogs_index = min(1.0, 0.35 * (1.0 - estimated_yield) + 0.35 * min(1.0, d["mw"] / 700.0) + 0.3 * process_risk)
 
         hetero = d["hba"] + d["hbd"]
-        green = max(0.0, 1.0 - (0.45 * process_risk + 0.15 * min(1.0, hetero / 12.0) + 0.15 * min(1.0, d["mw"] / 700.0)))
+        green = max(
+            0.0, 1.0 - (0.45 * process_risk + 0.15 * min(1.0, hetero / 12.0) + 0.15 * min(1.0, d["mw"] / 700.0))
+        )
 
         supply_chain = min(1.0, 0.07 * route_steps + 0.05 * max(0.0, d["rings"] - 2.0))
 

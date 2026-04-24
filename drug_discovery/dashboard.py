@@ -21,7 +21,6 @@ from rich import box
 from rich.align import Align
 from rich.columns import Columns
 from rich.console import Console, Group
-from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
@@ -85,7 +84,9 @@ _SIMULATION_LIBRARY: list[_MoleculeSpec] = [
     _MoleculeSpec("Dextromethorphan", "CN1CCC23CCCCC2C1CC4=C3C=CC(=C4)OC", ("cough", "cold", "flu")),
     _MoleculeSpec("Guaifenesin", "COC1=CC=C(C=C1)OCC(O)CO", ("cough", "mucus", "cold", "chest congestion")),
     _MoleculeSpec("Pseudoephedrine", "CC(C)NCC(C1=CC=CC=C1)O", ("congestion", "sinus", "cold", "rhinitis")),
-    _MoleculeSpec("Loratadine", "CCOC(=O)N1CCC(=C2C3=CC=CC=C3CCC4=CC=CC=C24)CC1", ("allergy", "sneezing", "rhinitis", "cold")),
+    _MoleculeSpec(
+        "Loratadine", "CCOC(=O)N1CCC(=C2C3=CC=CC=C3CCC4=CC=CC=C24)CC1", ("allergy", "sneezing", "rhinitis", "cold")
+    ),
     _MoleculeSpec("Cetirizine", "CN1CCN(CC1)CCOCCOCC(=O)O", ("allergy", "rhinitis", "sneezing", "cold")),
 ]
 
@@ -821,7 +822,10 @@ def _compute_combo_rankings(
         else:
             fallback_qed, fallback_risk = _FALLBACK_MOL_PROFILES.get(
                 spec.name,
-                (spec.fallback_qed if spec.fallback_qed is not None else 0.5, spec.fallback_risk if spec.fallback_risk is not None else 1.0),
+                (
+                    spec.fallback_qed if spec.fallback_qed is not None else 0.5,
+                    spec.fallback_risk if spec.fallback_risk is not None else 1.0,
+                ),
             )
             qed_val, risk_proxy = fallback_qed, fallback_risk
 
@@ -853,7 +857,9 @@ def _compute_combo_rankings(
         )
 
     for mol in molecule_rows:
-        single_score = (w_match * float(mol["match"])) + (w_efficacy * float(mol["qed"])) - (w_risk * float(mol["risk_proxy"]))
+        single_score = (
+            (w_match * float(mol["match"])) + (w_efficacy * float(mol["qed"])) - (w_risk * float(mol["risk_proxy"]))
+        )
         combo_rows.append(
             {
                 "combo": str(mol["name"]),
@@ -895,7 +901,9 @@ def _sparkline(values: list[float]) -> str:
     return "".join(out)
 
 
-def _build_candidates_table(simulated_combos: list[dict[str, float | str]] | None = None, theme: DashboardTheme | None = None) -> Panel:
+def _build_candidates_table(
+    simulated_combos: list[dict[str, float | str]] | None = None, theme: DashboardTheme | None = None
+) -> Panel:
     resolved_theme = theme or _resolve_theme("lab")
     table = Table(box=box.SIMPLE_HEAVY, expand=True)
     table.add_column("Rank", justify="right", style="bold")
@@ -930,10 +938,14 @@ def _build_candidates_table(simulated_combos: list[dict[str, float | str]] | Non
             f"[{style}]{status}[/{style}]",
         )
 
-    return Panel(table, title="Top Simulated Combinations", border_style=resolved_theme.accent, box=resolved_theme.panel_box)
+    return Panel(
+        table, title="Top Simulated Combinations", border_style=resolved_theme.accent, box=resolved_theme.panel_box
+    )
 
 
-def _build_composition_table(simulated_combos: list[dict[str, float | str]] | None = None, theme: DashboardTheme | None = None) -> Panel:
+def _build_composition_table(
+    simulated_combos: list[dict[str, float | str]] | None = None, theme: DashboardTheme | None = None
+) -> Panel:
     """Build a simulation-only composition table for beta dosage exploration."""
     table = Table(box=box.SIMPLE_HEAVY, expand=True)
     table.add_column("Rank", justify="right", style="bold")
@@ -1135,9 +1147,16 @@ def _build_runtime_telemetry_panel(
     mem_ratio = max(0.0, min(1.0, snapshot.memory_gb / 32.0))
 
     text.append("Runtime Utilization\n", style="bold white")
-    text.append(f"CPU {_animated_bar(cpu_ratio, snapshot.tick, width=16)} {snapshot.cpu_util:5.1f}%\n", style=theme.primary)
-    text.append(f"GPU {_animated_bar(gpu_ratio, snapshot.tick + 1, width=16)} {snapshot.gpu_util:5.1f}%\n", style=theme.accent)
-    text.append(f"MEM {_animated_bar(mem_ratio, snapshot.tick + 2, width=16)} {snapshot.memory_gb:5.1f} GB\n\n", style=theme.caution)
+    text.append(
+        f"CPU {_animated_bar(cpu_ratio, snapshot.tick, width=16)} {snapshot.cpu_util:5.1f}%\n", style=theme.primary
+    )
+    text.append(
+        f"GPU {_animated_bar(gpu_ratio, snapshot.tick + 1, width=16)} {snapshot.gpu_util:5.1f}%\n", style=theme.accent
+    )
+    text.append(
+        f"MEM {_animated_bar(mem_ratio, snapshot.tick + 2, width=16)} {snapshot.memory_gb:5.1f} GB\n\n",
+        style=theme.caution,
+    )
 
     text.append("Live Trend Signals\n", style="bold white")
     text.append(f"HitRate  {hit_trend}\n", style=theme.ok)
@@ -1162,7 +1181,12 @@ def _build_protocol_panel(snapshot: DashboardSnapshot, theme: DashboardTheme) ->
     for protocol, criterion, observed, decision in checks:
         decision_text = "PASS" if decision else "REVIEW"
         decision_style = theme.ok if decision else theme.caution
-        table.add_row(protocol, criterion, f"{observed:.3f}" if protocol != "Latency gate" else f"{observed:.1f}", f"[{decision_style}]{decision_text}[/{decision_style}]")
+        table.add_row(
+            protocol,
+            criterion,
+            f"{observed:.3f}" if protocol != "Latency gate" else f"{observed:.1f}",
+            f"[{decision_style}]{decision_text}[/{decision_style}]",
+        )
 
     return Panel(table, title="Protocol Compliance", border_style=theme.caution, box=theme.panel_box)
 
@@ -1177,9 +1201,7 @@ def _compose_ai_panel_content(
     if advisor:
         local_ai = advisor.summarize(snapshot)
         if evidence_lines:
-            local_ai = f"{local_ai}\n\nExternal evidence signals:\n" + "\n".join(
-                f"- {line}" for line in evidence_lines
-            )
+            local_ai = f"{local_ai}\n\nExternal evidence signals:\n" + "\n".join(f"- {line}" for line in evidence_lines)
         ai_provider = f"{advisor.provider}, {intel_provider}" if intel_provider else advisor.provider
         if intel_text:
             return f"{local_ai}\n\n{intel_text}", ai_provider

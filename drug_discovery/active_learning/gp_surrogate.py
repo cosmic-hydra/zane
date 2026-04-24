@@ -8,8 +8,7 @@ generated molecules efficiently.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -19,6 +18,7 @@ try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -28,10 +28,11 @@ except ImportError:
 
 try:
     import gpytorch
-    from gpytorch.models import ExactGP
+    from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
     from gpytorch.likelihoods import GaussianLikelihood
     from gpytorch.means import ConstantMean, LinearMean
-    from gpytorch.kernels import ScaleKernel, RBFKernel, MaternKernel
+    from gpytorch.models import ExactGP
+
     GPYTORCH_AVAILABLE = True
 except ImportError:
     GPYTORCH_AVAILABLE = False
@@ -41,7 +42,9 @@ except ImportError:
 
 try:
     from sklearn.gaussian_process import GaussianProcessRegressor
-    from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, Matern
+    from sklearn.gaussian_process.kernels import RBF, Matern
+    from sklearn.gaussian_process.kernels import ConstantKernel as C
+
     SKLEARN_GP_AVAILABLE = True
 except ImportError:
     SKLEARN_GP_AVAILABLE = False
@@ -103,7 +106,7 @@ class SimpleGPModel:
             kernel = self._get_sklearn_kernel()
             self.model = GaussianProcessRegressor(
                 kernel=kernel,
-                alpha=noise_std ** 2,
+                alpha=noise_std**2,
                 n_restarts_optimizer=5,
                 normalize_y=True,
             )
@@ -149,7 +152,7 @@ class SimpleGPModel:
         K = self._rbf_kernel(X, X)
 
         # Add noise
-        K = K + self.noise_std ** 2 * np.eye(n)
+        K = K + self.noise_std**2 * np.eye(n)
 
         # Cholesky decomposition
         try:
@@ -165,11 +168,11 @@ class SimpleGPModel:
 
     def _rbf_kernel(self, X1: np.ndarray, X2: np.ndarray, length_scale: float = 1.0) -> np.ndarray:
         """RBF kernel computation."""
-        X1_sq = np.sum(X1 ** 2, axis=1, keepdims=True)
-        X2_sq = np.sum(X2 ** 2, axis=1, keepdims=True)
+        X1_sq = np.sum(X1**2, axis=1, keepdims=True)
+        X2_sq = np.sum(X2**2, axis=1, keepdims=True)
 
         K = X1_sq + X2_sq.T - 2 * np.dot(X1, X2.T)
-        K = np.exp(-0.5 * K / (length_scale ** 2))
+        K = np.exp(-0.5 * K / (length_scale**2))
 
         return K
 
@@ -205,7 +208,7 @@ class SimpleGPModel:
         # Predictive variance
         K_ss = self._rbf_kernel(X, X)
         v = np.linalg.solve(self.L, K_star.T)
-        y_var = np.diag(K_ss) - np.sum(v ** 2, axis=0)
+        y_var = np.diag(K_ss) - np.sum(v**2, axis=0)
         y_var = np.maximum(y_var, 1e-10)
         y_std = np.sqrt(y_var)
 
@@ -286,7 +289,7 @@ class GaussianProcessSurrogate:
             # Mini-batch training
             indices = np.random.permutation(len(X))
             for i in range(0, len(X), batch_size):
-                batch_idx = indices[i:i+batch_size]
+                batch_idx = indices[i : i + batch_size]
                 self._partial_fit(X[batch_idx], y[batch_idx])
         else:
             self._partial_fit(X, y)
@@ -326,7 +329,7 @@ class GaussianProcessSurrogate:
         stds = []
 
         for i in range(0, len(X), batch_size):
-            batch = X[i:i+batch_size]
+            batch = X[i : i + batch_size]
             m, s = self.gp.predict(batch)
             means.append(m)
             stds.append(s)
@@ -416,7 +419,7 @@ class GaussianProcessSurrogate:
     @staticmethod
     def _norm_pdf(x: np.ndarray) -> np.ndarray:
         """Standard normal PDF."""
-        return np.exp(-0.5 * x ** 2) / np.sqrt(2 * np.pi)
+        return np.exp(-0.5 * x**2) / np.sqrt(2 * np.pi)
 
     def save(self, path: str) -> None:
         """Save model state."""

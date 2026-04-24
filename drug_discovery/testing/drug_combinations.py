@@ -10,7 +10,6 @@ Uses Bliss independence model, Loewe additivity, and ML models.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -59,7 +58,7 @@ class DrugCombinationTester:
         self,
         smiles1: str,
         smiles2: str,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Compute features for drug combination.
 
@@ -154,7 +153,7 @@ class DrugCombinationTester:
         smiles2: str,
         effect1: float,
         effect2: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Predict synergy using Bliss independence model.
 
@@ -194,9 +193,9 @@ class DrugCombinationTester:
 
         synergy_score = observed_effect - expected_effect
 
-        interaction_type = "synergistic" if synergy_score > 0.05 else \
-                          "antagonistic" if synergy_score < -0.05 else \
-                          "additive"
+        interaction_type = (
+            "synergistic" if synergy_score > 0.05 else "antagonistic" if synergy_score < -0.05 else "additive"
+        )
 
         return {
             "expected_effect": expected_effect,
@@ -214,7 +213,7 @@ class DrugCombinationTester:
         dose2: float,
         ic50_1: float,
         ic50_2: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Predict synergy using Loewe additivity model.
 
@@ -238,9 +237,7 @@ class DrugCombinationTester:
         # CI = 1: additive
         # CI > 1: antagonistic
 
-        interaction_type = "synergistic" if ci < 0.9 else \
-                          "antagonistic" if ci > 1.1 else \
-                          "additive"
+        interaction_type = "synergistic" if ci < 0.9 else "antagonistic" if ci > 1.1 else "additive"
 
         return {
             "combination_index": ci,
@@ -253,7 +250,7 @@ class DrugCombinationTester:
         self,
         smiles1: str,
         smiles2: str,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Predict synergy using ML models.
 
@@ -289,9 +286,9 @@ class DrugCombinationTester:
 
         synergy_score = min(1.0, synergy_score)
 
-        interaction_type = "synergistic" if synergy_score > 0.5 else \
-                          "antagonistic" if synergy_score < -0.3 else \
-                          "additive"
+        interaction_type = (
+            "synergistic" if synergy_score > 0.5 else "antagonistic" if synergy_score < -0.3 else "additive"
+        )
 
         return {
             "synergy_score": synergy_score,
@@ -306,7 +303,7 @@ class DrugCombinationTester:
         smiles2: str,
         method: str = "bliss",
         **kwargs,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Test drug combination using specified method.
 
@@ -340,7 +337,7 @@ class DrugCombinationTester:
 
     def batch_test_combinations(
         self,
-        combinations: List[Tuple[str, str]],
+        combinations: list[tuple[str, str]],
         method: str = "ml",
     ) -> pd.DataFrame:
         """
@@ -379,9 +376,9 @@ class DrugCombinationTester:
 
     def find_synergistic_pairs(
         self,
-        smiles_list: List[str],
+        smiles_list: list[str],
         threshold: float = 0.5,
-        max_pairs: Optional[int] = None,
+        max_pairs: int | None = None,
     ) -> pd.DataFrame:
         """
         Find potentially synergistic drug pairs from a list.
@@ -396,17 +393,14 @@ class DrugCombinationTester:
         """
         combinations = []
         for i, smiles1 in enumerate(smiles_list):
-            for smiles2 in smiles_list[i+1:]:
+            for smiles2 in smiles_list[i + 1 :]:
                 combinations.append((smiles1, smiles2))
 
         # Test all combinations
         results = self.batch_test_combinations(combinations, method="ml")
 
         # Filter synergistic pairs
-        synergistic = results[
-            (results["interaction_type"] == "synergistic") &
-            (results["synergy_score"] >= threshold)
-        ]
+        synergistic = results[(results["interaction_type"] == "synergistic") & (results["synergy_score"] >= threshold)]
 
         # Sort by synergy score
         synergistic = synergistic.sort_values("synergy_score", ascending=False)

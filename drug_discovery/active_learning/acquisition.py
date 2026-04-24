@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -17,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import torch
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -121,7 +121,7 @@ class ExpectedImprovement(AcquisitionFunction):
             EI values.
         """
         # Get predictions
-        if hasattr(self.surrogate, 'predict'):
+        if hasattr(self.surrogate, "predict"):
             means, stds = self.surrogate.predict(X)
         else:
             means = self.surrogate(X)
@@ -135,7 +135,7 @@ class ExpectedImprovement(AcquisitionFunction):
         # Target value
         if self.target_value is None:
             # Use best observed
-            if hasattr(self.surrogate, 'y_buffer') and self.surrogate.y_buffer:
+            if hasattr(self.surrogate, "y_buffer") and self.surrogate.y_buffer:
                 y_obs = np.concatenate(self.surrogate.y_buffer)
                 if self.minimize:
                     target = y_obs.min()
@@ -200,7 +200,7 @@ class ExpectedImprovement(AcquisitionFunction):
     @staticmethod
     def _norm_pdf(x: np.ndarray) -> np.ndarray:
         """Standard normal PDF."""
-        return np.exp(-0.5 * x ** 2) / np.sqrt(2 * np.pi)
+        return np.exp(-0.5 * x**2) / np.sqrt(2 * np.pi)
 
     @staticmethod
     def _norm_cdf(x: np.ndarray) -> np.ndarray:
@@ -368,7 +368,7 @@ class ProbabilityOfImprovement(AcquisitionFunction):
         means, stds = self.surrogate.predict(X)
 
         if self.target_value is None:
-            if hasattr(self.surrogate, 'y_buffer') and self.surrogate.y_buffer:
+            if hasattr(self.surrogate, "y_buffer") and self.surrogate.y_buffer:
                 y_obs = np.concatenate(self.surrogate.y_buffer)
                 target = y_obs.min() if self.minimize else y_obs.max()
             else:
@@ -431,7 +431,7 @@ class KnowledgeGradient(AcquisitionFunction):
         means, stds = self.surrogate.predict(X)
 
         # Discretize the outcome space
-        if hasattr(self.surrogate, 'y_buffer') and self.surrogate.y_buffer:
+        if hasattr(self.surrogate, "y_buffer") and self.surrogate.y_buffer:
             y_obs = np.concatenate(self.surrogate.y_buffer)
             y_min, y_max = y_obs.min(), y_obs.max()
         else:
@@ -471,4 +471,4 @@ class KnowledgeGradient(AcquisitionFunction):
     @staticmethod
     def _norm_pdf(x: np.ndarray) -> np.ndarray:
         """Standard normal PDF."""
-        return np.exp(-0.5 * x ** 2) / np.sqrt(2 * np.pi)
+        return np.exp(-0.5 * x**2) / np.sqrt(2 * np.pi)

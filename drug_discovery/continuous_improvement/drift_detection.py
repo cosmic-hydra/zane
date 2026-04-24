@@ -11,12 +11,14 @@ Implements continuous monitoring and auto-retraining:
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple, Any, Callable
-from datetime import datetime, timedelta
+from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from collections import deque
 from scipy import stats
 
 logger = logging.getLogger(__name__)
@@ -25,23 +27,25 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DriftReport:
     """Report on detected drift."""
+
     timestamp: str
     drift_detected: bool
     drift_type: str  # 'data', 'concept', 'feature'
     drift_score: float
-    affected_features: List[str]
-    recommendations: List[str]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    affected_features: list[str]
+    recommendations: list[str]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class PerformanceMetric:
     """Performance metric snapshot."""
+
     timestamp: str
     metric_name: str
     metric_value: float
     dataset_size: int
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class DataDriftDetector:
@@ -66,10 +70,10 @@ class DataDriftDetector:
         self.method = method
 
         # Reference distribution (baseline)
-        self.reference_distributions: Dict[str, np.ndarray] = {}
+        self.reference_distributions: dict[str, np.ndarray] = {}
 
         # Historical data windows
-        self.data_windows: Dict[str, deque] = {}
+        self.data_windows: dict[str, deque] = {}
 
     def set_reference_distribution(
         self,
@@ -92,7 +96,7 @@ class DataDriftDetector:
         self,
         feature_name: str,
         new_data: np.ndarray,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Detect drift in a feature.
 
@@ -185,8 +189,8 @@ class DataDriftDetector:
 
     def batch_detect_drift(
         self,
-        feature_data: Dict[str, np.ndarray],
-    ) -> Dict[str, Dict[str, Any]]:
+        feature_data: dict[str, np.ndarray],
+    ) -> dict[str, dict[str, Any]]:
         """
         Detect drift across multiple features.
 
@@ -246,7 +250,7 @@ class ConceptDriftDetector:
         self,
         predictions: np.ndarray,
         true_labels: np.ndarray,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Detect concept drift based on prediction errors.
 
@@ -298,14 +302,14 @@ class PerformanceMonitor:
             alert_threshold: Threshold for performance degradation alerts
         """
         self.alert_threshold = alert_threshold
-        self.metrics_history: List[PerformanceMetric] = []
+        self.metrics_history: list[PerformanceMetric] = []
 
     def log_metric(
         self,
         metric_name: str,
         metric_value: float,
         dataset_size: int,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Log a performance metric.
@@ -330,7 +334,7 @@ class PerformanceMonitor:
         self,
         metric_name: str,
         lookback_period: int = 10,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Check for performance degradation.
 
@@ -342,10 +346,7 @@ class PerformanceMonitor:
             Dictionary with degradation analysis
         """
         # Filter metrics
-        recent_metrics = [
-            m for m in self.metrics_history[-lookback_period:]
-            if m.metric_name == metric_name
-        ]
+        recent_metrics = [m for m in self.metrics_history[-lookback_period:] if m.metric_name == metric_name]
 
         if len(recent_metrics) < 2:
             return {"degradation_detected": False}
@@ -398,7 +399,7 @@ class ContinuousImprovementSystem:
 
     def __init__(
         self,
-        model_retraining_trigger: Optional[Callable] = None,
+        model_retraining_trigger: Callable | None = None,
         retraining_window_days: int = 30,
     ):
         """
@@ -414,16 +415,16 @@ class ContinuousImprovementSystem:
 
         self.model_retraining_trigger = model_retraining_trigger
         self.retraining_window_days = retraining_window_days
-        self.last_retraining_date: Optional[datetime] = None
+        self.last_retraining_date: datetime | None = None
 
         # Drift reports
-        self.drift_reports: List[DriftReport] = []
+        self.drift_reports: list[DriftReport] = []
 
     def monitor_data_health(
         self,
-        feature_data: Dict[str, np.ndarray],
-        predictions: Optional[np.ndarray] = None,
-        true_labels: Optional[np.ndarray] = None,
+        feature_data: dict[str, np.ndarray],
+        predictions: np.ndarray | None = None,
+        true_labels: np.ndarray | None = None,
     ) -> DriftReport:
         """
         Monitor data health and detect drifts.
@@ -442,10 +443,7 @@ class ContinuousImprovementSystem:
         data_drift_results = self.data_drift_detector.batch_detect_drift(feature_data)
 
         data_drift_detected = any(r["drift_detected"] for r in data_drift_results.values())
-        affected_features = [
-            f for f, r in data_drift_results.items()
-            if r["drift_detected"]
-        ]
+        affected_features = [f for f, r in data_drift_results.items() if r["drift_detected"]]
 
         # Detect concept drift
         concept_drift_detected = False
@@ -520,15 +518,19 @@ class ContinuousImprovementSystem:
                 self.model_retraining_trigger()
                 self.last_retraining_date = datetime.now()
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get overall system status."""
         recent_reports = self.drift_reports[-10:] if len(self.drift_reports) >= 10 else self.drift_reports
 
         status = {
             "total_drift_reports": len(self.drift_reports),
-            "recent_drift_rate": sum(1 for r in recent_reports if r.drift_detected) / len(recent_reports) if recent_reports else 0,
+            "recent_drift_rate": (
+                sum(1 for r in recent_reports if r.drift_detected) / len(recent_reports) if recent_reports else 0
+            ),
             "last_retraining_date": self.last_retraining_date.isoformat() if self.last_retraining_date else None,
-            "days_since_retraining": (datetime.now() - self.last_retraining_date).days if self.last_retraining_date else None,
+            "days_since_retraining": (
+                (datetime.now() - self.last_retraining_date).days if self.last_retraining_date else None
+            ),
             "performance_metrics_count": len(self.performance_monitor.metrics_history),
         }
 

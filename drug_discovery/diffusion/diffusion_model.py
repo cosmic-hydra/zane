@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -25,7 +25,8 @@ try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    from torch.utils.data import Dataset, DataLoader
+    from torch.utils.data import DataLoader, Dataset
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -37,6 +38,7 @@ except ImportError:
 try:
     import e3nn
     from e3nn import o3
+
     E3NN_AVAILABLE = True
 except ImportError:
     E3NN_AVAILABLE = False
@@ -47,6 +49,7 @@ except ImportError:
 try:
     from rdkit import Chem
     from rdkit.Chem import AllChem, Descriptors, SlogP_VSA
+
     RDKIT_AVAILABLE = True
 except ImportError:
     RDKIT_AVAILABLE = False
@@ -77,7 +80,9 @@ class DiffusionConfig:
     batch_size: int = 32
     num_heads: int = 4
     dropout: float = 0.1
-    atom_types: list[int] = field(default_factory=lambda: [6, 7, 8, 9, 15, 16, 17, 35, 53])  # C, N, O, F, P, S, Cl, Br, I
+    atom_types: list[int] = field(
+        default_factory=lambda: [6, 7, 8, 9, 15, 16, 17, 35, 53]
+    )  # C, N, O, F, P, S, Cl, Br, I
 
 
 @dataclass
@@ -172,7 +177,7 @@ class E3DiffusionLayer(nn.Module if TORCH_AVAILABLE else object):
         v = self.v_proj(h).view(-1, self.num_heads, self.head_dim)
 
         # Simple attention (softmax over sequence)
-        attn = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
+        attn = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim**0.5)
         attn = F.softmax(attn, dim=-2)
         attn = self.dropout(attn)
 
@@ -228,14 +233,16 @@ class EquivariantDiffusionModel(nn.Module if TORCH_AVAILABLE else object):
         self.pos_encoder = nn.Linear(3, self.config.hidden_dim // 2)
 
         # Diffusion layers
-        self.layers = nn.ModuleList([
-            E3DiffusionLayer(
-                hidden_dim=self.config.hidden_dim,
-                num_heads=self.config.num_heads,
-                dropout=self.config.dropout,
-            )
-            for _ in range(self.config.num_layers)
-        ])
+        self.layers = nn.ModuleList(
+            [
+                E3DiffusionLayer(
+                    hidden_dim=self.config.hidden_dim,
+                    num_heads=self.config.num_heads,
+                    dropout=self.config.dropout,
+                )
+                for _ in range(self.config.num_layers)
+            ]
+        )
 
         # Output heads
         self.atom_type_head = nn.Linear(self.config.hidden_dim, len(self.config.atom_types))
@@ -337,10 +344,7 @@ class EquivariantDiffusionModel(nn.Module if TORCH_AVAILABLE else object):
                     n_atoms = np.random.randint(15, max_atoms + 1)
 
                     # Initial atom types (random)
-                    atom_types = torch.randint(
-                        0, len(self.config.atom_types),
-                        (n_atoms,), device=self.device
-                    )
+                    atom_types = torch.randint(0, len(self.config.atom_types), (n_atoms,), device=self.device)
 
                     # Initial positions (centered around pocket)
                     if pocket_coords is not None:

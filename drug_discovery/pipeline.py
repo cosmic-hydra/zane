@@ -283,16 +283,16 @@ class DrugDiscoveryPipeline:
         print("\n✓ Training complete!")
         return history
 
-    def predict_properties(self, smiles: str, include_admet: bool = True) -> dict:
+    def predict_properties(self, smiles: str, include_admet: bool = True) -> dict[str, Any]:
         """
-        Predict properties for a molecule
+        Predict properties for a molecule using the trained internal model.
 
         Args:
-            smiles: SMILES string
-            include_admet: Whether to include ADMET predictions
+            smiles: SMILES string of the candidate.
+            include_admet: Whether to include auxiliary ADMET predictions.
 
         Returns:
-            Dictionary of predicted properties
+            Dictionary containing predicted properties and metadata.
         """
         if self.property_predictor is None:
             raise RuntimeError("Model not trained yet. Call train() first.")
@@ -331,7 +331,10 @@ class DrugDiscoveryPipeline:
         return results
 
     def generate_candidates(
-        self, target_protein: str | None = None, num_candidates: int = 10, filter_criteria: dict | None = None
+        self,
+        target_protein: str | None = None,
+        num_candidates: int = 10,
+        filter_criteria: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
         """
         Generate drug candidate molecules
@@ -777,3 +780,24 @@ class DrugDiscoveryPipeline:
 
         protocol = OmegaProtocol()
         return protocol.execute_omega_workflow(target_pathology)
+
+    async def run_full_stack_discovery(self, drug_name: str, target_pathology: str) -> dict[str, Any]:
+        """
+        Execute the full ZANE stack from Tier 1 to Tier 22.
+        Warning: This includes high-latency physics and existential-risk protocols.
+        """
+        print(f"\n=== INITIATING FULL-STACK DISCOVERY: {drug_name} vs {target_pathology} ===")
+
+        # Tier 1-18: Singularity Workflow
+        singularity_results = await self.run_singularity_workflow(drug_name)
+
+        # Tier 19-22: Omega Protocol
+        omega_results = self.run_omega_protocol(target_pathology)
+
+        return {
+            "drug_name": drug_name,
+            "target_pathology": target_pathology,
+            "singularity_layer": singularity_results,
+            "omega_layer": omega_results,
+            "final_recommendation": "PROCEED_TO_HOST_REFACTOR",
+        }

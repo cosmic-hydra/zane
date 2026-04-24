@@ -381,6 +381,11 @@ def main():
     omega_parser = subparsers.add_parser("omega-run", help="Run final Tier 22 Omega Protocol")
     omega_parser.add_argument("pathology", help="Target pathology to refactor")
 
+    # Full-Stack Discovery command
+    full_parser = subparsers.add_parser("full-stack-run", help="Run ZANE full-stack discovery (Tier 1-22)")
+    full_parser.add_argument("drug_name", help="Candidate drug name")
+    full_parser.add_argument("pathology", help="Target pathology")
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -437,6 +442,8 @@ def main():
         run_train_swarm(args)
     elif args.command == "omega-run":
         run_omega_protocol(args)
+    elif args.command == "full-stack-run":
+        run_full_stack_discovery(args)
     else:
         parser.print_help()
 
@@ -953,6 +960,19 @@ def run_omega_protocol(args):
     print(f"INITIATING OMEGA PROTOCOL FOR: {args.pathology}...")
     result = pipeline.run_omega_protocol(args.pathology)
     print("\nOmega Protocol Completed:")
+    print(json.dumps(result, indent=2))
+
+
+def run_full_stack_discovery(args):
+    """Run full ZANE discovery Tier 1-22."""
+    import asyncio
+
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    print(f"STARTING FULL-STACK DISCOVERY: {args.drug_name} vs {args.pathology}...")
+    result = asyncio.run(pipeline.run_full_stack_discovery(args.drug_name, args.pathology))
+    print("\nFull-Stack Discovery Completed:")
     print(json.dumps(result, indent=2))
 
 

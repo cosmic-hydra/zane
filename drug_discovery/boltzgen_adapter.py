@@ -39,7 +39,9 @@ class BoltzGenRunner:
     emitted by the official BoltzGen pipeline.
     """
 
-    def __init__(self, executable: str = "boltzgen", cache_dir: str | Path | None = None, work_dir: str | Path | None = None):
+    def __init__(
+        self, executable: str = "boltzgen", cache_dir: str | Path | None = None, work_dir: str | Path | None = None
+    ):
         self.executable = executable
         self.cache_dir = Path(cache_dir).expanduser() if cache_dir else None
         self.work_dir = Path(work_dir) if work_dir else Path.cwd() / "outputs" / "boltzgen"
@@ -172,7 +174,9 @@ class BoltzGenRunner:
             metrics_file=metrics_file,
         )
 
-    def parse_metrics(self, output_dir: str | Path, budget: int | None = None) -> tuple[list[dict[str, object]] | None, Path | None]:
+    def parse_metrics(
+        self, output_dir: str | Path, budget: int | None = None
+    ) -> tuple[list[dict[str, object]] | None, Path | None]:
         """
         Parse BoltzGen ranking CSVs from an output directory.
         """

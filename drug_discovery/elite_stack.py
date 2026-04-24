@@ -64,7 +64,7 @@ class EliteStackPipeline:
     def _property_score(self, smiles: str) -> float:
         try:
             from rdkit import Chem
-            from rdkit.Chem import Crippen, Descriptors, QED
+            from rdkit.Chem import QED, Crippen, Descriptors
 
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:

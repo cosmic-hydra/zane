@@ -16,21 +16,21 @@ Tech Stack: BoTorch, GPyTorch
 
 from __future__ import annotations
 
+from drug_discovery.active_learning.acquisition import (
+    AcquisitionFunction,
+    ExpectedImprovement,
+    ThompsonSampling,
+    UpperConfidenceBound,
+)
 from drug_discovery.active_learning.gp_surrogate import (
     GaussianProcessSurrogate,
     SurrogateConfig,
 )
-from drug_discovery.active_learning.acquisition import (
-    AcquisitionFunction,
-    ExpectedImprovement,
-    UpperConfidenceBound,
-    ThompsonSampling,
-)
 from drug_discovery.active_learning.optimizer import (
     BayesianOptimizer,
     MultiFidelityOptimizer,
-    ResourceAllocator,
     OptimizationResult,
+    ResourceAllocator,
     ResourceBudget,
 )
 

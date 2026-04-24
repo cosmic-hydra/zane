@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -131,7 +131,7 @@ class TransientPocketPredictor:
         # Score and rank pockets
         pockets = self._score_pockets(pockets)
 
-        return pockets[:self.max_pockets]
+        return pockets[: self.max_pockets]
 
     def predict_from_trajectory(
         self,
@@ -162,7 +162,7 @@ class TransientPocketPredictor:
         # Cluster pockets across frames
         persistent_pockets = self._cluster_pockets_temporally(all_pockets)
 
-        return persistent_pockets[:self.max_pockets]
+        return persistent_pockets[: self.max_pockets]
 
     def _compute_surface(
         self,
@@ -183,11 +183,13 @@ class TransientPocketPredictor:
             phi = np.random.uniform(0, np.pi, n_samples)
 
             for th, ph in zip(theta, phi):
-                point = pos + radius * np.array([
-                    np.sin(ph) * np.cos(th),
-                    np.sin(ph) * np.sin(th),
-                    np.cos(ph),
-                ])
+                point = pos + radius * np.array(
+                    [
+                        np.sin(ph) * np.cos(th),
+                        np.sin(ph) * np.sin(th),
+                        np.cos(ph),
+                    ]
+                )
 
                 # Check if point is on surface (not buried)
                 if self._is_surface_point(point, coords, atom_types):
@@ -198,11 +200,11 @@ class TransientPocketPredictor:
     def _vdw_radius(self, atom_type: int) -> float:
         """Get van der Waals radius for atom type."""
         radii = {
-            1: 1.20,   # H
-            6: 1.70,   # C
-            7: 1.55,   # N
-            8: 1.52,   # O
-            9: 1.47,   # F
+            1: 1.20,  # H
+            6: 1.70,  # C
+            7: 1.55,  # N
+            8: 1.52,  # O
+            9: 1.47,  # F
             15: 1.80,  # P
             16: 1.80,  # S
             17: 1.75,  # Cl
@@ -256,10 +258,7 @@ class TransientPocketPredictor:
                     center = points.mean(axis=0)
 
                     # Check distance to protein
-                    dist_to_protein = np.min([
-                        np.min(np.linalg.norm(protein_coords - p, axis=1))
-                        for p in points
-                    ])
+                    dist_to_protein = np.min([np.min(np.linalg.norm(protein_coords - p, axis=1)) for p in points])
 
                     # Pocket if cavity is surrounded by protein
                     if dist_to_protein < 5.0:  # Å from protein
@@ -267,17 +266,17 @@ class TransientPocketPredictor:
 
                         if volume > self.min_pocket_size:
                             # Find contributing residues
-                            nearby_residues = self._find_nearby_residues(
-                                center, protein_coords, residue_indices
-                            )
+                            nearby_residues = self._find_nearby_residues(center, protein_coords, residue_indices)
 
-                            pockets.append(PocketPrediction(
-                                pocket_id=f"pocket_{len(pockets)}",
-                                center=center,
-                                volume=volume,
-                                depth=dist_to_protein,
-                                residues=nearby_residues,
-                            ))
+                            pockets.append(
+                                PocketPrediction(
+                                    pocket_id=f"pocket_{len(pockets)}",
+                                    center=center,
+                                    volume=volume,
+                                    depth=dist_to_protein,
+                                    residues=nearby_residues,
+                                )
+                            )
 
         except Exception as e:
             logger.warning(f"Pocket finding failed: {e}")
@@ -292,6 +291,7 @@ class TransientPocketPredictor:
         # Use convex hull volume as estimate
         try:
             from scipy.spatial import ConvexHull
+
             hull = ConvexHull(points)
             return hull.volume
         except Exception:
@@ -330,24 +330,19 @@ class TransientPocketPredictor:
             size_score = 1.0 if self.min_pocket_size <= pocket.volume <= 2000 else 0.5
 
             # Combined druggability score
-            pocket.druggability_score = (
-                0.4 * volume_score
-                + 0.3 * depth_score
-                + 0.3 * size_score
-            )
+            pocket.druggability_score = 0.4 * volume_score + 0.3 * depth_score + 0.3 * size_score
 
             # Confidence based on multiple indicators
-            pocket.confidence = (
-                0.5 * pocket.druggability_score
-                + 0.5 * size_score
-            )
+            pocket.confidence = 0.5 * pocket.druggability_score + 0.5 * size_score
 
             # Store scoring components
-            pocket.properties.update({
-                "volume_score": volume_score,
-                "depth_score": depth_score,
-                "size_score": size_score,
-            })
+            pocket.properties.update(
+                {
+                    "volume_score": volume_score,
+                    "depth_score": depth_score,
+                    "size_score": size_score,
+                }
+            )
 
         # Sort by druggability
         pockets.sort(key=lambda p: p.druggability_score, reverse=True)
@@ -379,11 +374,13 @@ class TransientPocketPredictor:
                         break
 
             if not assigned:
-                clusters.append({
-                    "center": pocket.center if pocket.center is not None else np.zeros(3),
-                    "pockets": [pocket],
-                    "count": 1,
-                })
+                clusters.append(
+                    {
+                        "center": pocket.center if pocket.center is not None else np.zeros(3),
+                        "pockets": [pocket],
+                        "count": 1,
+                    }
+                )
 
         # Select persistent pockets (appearing in multiple frames)
         persistent = []

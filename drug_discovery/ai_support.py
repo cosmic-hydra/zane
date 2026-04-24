@@ -134,11 +134,7 @@ class LlamaSupportAssistant:
                     model_input = templated["input_ids"]
                     attention_mask = templated.get("attention_mask")
             except Exception:
-                fallback_text = (
-                    f"System: {self._system_prompt()}\n\n"
-                    f"User: {combined_prompt}\n\n"
-                    "Assistant:"
-                )
+                fallback_text = f"System: {self._system_prompt()}\n\n" f"User: {combined_prompt}\n\n" "Assistant:"
                 encoded = self._tokenizer(fallback_text, return_tensors="pt")
                 model_input = encoded["input_ids"]
                 attention_mask = encoded.get("attention_mask")

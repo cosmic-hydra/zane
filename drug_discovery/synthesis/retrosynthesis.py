@@ -6,11 +6,16 @@ Retrosynthesis Planning and Synthesis Feasibility Scoring
 
 import logging
 import os
-from typing import Iterable, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
-from drug_discovery.synthesis.backends import AiZynthFinderBackend, BackendResult, BaseRetrosynthesisBackend, RouteCandidate
+from drug_discovery.synthesis.backends import (
+    AiZynthFinderBackend,
+    BackendResult,
+    BaseRetrosynthesisBackend,
+    RouteCandidate,
+)
 from drug_discovery.web_scraping import AISynthesisChat, InternetSearchClient, OnlineResourceReader
 
 logger = logging.getLogger(__name__)
@@ -30,8 +35,8 @@ class RetrosynthesisPlanner:
         self.reaction_templates = []
         self.internet_search = InternetSearchClient()
         self.resource_reader = OnlineResourceReader()
-        self.backends: list[BaseRetrosynthesisBackend] = list(backends) if backends is not None else self._default_backends(
-            aizynth_config=aizynth_config
+        self.backends: list[BaseRetrosynthesisBackend] = (
+            list(backends) if backends is not None else self._default_backends(aizynth_config=aizynth_config)
         )
 
     def _default_backends(self, aizynth_config: str | None) -> list[BaseRetrosynthesisBackend]:

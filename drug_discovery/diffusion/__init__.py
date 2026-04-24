@@ -16,14 +16,14 @@ Tech Stack: Diffusers, PyTorch3D, RDKit
 from __future__ import annotations
 
 from drug_discovery.diffusion.diffusion_model import (
-    EquivariantDiffusionModel,
     DiffusionConfig,
     DiffusionResult,
+    EquivariantDiffusionModel,
 )
 from drug_discovery.diffusion.pocket_generator import (
+    GeneratedMolecule,
     PocketAwareGenerator,
     PocketContext,
-    GeneratedMolecule,
 )
 
 __all__ = [

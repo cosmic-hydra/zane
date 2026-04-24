@@ -19,11 +19,10 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Dict
 
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +43,7 @@ class MCDropoutPredictor:
         predictor = MCDropoutPredictor(model, mc_samples=30)
         mean, std, raw = predictor.predict(**inputs)
     """
+
     def __init__(self, model: nn.Module, mc_samples: int = 30, dropout_rate: float = 0.1):
         self.model = model
         self.mc_samples = mc_samples
@@ -56,7 +56,7 @@ class MCDropoutPredictor:
                 m.p = self.dropout_rate
 
     @torch.no_grad()
-    def predict(self, **kwargs) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def predict(self, **kwargs) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         self.model.eval()
         self._enable_dropout()
         samples = []
@@ -73,11 +73,12 @@ class DeepEnsemble:
         ensemble = DeepEnsemble([model1, model2, model3])
         mean, epistemic, aleatoric = ensemble.predict(**inputs)
     """
-    def __init__(self, models: List[nn.Module]):
+
+    def __init__(self, models: list[nn.Module]):
         self.models = models
 
     @torch.no_grad()
-    def predict(self, **kwargs) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def predict(self, **kwargs) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         preds = []
         for m in self.models:
             m.eval()
@@ -97,9 +98,10 @@ class ConformalPredictor:
         cp.calibrate(val_preds, val_true)
         lower, upper = cp.predict_interval(test_preds)
     """
+
     def __init__(self, alpha: float = 0.05):
         self.alpha = alpha
-        self.q_hat: Optional[float] = None
+        self.q_hat: float | None = None
 
     def calibrate(self, predictions: np.ndarray, true_values: np.ndarray):
         scores = np.abs(predictions - true_values)
@@ -108,7 +110,7 @@ class ConformalPredictor:
         self.q_hat = float(np.quantile(scores, q_level))
         logger.info(f"Conformal q_hat = {self.q_hat:.4f} at alpha={self.alpha}")
 
-    def predict_interval(self, predictions: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def predict_interval(self, predictions: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         if self.q_hat is None:
             raise RuntimeError("Must call calibrate() first")
         return predictions - self.q_hat, predictions + self.q_hat
@@ -139,5 +141,7 @@ def regression_calibration_error(preds, true_vals, uncertainties, bins=10):
         z = 1.96 * lev  # Simplified z-score
         coverages.append(float((errors <= z * uncertainties).mean()))
     cal_errs = [abs(o - e) for o, e in zip(coverages, levels)]
-    return {"mean_calibration_error": float(np.mean(cal_errs)),
-            "interval_coverages": dict(zip([f"{l:.1f}" for l in levels], coverages))}
+    return {
+        "mean_calibration_error": float(np.mean(cal_errs)),
+        "interval_coverages": dict(zip([f"{l:.1f}" for l in levels], coverages)),
+    }

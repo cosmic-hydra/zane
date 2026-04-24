@@ -8,8 +8,9 @@ allocation for quantum computing and molecular dynamics simulations.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import torch
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -145,6 +147,7 @@ class BayesianOptimizer:
             self.surrogate = surrogate
         else:
             from drug_discovery.active_learning.gp_surrogate import GaussianProcessSurrogate, SurrogateConfig
+
             input_dim = bounds.shape[0] if bounds is not None else 1
             config = SurrogateConfig(input_dim=input_dim)
             self.surrogate = GaussianProcessSurrogate(config=config)
@@ -162,9 +165,9 @@ class BayesianOptimizer:
         """Create acquisition function."""
         from drug_discovery.active_learning.acquisition import (
             ExpectedImprovement,
-            UpperConfidenceBound,
-            ThompsonSampling,
             ProbabilityOfImprovement,
+            ThompsonSampling,
+            UpperConfidenceBound,
         )
 
         if name == "ei":
@@ -348,6 +351,7 @@ class MultiFidelityOptimizer:
 
         # Create surrogate for this fidelity
         from drug_discovery.active_learning.gp_surrogate import GaussianProcessSurrogate
+
         self.surrogates[name] = GaussianProcessSurrogate()
 
         logger.info(f"Added fidelity: {name}, cost={cost}, accuracy={accuracy}")
@@ -382,7 +386,7 @@ class MultiFidelityOptimizer:
             top_idx = np.argsort(scores)[-n_select:]
             ml_selected = X[top_idx]
         else:
-            ml_selected = candidates[:int(len(candidates) * selection_ratio)]
+            ml_selected = candidates[: int(len(candidates) * selection_ratio)]
 
         # Phase 2: QML evaluation (if budget allows)
         qml_selected = ml_selected
@@ -529,13 +533,15 @@ class ResourceAllocator:
         self.md_used += md_cost
 
         # Log
-        self.history.append({
-            "n_candidates": len(candidates),
-            "n_qml": len(qml_candidates),
-            "n_md": len(md_candidates),
-            "qml_cost": qml_cost,
-            "md_cost": md_cost,
-        })
+        self.history.append(
+            {
+                "n_candidates": len(candidates),
+                "n_qml": len(qml_candidates),
+                "n_md": len(md_candidates),
+                "qml_cost": qml_cost,
+                "md_cost": md_cost,
+            }
+        )
 
         return {
             "ml_candidates": candidates,  # All screened

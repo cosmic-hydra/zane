@@ -13,13 +13,14 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 
 try:
     import torch
     import torch.nn as nn
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -30,6 +31,7 @@ except ImportError:
 try:
     import pennylane as qml
     from pennylane import numpy as qnp
+
     PENNYLANE_AVAILABLE = True
 except ImportError:
     PENNYLANE_AVAILABLE = False
@@ -247,9 +249,7 @@ class VQECircuit:
             self.optimizer = None
             return
 
-        self.torch_params = torch.nn.Parameter(
-            torch.tensor(self.parameters, dtype=torch.float32)
-        )
+        self.torch_params = torch.nn.Parameter(torch.tensor(self.parameters, dtype=torch.float32))
 
         if self.optimizer_name == "adam":
             self.optimizer = torch.optim.Adam(
@@ -352,13 +352,14 @@ class VQECircuit:
             VQEResult with optimization results.
         """
         import time
+
         start_time = time.time()
 
         if initial_params is not None:
             self.parameters = initial_params
 
         energy_history = []
-        best_energy = float('inf')
+        best_energy = float("inf")
         best_params = self.parameters.copy()
 
         if TORCH_AVAILABLE and self.optimizer is not None:
@@ -407,8 +408,8 @@ class VQECircuit:
             result = minimize(
                 objective,
                 self.parameters,
-                method='L-BFGS-B',
-                options={'maxiter': max_iterations, 'gtol': convergence_threshold}
+                method="L-BFGS-B",
+                options={"maxiter": max_iterations, "gtol": convergence_threshold},
             )
 
             best_params = result.x

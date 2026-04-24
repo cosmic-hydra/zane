@@ -14,9 +14,8 @@ References:
 from __future__ import annotations
 
 import logging
-import math
 from dataclasses import dataclass
-from typing import Optional, Dict, List, Any
+from typing import Any
 
 import numpy as np
 import torch
@@ -52,6 +51,7 @@ def generate_lambda_schedule(n_windows: int, schedule_type: str = "optimal") -> 
 
 class FEPSurrogateNetwork(nn.Module):
     """GNN surrogate for predicting relative binding free energies."""
+
     def __init__(self, config: FEPConfig, atom_types: int = 50):
         super().__init__()
         hd = config.surrogate_hidden_dim
@@ -59,10 +59,17 @@ class FEPSurrogateNetwork(nn.Module):
         self.lambda_embed = nn.Linear(1, hd)
         self.layers = nn.ModuleList()
         for _ in range(config.surrogate_layers):
-            self.layers.append(nn.ModuleDict({
-                "edge_mlp": nn.Sequential(nn.Linear(2*hd+1+hd, hd), nn.SiLU(), nn.Linear(hd, hd), nn.SiLU()),
-                "node_mlp": nn.Sequential(nn.Linear(2*hd, hd), nn.SiLU(), nn.Linear(hd, hd)),
-                "ln": nn.LayerNorm(hd)}))
+            self.layers.append(
+                nn.ModuleDict(
+                    {
+                        "edge_mlp": nn.Sequential(
+                            nn.Linear(2 * hd + 1 + hd, hd), nn.SiLU(), nn.Linear(hd, hd), nn.SiLU()
+                        ),
+                        "node_mlp": nn.Sequential(nn.Linear(2 * hd, hd), nn.SiLU(), nn.Linear(hd, hd)),
+                        "ln": nn.LayerNorm(hd),
+                    }
+                )
+            )
         self.energy_head = nn.Sequential(nn.Linear(hd, hd), nn.SiLU(), nn.Linear(hd, 1))
 
     def forward(self, z, pos, edge_index, lam, batch=None):
@@ -76,7 +83,7 @@ class FEPSurrogateNetwork(nn.Module):
         for layer in self.layers:
             diff = pos[row] - pos[col]
             dist = torch.sqrt((diff**2).sum(-1, keepdim=True) + 1e-8)
-            lam_e = lam_feat[row] if lam_feat.size(0) == h.size(0) else lam_feat[:row.size(0)]
+            lam_e = lam_feat[row] if lam_feat.size(0) == h.size(0) else lam_feat[: row.size(0)]
             m = layer["edge_mlp"](torch.cat([h[row], h[col], dist, lam_e], -1))
             agg = torch.zeros_like(h)
             agg.index_add_(0, row, m)
@@ -98,6 +105,7 @@ class FEPPipeline:
         pipeline = FEPPipeline(config, device="cuda")
         ddG = pipeline.predict_ddG(ligand_a, ligand_b)
     """
+
     def __init__(self, config: FEPConfig, device: str = "cpu"):
         self.config = config
         self.device = torch.device(device)
@@ -105,28 +113,38 @@ class FEPPipeline:
         self.surrogate = FEPSurrogateNetwork(config).to(self.device) if config.use_surrogate else None
 
     @torch.no_grad()
-    def predict_ddG(self, ligand_a: Dict[str, torch.Tensor], ligand_b: Dict[str, torch.Tensor]) -> Dict[str, Any]:
+    def predict_dd_g(self, ligand_a: dict[str, torch.Tensor], ligand_b: dict[str, torch.Tensor]) -> dict[str, Any]:
         if self.surrogate is None:
             raise RuntimeError("Surrogate not initialized")
         self.surrogate.eval()
         energies_a, energies_b = [], []
         for lv in self.lambdas:
             lam = torch.tensor([lv], device=self.device, dtype=torch.float32)
-            ea = self.surrogate(ligand_a["z"].to(self.device), ligand_a["pos"].to(self.device),
-                                ligand_a["edges"].to(self.device), lam).item()
-            eb = self.surrogate(ligand_b["z"].to(self.device), ligand_b["pos"].to(self.device),
-                                ligand_b["edges"].to(self.device), lam).item()
-            energies_a.append(ea); energies_b.append(eb)
+            ea = self.surrogate(
+                ligand_a["z"].to(self.device), ligand_a["pos"].to(self.device), ligand_a["edges"].to(self.device), lam
+            ).item()
+            eb = self.surrogate(
+                ligand_b["z"].to(self.device), ligand_b["pos"].to(self.device), ligand_b["edges"].to(self.device), lam
+            ).item()
+            energies_a.append(ea)
+            energies_b.append(eb)
         diffs = np.array(energies_b) - np.array(energies_a)
-        ddG = float(np.trapz(diffs, self.lambdas))
-        return {"ddG_kcal_mol": ddG, "lambda_values": self.lambdas.tolist(),
-                "energies_a": energies_a, "energies_b": energies_b,
-                "method": "ML-FEP (GNN surrogate + thermodynamic integration)"}
+        dd_g = float(np.trapz(diffs, self.lambdas))
+        return {
+            "ddG_kcal_mol": dd_g,
+            "lambda_values": self.lambdas.tolist(),
+            "energies_a": energies_a,
+            "energies_b": energies_b,
+            "method": "ML-FEP (GNN surrogate + thermodynamic integration)",
+        }
 
-    def estimate_uncertainty(self, ddG_values: List[float], n_bootstrap: int = 1000) -> Dict[str, float]:
+    def estimate_uncertainty(self, ddG_values: list[float], n_bootstrap: int = 1000) -> dict[str, float]:
         arr = np.array(ddG_values)
         boots = [np.random.choice(arr, len(arr), replace=True).mean() for _ in range(n_bootstrap)]
         boots = np.array(boots)
-        return {"mean": float(arr.mean()), "std": float(arr.std()),
-                "ci_95_lower": float(np.percentile(boots, 2.5)),
-                "ci_95_upper": float(np.percentile(boots, 97.5))}
+        return {
+            "mean": float(arr.mean()),
+            "std": float(arr.std()),
+            "ci_95_lower": float(np.percentile(boots, 2.5)),
+            "ci_95_upper": float(np.percentile(boots, 97.5)),
+        }

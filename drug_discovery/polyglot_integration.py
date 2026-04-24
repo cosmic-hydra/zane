@@ -12,11 +12,12 @@ This module handles runtime selection of implementations based on availability.
 
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
-import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,7 @@ class JuliaCompute:
         """Check if Julia is available in the system."""
         try:
             import julia
+
             self._julia = julia.Julia(compiled_modules=False)
             return True
         except ImportError:
@@ -81,7 +83,7 @@ class JuliaCompute:
 class GoAccelerator:
     """Wrapper for Go-based high-performance operations."""
 
-    def __init__(self, go_binary_path: Optional[Path] = None):
+    def __init__(self, go_binary_path: Path | None = None):
         """Initialize Go accelerator.
 
         Args:
@@ -103,13 +105,8 @@ class GoAccelerator:
         return self._available
 
     def predict_admet_single(
-        self,
-        molecular_weight: float,
-        logp: float,
-        hbd: int,
-        hba: int,
-        rotatable_bonds: int
-    ) -> Dict[str, Any]:
+        self, molecular_weight: float, logp: float, hbd: int, hba: int, rotatable_bonds: int
+    ) -> dict[str, Any]:
         """Predict ADMET using Go backend.
 
         Args:
@@ -127,12 +124,18 @@ class GoAccelerator:
 
         cmd = [
             str(self.binary_path),
-            "-mw", str(molecular_weight),
-            "-logp", str(logp),
-            "-hbd", str(hbd),
-            "-hba", str(hba),
-            "-rb", str(rotatable_bonds),
-            "-output", "json"
+            "-mw",
+            str(molecular_weight),
+            "-logp",
+            str(logp),
+            "-hbd",
+            str(hbd),
+            "-hba",
+            str(hba),
+            "-rb",
+            str(rotatable_bonds),
+            "-output",
+            "json",
         ]
 
         try:
@@ -143,7 +146,7 @@ class GoAccelerator:
         except subprocess.TimeoutExpired:
             raise RuntimeError("Go execution timed out")
 
-    def predict_admet_batch(self, properties_json: str) -> List[Dict[str, float]]:
+    def predict_admet_batch(self, properties_json: str) -> list[dict[str, float]]:
         """Batch predict ADMET using Go backend.
 
         Args:
@@ -178,6 +181,7 @@ class CythonOptimized:
         """Check if Cython extensions are available."""
         try:
             from zane import fingerprints as fp_module
+
             self._module = fp_module
             return True
         except ImportError:
@@ -189,11 +193,7 @@ class CythonOptimized:
         """Check if Cython is available."""
         return self._available
 
-    def tanimoto_batch(
-        self,
-        fingerprints1: np.ndarray,
-        fingerprints2: np.ndarray
-    ) -> np.ndarray:
+    def tanimoto_batch(self, fingerprints1: np.ndarray, fingerprints2: np.ndarray) -> np.ndarray:
         """Compute pairwise Tanimoto similarity (Cython-optimized).
 
         Args:
@@ -220,11 +220,7 @@ class CythonOptimized:
                 similarities[i, j] = intersection / union if union > 0 else 0
         return similarities
 
-    def euclidean_distance_batch(
-        self,
-        points1: np.ndarray,
-        points2: np.ndarray
-    ) -> np.ndarray:
+    def euclidean_distance_batch(self, points1: np.ndarray, points2: np.ndarray) -> np.ndarray:
         """Compute pairwise Euclidean distances (Cython-optimized)."""
         if not self.available:
             return np.linalg.cdist(points1, points2)
@@ -251,6 +247,7 @@ class RStatistics:
         """Check if R environment is available."""
         try:
             import rpy2.robjects as robjects
+
             self._r = robjects
             return True
         except ImportError:
@@ -263,11 +260,8 @@ class RStatistics:
         return self._available
 
     def analyze_training_trends(
-        self,
-        epochs: List[int],
-        train_loss: List[float],
-        val_loss: List[float]
-    ) -> Dict[str, Any]:
+        self, epochs: list[int], train_loss: list[float], val_loss: list[float]
+    ) -> dict[str, Any]:
         """Analyze training trends using R statistics.
 
         Args:
@@ -288,11 +282,7 @@ class RStatistics:
         result = robjects.r.analyze_training_trends(epochs, train_loss, val_loss)
         return dict(result)
 
-    def rank_drug_candidates(
-        self,
-        candidates_df: Any,
-        weights: Optional[Dict[str, float]] = None
-    ) -> Any:
+    def rank_drug_candidates(self, candidates_df: Any, weights: dict[str, float] | None = None) -> Any:
         """Rank drug candidates using multi-objective scoring in R.
 
         Args:
@@ -338,8 +328,8 @@ class PolyglotPipeline:
         hbd: int,
         hba: int,
         rotatable_bonds: int,
-        prefer_backend: str = "auto"
-    ) -> Dict[str, Any]:
+        prefer_backend: str = "auto",
+    ) -> dict[str, Any]:
         """Predict ADMET with automatic backend selection.
 
         Args:
@@ -355,9 +345,7 @@ class PolyglotPipeline:
         """
         # Try preferred backend first
         if prefer_backend == "go" and self.go.available:
-            return self.go.predict_admet_single(
-                molecular_weight, logp, hbd, hba, rotatable_bonds
-            )
+            return self.go.predict_admet_single(molecular_weight, logp, hbd, hba, rotatable_bonds)
         elif prefer_backend == "julia" and self.julia.available:
             # Julia prefers batch operations
             logger.info("Using Julia backend for single prediction")
@@ -368,9 +356,7 @@ class PolyglotPipeline:
         return self._python_admet(molecular_weight, logp, hbd, hba, rotatable_bonds)
 
     @staticmethod
-    def _python_admet(
-        mw: float, logp: float, hbd: int, hba: int, rb: int
-    ) -> Dict[str, Any]:
+    def _python_admet(mw: float, logp: float, hbd: int, hba: int, rb: int) -> dict[str, Any]:
         """Python ADMET fallback implementation."""
         violations = []
         if mw > 500:
@@ -383,12 +369,9 @@ class PolyglotPipeline:
             violations.append("hba > 10")
 
         score = 0.7 if not violations else 0.4
-        return {
-            "lipinski": {"passes": len(violations) == 0, "violations": violations},
-            "admet": {"overall": score}
-        }
+        return {"lipinski": {"passes": len(violations) == 0, "violations": violations}, "admet": {"overall": score}}
 
-    def get_backend_info(self) -> Dict[str, bool]:
+    def get_backend_info(self) -> dict[str, bool]:
         """Get information about available backends."""
         return {
             "julia": self.julia.available,

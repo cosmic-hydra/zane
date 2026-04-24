@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from .manufacturing import ManufacturingStrategyPlanner
-from .tpp import TPPScorer, TargetProductProfile
+from .tpp import TargetProductProfile, TPPScorer
 
 
 class ProgramStrategyEngine:

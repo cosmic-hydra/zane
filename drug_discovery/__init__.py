@@ -8,7 +8,7 @@ try:
 
     __all__.append("DrugDiscoveryPipeline")
 except Exception:
-    # Keep imports lazy when optional dependencies (e.g., torch-geometric) are unavailable.
+    # Keep imports lazy when optional dependencies are unavailable.
     pass
 
 try:
@@ -42,7 +42,6 @@ try:
         ]
     )
 except Exception:
-    # Keep drugmaking module lazy when dependencies are unavailable.
     pass
 
 # ── Module 2: Quantum Machine Learning Engine ────────────────────────────────

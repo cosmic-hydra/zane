@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import torch
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -24,7 +25,8 @@ except ImportError:
 
 try:
     from rdkit import Chem
-    from rdkit.Chem import AllChem, Descriptors, Crippen, QED
+    from rdkit.Chem import QED, AllChem, Crippen, Descriptors
+
     RDKIT_AVAILABLE = True
 except ImportError:
     RDKIT_AVAILABLE = False
@@ -86,11 +88,7 @@ class GeneratedMolecule:
 
     def is_druglike(self) -> bool:
         """Check if molecule is drug-like."""
-        return (
-            self.qed_score > 0.4
-            and not self.toxicity_flag
-            and 0 < self.logp < 6
-        )
+        return self.qed_score > 0.4 and not self.toxicity_flag and 0 < self.logp < 6
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -278,9 +276,7 @@ class PocketAwareGenerator:
                 for _ in range(n_modifications):
                     # Randomly add atoms
                     if rwmol.GetNumAtoms() < max_atoms:
-                        substituent = np.random.choice([
-                            "C", "O", "N", "F", "C(C)C"
-                        ])
+                        substituent = np.random.choice(["C", "O", "N", "F", "C(C)C"])
                         try:
                             sub = Chem.MolFromSmiles(substituent)
                             if sub:
@@ -315,9 +311,7 @@ class PocketAwareGenerator:
             AllChem.MMFFOptimizeMolecule(mol)
 
             conf = mol.GetConformer()
-            coords = np.array([
-                conf.GetAtomPosition(i) for i in range(mol.GetNumAtoms())
-            ])
+            coords = np.array([conf.GetAtomPosition(i) for i in range(mol.GetNumAtoms())])
 
             # Center on pocket
             coords = coords - coords.mean(axis=0) + center
@@ -454,8 +448,8 @@ class PocketAwareGenerator:
             return molecules[:n_select]
 
         try:
-            from rdkit.Chem import AllChem
             from rdkit import DataStructs
+            from rdkit.Chem import AllChem
 
             # Compute fingerprints
             fps = []

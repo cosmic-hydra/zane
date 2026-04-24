@@ -102,7 +102,10 @@ class MolecularDynamicsSimulator:
             polarity_balance = 1.0 - min(abs(descriptors["tpsa"] - 80.0) / 120.0, 1.0)
             thermal_penalty = min(abs(self.temperature - 300.0) / 150.0, 1.0)
 
-            stability_index = max(0.0, min(1.0, 0.55 * polarity_balance + 0.35 * (1.0 - flexibility_penalty) + 0.1 * (1.0 - thermal_penalty)))
+            stability_index = max(
+                0.0,
+                min(1.0, 0.55 * polarity_balance + 0.35 * (1.0 - flexibility_penalty) + 0.1 * (1.0 - thermal_penalty)),
+            )
 
             num_frames = max(10, min(200, num_steps // 500))
             final_rmsd = 0.7 + (1.0 - stability_index) * 2.0 + rng.uniform(-0.1, 0.1)
@@ -188,7 +191,9 @@ class MolecularDynamicsSimulator:
             binding_energy = float(-4.5 - 0.35 * num_contacts - 0.2 * num_hbonds + 0.01 * (tpsa - 80.0))
             ligand_rmsd = float(ligand_result.get("rmsd", 2.0) + 0.2)
             protein_rmsd = float(0.6 + min(1.8, rot / 10.0))
-            stability = "stable" if ligand_result.get("stability_index", 0.0) >= 0.6 and ligand_rmsd < 2.5 else "unstable"
+            stability = (
+                "stable" if ligand_result.get("stability_index", 0.0) >= 0.6 and ligand_rmsd < 2.5 else "unstable"
+            )
 
             results = {
                 "success": True,

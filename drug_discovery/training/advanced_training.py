@@ -12,16 +12,14 @@ Modern training utilities to improve model performance:
 from __future__ import annotations
 
 import logging
-import math
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Dict, List
 
 import torch
 import torch.nn as nn
-from torch.optim import AdamW, Adam
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, ReduceLROnPlateau, OneCycleLR
+from torch.optim import Adam, AdamW
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, OneCycleLR, ReduceLROnPlateau
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +75,7 @@ class WarmupScheduler:
 
 class EMA:
     """Exponential Moving Average of model parameters."""
+
     def __init__(self, model, decay=0.999):
         self.decay = decay
         self.shadow = {n: p.clone().detach() for n, p in model.named_parameters() if p.requires_grad}
@@ -111,7 +110,9 @@ class EarlyStopping:
         self.should_stop = False
 
     def step(self, metric):
-        improved = (metric < self.best - self.min_delta) if self.mode == "min" else (metric > self.best + self.min_delta)
+        improved = (
+            (metric < self.best - self.min_delta) if self.mode == "min" else (metric > self.best + self.min_delta)
+        )
         if improved:
             self.best = metric
             self.counter = 0
@@ -130,19 +131,22 @@ class AdvancedTrainer:
         trainer = AdvancedTrainer(model, config, device="cuda")
         history = trainer.fit(train_loader, val_loader)
     """
+
     def __init__(self, model, config, device="cpu", loss_fn=None):
         self.model = model.to(device)
         self.config = config
         self.device = torch.device(device)
         self.loss_fn = loss_fn or nn.MSELoss()
         if config.optimizer == "adamw":
-            self.optimizer = AdamW(model.parameters(), lr=config.learning_rate,
-                                   weight_decay=config.weight_decay, betas=config.betas)
+            self.optimizer = AdamW(
+                model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay, betas=config.betas
+            )
         else:
             self.optimizer = Adam(model.parameters(), lr=config.learning_rate, betas=config.betas)
         if config.scheduler == "cosine_warm_restarts":
-            base = CosineAnnealingWarmRestarts(self.optimizer, T_0=config.cosine_t0,
-                                                T_mult=config.cosine_t_mult, eta_min=config.cosine_eta_min)
+            base = CosineAnnealingWarmRestarts(
+                self.optimizer, T_0=config.cosine_t0, T_mult=config.cosine_t_mult, eta_min=config.cosine_eta_min
+            )
         elif config.scheduler == "plateau":
             base = ReduceLROnPlateau(self.optimizer, patience=config.plateau_patience, factor=config.plateau_factor)
         else:
@@ -162,15 +166,19 @@ class AdvancedTrainer:
             history["train_loss"].append(tl)
             vl = None
             if val_loader:
-                if self.ema: self.ema.apply(self.model)
+                if self.ema:
+                    self.ema.apply(self.model)
                 vl = self._eval_epoch(val_loader)
-                if self.ema: self.ema.restore(self.model)
+                if self.ema:
+                    self.ema.restore(self.model)
                 history["val_loss"].append(vl)
             self.scheduler.step(epoch=epoch, metrics=vl)
             lr = self.scheduler.get_last_lr()[0]
             history["lr"].append(lr)
             history["epoch_time"].append(time.time() - t0)
-            logger.info(f"Epoch {epoch}/{self.config.epochs} | train={tl:.6f} | val={vl:.6f if vl else 'N/A'} | lr={lr:.2e}")
+            logger.info(
+                f"Epoch {epoch}/{self.config.epochs} | train={tl:.6f} | val={vl:.6f if vl else 'N/A'} | lr={lr:.2e}"
+            )
             if vl is not None and vl < best_val:
                 best_val = vl
                 self._save(epoch, vl, "best_model.pt")
@@ -189,16 +197,24 @@ class AdvancedTrainer:
             with torch.amp.autocast("cuda", enabled=amp_on):
                 pred = self.model(**batch["inputs"])
                 loss = self.loss_fn(pred, batch["targets"]) / self.config.accumulation_steps
-            if self.scaler: self.scaler.scale(loss).backward()
-            else: loss.backward()
+            if self.scaler:
+                self.scaler.scale(loss).backward()
+            else:
+                loss.backward()
             if (i + 1) % self.config.accumulation_steps == 0:
-                if self.scaler: self.scaler.unscale_(self.optimizer)
+                if self.scaler:
+                    self.scaler.unscale_(self.optimizer)
                 nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_clip_norm)
-                if self.scaler: self.scaler.step(self.optimizer); self.scaler.update()
-                else: self.optimizer.step()
+                if self.scaler:
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
+                else:
+                    self.optimizer.step()
                 self.optimizer.zero_grad()
-                if self.ema: self.ema.update(self.model)
-            total += loss.item() * self.config.accumulation_steps; n += 1
+                if self.ema:
+                    self.ema.update(self.model)
+            total += loss.item() * self.config.accumulation_steps
+            n += 1
         return total / max(n, 1)
 
     @torch.no_grad()
@@ -208,16 +224,26 @@ class AdvancedTrainer:
         for batch in loader:
             batch = self._to_dev(batch)
             pred = self.model(**batch["inputs"])
-            total += self.loss_fn(pred, batch["targets"]).item(); n += 1
+            total += self.loss_fn(pred, batch["targets"]).item()
+            n += 1
         return total / max(n, 1)
 
     def _to_dev(self, batch):
-        if isinstance(batch, dict): return {k: self._to_dev(v) for k, v in batch.items()}
-        if isinstance(batch, torch.Tensor): return batch.to(self.device)
+        if isinstance(batch, dict):
+            return {k: self._to_dev(v) for k, v in batch.items()}
+        if isinstance(batch, torch.Tensor):
+            return batch.to(self.device)
         return batch
 
     def _save(self, epoch, val_loss, fname):
         path = Path(self.config.checkpoint_dir) / fname
-        torch.save({"epoch": epoch, "model": self.model.state_dict(),
-                     "optimizer": self.optimizer.state_dict(), "val_loss": val_loss}, path)
+        torch.save(
+            {
+                "epoch": epoch,
+                "model": self.model.state_dict(),
+                "optimizer": self.optimizer.state_dict(),
+                "val_loss": val_loss,
+            },
+            path,
+        )
         logger.info(f"Checkpoint: {path} (val_loss={val_loss:.6f})")

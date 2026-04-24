@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 import torch
 import torch.nn as nn
@@ -55,30 +54,47 @@ class ADMETConfig:
     max_seq_len: int = 256
     num_heads: int = 10
     dropout: float = 0.1
-    endpoints: List[str] = field(default_factory=lambda: [
-        "solubility", "herg_inhibition", "cyp3a4_inhibition",
-        "bioavailability", "bbb_penetration", "ames_toxicity"])
+    endpoints: list[str] = field(
+        default_factory=lambda: [
+            "solubility",
+            "herg_inhibition",
+            "cyp3a4_inhibition",
+            "bioavailability",
+            "bbb_penetration",
+            "ames_toxicity",
+        ]
+    )
     vocab_size: int = 128
 
 
 class ADMETGraphEncoder(nn.Module):
     """GNN encoder for molecular graph representation."""
+
     def __init__(self, hidden_dim, num_layers, max_atomic_num=100, dropout=0.1):
         super().__init__()
         self.atom_embed = nn.Embedding(max_atomic_num, hidden_dim)
         self.layers = nn.ModuleList()
         for _ in range(num_layers):
-            self.layers.append(nn.ModuleDict({
-                "msg": nn.Sequential(nn.Linear(2*hidden_dim+1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)),
-                "upd": nn.Sequential(nn.Linear(2*hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)),
-                "ln": nn.LayerNorm(hidden_dim)}))
+            self.layers.append(
+                nn.ModuleDict(
+                    {
+                        "msg": nn.Sequential(
+                            nn.Linear(2 * hidden_dim + 1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
+                        ),
+                        "upd": nn.Sequential(
+                            nn.Linear(2 * hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
+                        ),
+                        "ln": nn.LayerNorm(hidden_dim),
+                    }
+                )
+            )
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, z, pos, edge_index, batch=None):
         h = self.atom_embed(z)
         row, col = edge_index
         for layer in self.layers:
-            dist = torch.sqrt(((pos[row]-pos[col])**2).sum(-1, keepdim=True)+1e-8)
+            dist = torch.sqrt(((pos[row] - pos[col]) ** 2).sum(-1, keepdim=True) + 1e-8)
             m = layer["msg"](torch.cat([h[row], h[col], dist], -1))
             agg = torch.zeros_like(h)
             agg.index_add_(0, row, m)
@@ -95,13 +111,18 @@ class ADMETGraphEncoder(nn.Module):
 
 class SMILESTransformerEncoder(nn.Module):
     """Transformer encoder for SMILES string representation."""
+
     def __init__(self, config: ADMETConfig):
         super().__init__()
         self.token_embed = nn.Embedding(config.vocab_size, config.transformer_dim)
         self.pos_embed = nn.Embedding(config.max_seq_len, config.transformer_dim)
         enc_layer = nn.TransformerEncoderLayer(
-            d_model=config.transformer_dim, nhead=config.transformer_heads,
-            dim_feedforward=config.transformer_dim*4, dropout=config.dropout, batch_first=True)
+            d_model=config.transformer_dim,
+            nhead=config.transformer_heads,
+            dim_feedforward=config.transformer_dim * 4,
+            dropout=config.dropout,
+            batch_first=True,
+        )
         self.encoder = nn.TransformerEncoder(enc_layer, config.transformer_layers)
         self.ln = nn.LayerNorm(config.transformer_dim)
 
@@ -117,12 +138,13 @@ class SMILESTransformerEncoder(nn.Module):
 
 class CrossAttentionFusion(nn.Module):
     """Cross-attention fusion of graph and sequence representations."""
+
     def __init__(self, gnn_dim, seq_dim, fusion_dim):
         super().__init__()
         self.gnn_proj = nn.Linear(gnn_dim, fusion_dim)
         self.seq_proj = nn.Linear(seq_dim, fusion_dim)
         self.cross_attn = nn.MultiheadAttention(fusion_dim, num_heads=4, batch_first=True)
-        self.ffn = nn.Sequential(nn.Linear(fusion_dim*2, fusion_dim), nn.SiLU(), nn.Linear(fusion_dim, fusion_dim))
+        self.ffn = nn.Sequential(nn.Linear(fusion_dim * 2, fusion_dim), nn.SiLU(), nn.Linear(fusion_dim, fusion_dim))
         self.ln = nn.LayerNorm(fusion_dim)
 
     def forward(self, gnn_feat, seq_feat):
@@ -144,6 +166,7 @@ class AdvancedADMETPredictor(nn.Module):
         model = AdvancedADMETPredictor(config)
         preds = model(z, pos, edge_index, smiles_tokens, batch=batch)
     """
+
     def __init__(self, config: ADMETConfig):
         super().__init__()
         self.config = config
@@ -155,8 +178,11 @@ class AdvancedADMETPredictor(nn.Module):
             info = ADMET_ENDPOINTS.get(ep, {"type": "regression"})
             out_dim = 1 if info["type"] == "regression" else 2
             self.task_heads[ep] = nn.Sequential(
-                nn.Linear(config.fusion_dim, config.fusion_dim//2), nn.SiLU(),
-                nn.Dropout(config.dropout), nn.Linear(config.fusion_dim//2, out_dim))
+                nn.Linear(config.fusion_dim, config.fusion_dim // 2),
+                nn.SiLU(),
+                nn.Dropout(config.dropout),
+                nn.Linear(config.fusion_dim // 2, out_dim),
+            )
 
     def forward(self, z, pos, edge_index, smiles_tokens, batch=None, smiles_mask=None):
         gnn_feat = self.gnn(z, pos, edge_index, batch)
@@ -165,7 +191,7 @@ class AdvancedADMETPredictor(nn.Module):
         return {name: head(fused) for name, head in self.task_heads.items()}
 
 
-def compute_admet_profile(predictions: Dict[str, torch.Tensor]) -> Dict[str, Dict]:
+def compute_admet_profile(predictions: dict[str, torch.Tensor]) -> dict[str, dict]:
     """Summarize ADMET predictions into a human-readable profile."""
     profile = {}
     for name, pred in predictions.items():
@@ -174,9 +200,11 @@ def compute_admet_profile(predictions: Dict[str, torch.Tensor]) -> Dict[str, Dic
             probs = F.softmax(pred, dim=-1)
             pos_prob = probs[..., 1].item() if probs.dim() > 1 else probs.item()
             thr = info.get("threshold", 0.5)
-            profile[name] = {"probability": round(pos_prob, 4),
-                             "prediction": "positive" if pos_prob >= thr else "negative",
-                             "passes_threshold": pos_prob < thr}
+            profile[name] = {
+                "probability": round(pos_prob, 4),
+                "prediction": "positive" if pos_prob >= thr else "negative",
+                "passes_threshold": pos_prob < thr,
+            }
         else:
             profile[name] = {"value": round(pred.item(), 4), "unit": info.get("unit", "")}
     return profile

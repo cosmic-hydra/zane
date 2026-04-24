@@ -35,9 +35,8 @@ from __future__ import annotations
 
 import logging
 import math
-import random
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -50,8 +49,9 @@ logger = logging.getLogger(__name__)
 # RDKit imports with graceful fallback
 try:
     from rdkit import Chem
-    from rdkit.Chem import AllChem, Descriptors, Lipinski, Crippen, QED
-    from rdkit.Chem.Descriptors import MolWt, MolLogP, NumHDonors, NumHAcceptors, TPSA
+    from rdkit.Chem import QED, AllChem, Crippen, Descriptors, Lipinski
+    from rdkit.Chem.Descriptors import TPSA, MolLogP, MolWt, NumHAcceptors, NumHDonors
+
     RDKIT_AVAILABLE = True
 except ImportError:
     RDKIT_AVAILABLE = False
@@ -65,43 +65,61 @@ ANTIDOTE_FUNCTIONAL_GROUPS = {
         "smarts": "C(=O)O",
         "neutralizes": ["base", "alkali"],
         "mechanism": "acid-base neutralization",
-        "examples": ["sodium_bicarbonate", "magnesium_hydroxide"]
+        "examples": ["sodium_bicarbonate", "magnesium_hydroxide"],
     },
     "sulfonic_acid": {
         "smarts": "S(=O)(=O)O",
         "neutralizes": ["base", "alkali"],
         "mechanism": "strong acid neutralization",
-        "examples": ["sodium_sulfate"]
+        "examples": ["sodium_sulfate"],
     },
     "amine": {
         "smarts": "[NX3;H2,H1;!$(N-C=O)]",
         "neutralizes": ["acid", "acyl_chloride"],
         "mechanism": "acid-base neutralization",
-        "examples": ["sodium_carbonate", "sodium_bicarbonate"]
+        "examples": ["sodium_carbonate", "sodium_bicarbonate"],
     },
     "carbonate": {
         "smarts": "O=C([O-])[O-]",
         "neutralizes": ["acid"],
         "mechanism": "carbon dioxide release",
-        "examples": ["calcium_carbonate"]
+        "examples": ["calcium_carbonate"],
     },
     "edta": {
         "smarts": "O=C(O)CNCCN(CC(=O)O)CC(=O)O",
         "neutralizes": ["metal_ion", "heavy_metal"],
         "mechanism": "chelation",
-        "examples": ["edta", "dtpa"]
+        "examples": ["edta", "dtpa"],
     },
 }
 
 KNOWN_ANTIDOTES = [
-    "O", "CC(=O)O", "CCO", "CC(=O)OC(C)=O", "O=C([O-])[O-]",
-    "CC(=O)[O-]", "C(C(=O)[O-])(=O)[O-]", "O=S(=O)([O-])[O-]",
-    "N", "CN", "CCN", "CC(C)N", "NC(C)C", "CC(C)O", "CC(C)(C)O",
-    "OC(CNCCO)CNCCO", "OCCO", "CCCCO",
-    "c1ccc2c(c1)ccc3ccccc23", "c1ccc2c(c1)ccc3c(c2)cccc3",
+    "O",
+    "CC(=O)O",
+    "CCO",
+    "CC(=O)OC(C)=O",
+    "O=C([O-])[O-]",
+    "CC(=O)[O-]",
+    "C(C(=O)[O-])(=O)[O-]",
+    "O=S(=O)([O-])[O-]",
+    "N",
+    "CN",
+    "CCN",
+    "CC(C)N",
+    "NC(C)C",
+    "CC(C)O",
+    "CC(C)(C)O",
+    "OC(CNCCO)CNCCO",
+    "OCCO",
+    "CCCCO",
+    "c1ccc2c(c1)ccc3ccccc23",
+    "c1ccc2c(c1)ccc3c(c2)cccc3",
     "c1ccc2c(c1)ccc3c(c2)ccc4ccccc34",
-    "O=C(O)CO", "O=C(O)C(O)=O", "CC(=O)OC(=O)C",
-    "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", "c1ccc2c(c1)ncc3ccccc23",
+    "O=C(O)CO",
+    "O=C(O)C(O)=O",
+    "CC(=O)OC(=O)C",
+    "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
+    "c1ccc2c(c1)ncc3ccccc23",
 ]
 
 NEUTRALIZATION_RULES = {
@@ -149,11 +167,11 @@ class CounterSubstanceResult:
         normalized_antagonism = min(1.0, max(0.0, -self.antagonism_score))
         mechanism_bonus = 1.0 if self.neutralization_mechanism != "unknown" else 0.0
         self.combined_score = (
-            normalized_antagonism * antagonism_weight +
-            self.safety_score * safety_weight +
-            self.efficacy_score * efficacy_weight +
-            mechanism_bonus * mechanism_weight +
-            self.functional_group_score * functional_group_weight
+            normalized_antagonism * antagonism_weight
+            + self.safety_score * safety_weight
+            + self.efficacy_score * efficacy_weight
+            + mechanism_bonus * mechanism_weight
+            + self.functional_group_score * functional_group_weight
         )
         return self.combined_score
 
@@ -258,6 +276,7 @@ class MolecularAnalyzer:
             return 0.0
         try:
             from rdkit import DataStructs
+
             fp1 = self.get_fingerprint(smiles1)
             fp2 = self.get_fingerprint(smiles2)
             if fp1 is None or fp2 is None:
@@ -275,8 +294,8 @@ class CounterSubstanceFinder:
         safety_threshold: float = 0.3,
         min_similarity_to_antidote: float = 0.2,
     ):
-        self._combination_tester: "DrugCombinationTester | None" = None
-        self._toxicity_predictor: "ToxicityPredictor | None" = None
+        self._combination_tester: DrugCombinationTester | None = None
+        self._toxicity_predictor: ToxicityPredictor | None = None
         self.use_ml_models = use_ml_models
         self.antagonism_threshold = antagonism_threshold
         self.safety_threshold = safety_threshold
@@ -287,16 +306,18 @@ class CounterSubstanceFinder:
         logger.info("CounterSubstanceFinder initialized with SOTA features")
 
     @property
-    def combination_tester(self) -> "DrugCombinationTester":
+    def combination_tester(self) -> DrugCombinationTester:
         if self._combination_tester is None:
             from drug_discovery.testing.drug_combinations import DrugCombinationTester
+
             self._combination_tester = DrugCombinationTester(use_ml_models=self.use_ml_models)
         return self._combination_tester
 
     @property
-    def toxicity_predictor(self) -> "ToxicityPredictor":
+    def toxicity_predictor(self) -> ToxicityPredictor:
         if self._toxicity_predictor is None:
             from drug_discovery.testing.toxicity import ToxicityPredictor
+
             self._toxicity_predictor = ToxicityPredictor()
         return self._toxicity_predictor
 
@@ -330,9 +351,7 @@ class CounterSubstanceFinder:
         neutralizers = NEUTRALIZATION_RULES[target_toxicity]["neutralizers"]
         target_groups = set()
         for key, info in ANTIDOTE_FUNCTIONAL_GROUPS.items():
-            if info["neutralizes"] and any(
-                target_toxicity.replace("_", " ") in n for n in info["neutralizes"]
-            ):
+            if info["neutralizes"] and any(target_toxicity.replace("_", " ") in n for n in info["neutralizes"]):
                 target_groups.add(key)
         matches = groups & target_groups
         return min(1.0, len(matches) / max(1, len(target_groups)))
@@ -372,10 +391,7 @@ class CounterSubstanceFinder:
         hbd_score = math.exp(-hbd_diff / 3)
         hba_diff = abs(drug_props["h_bond_acceptors"] - counter_props["h_bond_acceptors"])
         hba_score = math.exp(-hba_diff / 3)
-        binding_score = (
-            mw_score * 0.15 + logp_score * 0.25 + tpsa_score * 0.2 +
-            hbd_score * 0.2 + hba_score * 0.2
-        )
+        binding_score = mw_score * 0.15 + logp_score * 0.25 + tpsa_score * 0.2 + hbd_score * 0.2 + hba_score * 0.2
         return binding_score
 
     def _compute_efficacy_score(
@@ -398,9 +414,7 @@ class CounterSubstanceFinder:
         target_toxicity: str | None = None,
     ) -> CounterSubstanceResult:
         try:
-            result = self.combination_tester.test_combination(
-                counter_smiles, drug_smiles, method="ml"
-            )
+            result = self.combination_tester.test_combination(counter_smiles, drug_smiles, method="ml")
             antagonism_score = result.get("synergy_score", 0.0)
             interaction_type = result.get("interaction_type", "unknown")
             safety_score = self._compute_safety_score(counter_smiles)
@@ -457,13 +471,14 @@ class CounterSubstanceFinder:
                 results.append(result)
         results.sort(key=lambda x: x.combined_score, reverse=True)
         valid_results = [
-            r for r in results
-            if r.antagonism_score <= self.antagonism_threshold or
-               r.safety_score >= self.safety_threshold or
-               r.functional_group_score > 0.3
+            r
+            for r in results
+            if r.antagonism_score <= self.antagonism_threshold
+            or r.safety_score >= self.safety_threshold
+            or r.functional_group_score > 0.3
         ]
         if len(valid_results) < min_count:
-            valid_results = results[:max(min_count, len(results))]
+            valid_results = results[: max(min_count, len(results))]
             logger.warning(f"Only found {len(valid_results)} candidates, returning top matches")
         if max_count is not None:
             valid_results = valid_results[:max_count]

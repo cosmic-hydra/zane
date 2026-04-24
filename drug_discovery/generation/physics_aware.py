@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import math
 import random
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Sequence
+from typing import Any
 
 from drug_discovery.physics.md_simulator import MolecularDynamicsSimulator
 from drug_discovery.synthesis.retrosynthesis import RetrosynthesisPlanner, SynthesisFeasibilityScorer
@@ -19,9 +20,9 @@ from drug_discovery.synthesis.retrosynthesis import RetrosynthesisPlanner, Synth
 try:  # Optional heavy deps are guarded to keep CLI startup light.
     import numpy as np
     from rdkit import Chem
-    from rdkit.Chem import AllChem, BRICS, Descriptors, Lipinski, rdMolDescriptors
+    from rdkit.Chem import BRICS, AllChem, Descriptors, Lipinski, rdMolDescriptors
     from rdkit.Chem.Scaffolds import MurckoScaffold
-    from rdkit.DataStructs import BulkTanimotoSimilarity, TanimotoSimilarity
+    from rdkit.DataStructs import BulkTanimotoSimilarity
 except Exception:  # pragma: no cover - optional dependency
     Chem = None
     np = None
@@ -147,7 +148,9 @@ class PhysicsAwareGenerator:
         self.rng.shuffle(clean)
         return clean[: max(40, self.max_candidates * 2)]
 
-    def _assemble_fragments(self, fragments: Sequence[str], target_pocket: dict[str, float] | None = None) -> list[FragmentAssembly]:
+    def _assemble_fragments(
+        self, fragments: Sequence[str], target_pocket: dict[str, float] | None = None
+    ) -> list[FragmentAssembly]:
         if Chem is None:
             return [
                 FragmentAssembly(smiles=smi, fragments_used=[smi], fragment_compatibility=0.4, steric_fit=0.4)
@@ -163,7 +166,9 @@ class PhysicsAwareGenerator:
                     continue
                 comp = self._fragment_compatibility_score(mol_frags)
                 steric = self._steric_fit_score(mol, target_pocket)
-                assemblies.append(FragmentAssembly(smiles=smi, fragments_used=[], fragment_compatibility=comp, steric_fit=steric))
+                assemblies.append(
+                    FragmentAssembly(smiles=smi, fragments_used=[], fragment_compatibility=comp, steric_fit=steric)
+                )
                 if len(assemblies) >= self.max_candidates * 3:
                     break
         except Exception:
@@ -258,7 +263,9 @@ class PhysicsAwareGenerator:
             return RiskProfile(total_risk=0.5, toxicity=0.2, reactivity=0.15, synthetic_difficulty=0.15, alerts=alerts)
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
-            return RiskProfile(total_risk=1.0, toxicity=0.5, reactivity=0.3, synthetic_difficulty=0.2, alerts=["invalid_smiles"])
+            return RiskProfile(
+                total_risk=1.0, toxicity=0.5, reactivity=0.3, synthetic_difficulty=0.2, alerts=["invalid_smiles"]
+            )
         alert_smarts = {
             "nitro": "[N+](=O)[O-]",
             "aniline": "Nc1ccc(cc1)",
@@ -374,7 +381,9 @@ class PhysicsAwareGenerator:
         pharmacophore: dict[str, Any],
         md: dict[str, Any],
     ) -> dict[str, float]:
-        binding_proxy = max(0.0, min(1.0, 0.7 * (1.0 - risk.reactivity) + 0.3 * (1.0 - ensemble.boltzmann_average / 50.0)))
+        binding_proxy = max(
+            0.0, min(1.0, 0.7 * (1.0 - risk.reactivity) + 0.3 * (1.0 - ensemble.boltzmann_average / 50.0))
+        )
         admet = max(0.0, min(1.0, 0.6 * (1.0 - risk.toxicity) + 0.4 * (1.0 - risk.synthetic_difficulty)))
         synth = reaction.get("reaction_likelihood", 0.5)
         novelty = max(0.0, 1.0 - risk.synthetic_difficulty * 0.5 - len(risk.alerts) * 0.05)
@@ -402,7 +411,10 @@ class PhysicsAwareGenerator:
     def _chemical_space_metrics(self, smiles_list: Sequence[str], known: Sequence[str] | None) -> dict[str, float]:
         if Chem is None or not smiles_list:
             return {"diversity": 0.0, "novelty": 0.0}
-        fps = [rdMolDescriptors.GetMorganFingerprintAsBitVect(Chem.MolFromSmiles(s), radius=2, nBits=1024) for s in smiles_list]
+        fps = [
+            rdMolDescriptors.GetMorganFingerprintAsBitVect(Chem.MolFromSmiles(s), radius=2, nBits=1024)
+            for s in smiles_list
+        ]
         diversity_scores: list[float] = []
         for idx, fp in enumerate(fps):
             others = fps[:idx] + fps[idx + 1 :]
@@ -412,7 +424,10 @@ class PhysicsAwareGenerator:
             diversity_scores.append(1.0 - float(np.mean(sims)))
         novelty_scores: list[float] = []
         if known:
-            known_fps = [rdMolDescriptors.GetMorganFingerprintAsBitVect(Chem.MolFromSmiles(s), radius=2, nBits=1024) for s in known]
+            known_fps = [
+                rdMolDescriptors.GetMorganFingerprintAsBitVect(Chem.MolFromSmiles(s), radius=2, nBits=1024)
+                for s in known
+            ]
             for fp in fps:
                 sims = BulkTanimotoSimilarity(fp, known_fps)
                 novelty_scores.append(1.0 - float(np.max(sims)))
@@ -466,14 +481,16 @@ class PhysicsAwareGenerator:
             )
 
         candidates.sort(key=lambda c: c.scores["multi_objective"], reverse=True)
-        selected = candidates[: num_molecules]
+        selected = candidates[:num_molecules]
 
         diversity = self._chemical_space_metrics([c.smiles for c in selected], known_smiles)
         experimental_loop = [
             {
                 "iteration": 1,
                 "generated": len(selected),
-                "avg_score": round(float(sum(c.scores["multi_objective"] for c in selected) / max(1, len(selected))), 4),
+                "avg_score": round(
+                    float(sum(c.scores["multi_objective"] for c in selected) / max(1, len(selected))), 4
+                ),
                 "success_rate": round(float(sum(1 for c in selected if c.md.get("stable")) / max(1, len(selected))), 4),
             }
         ]

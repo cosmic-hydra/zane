@@ -10,9 +10,9 @@ This module implements rigorous scientific validation including:
 - Robustness and uncertainty testing
 """
 
-from drug_discovery.testing.toxicity import ToxicityPredictor
 from drug_discovery.testing.drug_combinations import DrugCombinationTester
 from drug_discovery.testing.robustness import RobustnessTester
+from drug_discovery.testing.toxicity import ToxicityPredictor
 from drug_discovery.testing.uncertainty import UncertaintyEstimator
 
 __all__ = [

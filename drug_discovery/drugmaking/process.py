@@ -23,7 +23,7 @@ import logging
 import math
 import random
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     from drug_discovery.evaluation.predictor import ADMETPredictor
     from drug_discovery.generation.backends import GenerationManager
     from drug_discovery.optimization.multi_objective import (
-        MOBOConfig,
         MultiObjectiveBayesianOptimizer,
     )
     from drug_discovery.testing.toxicity import ToxicityPredictor
@@ -41,17 +40,25 @@ logger = logging.getLogger(__name__)
 # RDKit imports with graceful fallback
 try:
     from rdkit import Chem, DataStructs
-    from rdkit.Chem import (
-        AllChem, Descriptors, Lipinski, Crippen, QED, rdMolDescriptors
-    )
+    from rdkit.Chem import QED, AllChem, Crippen, Descriptors, Lipinski, rdMolDescriptors
     from rdkit.Chem.Descriptors import (
-        MolWt, MolLogP, NumHDonors, NumHAcceptors,
-        NumRotatableBonds, TPSA, NumAromaticRings, NumHeteroatoms
+        TPSA,
+        MolLogP,
+        MolWt,
+        NumAromaticRings,
+        NumHAcceptors,
+        NumHDonors,
+        NumHeteroatoms,
+        NumRotatableBonds,
     )
     from rdkit.Chem.rdMolDescriptors import (
-        CalcNumAliphaticRings, CalcNumSaturatedRings, CalcNumSpiroAtoms,
-        CalcNumBridgeheadAtoms, CalcNumHeavyAtoms
+        CalcNumAliphaticRings,
+        CalcNumBridgeheadAtoms,
+        CalcNumHeavyAtoms,
+        CalcNumSaturatedRings,
+        CalcNumSpiroAtoms,
     )
+
     RDKIT_AVAILABLE = True
 except ImportError:
     RDKIT_AVAILABLE = False
@@ -104,9 +111,18 @@ PRIVILEGED_SCAFFOLDS = [
 
 # Known drug scaffolds with favorable properties
 BENZENE_DERIVATIVES = [
-    "Cc1ccccc1", "Clc1ccccc1", "Fc1ccccc1", "Oc1ccccc1",
-    "Nc1ccccc1", "CC(=O)c1ccccc1", "CCc1ccccc1", "c1ccc(C)cc1",
-    "COc1ccccc1", "O=C(O)c1ccccc1", "O=C(N)c1ccccc1", "CC(=O)Nc1ccccc1",
+    "Cc1ccccc1",
+    "Clc1ccccc1",
+    "Fc1ccccc1",
+    "Oc1ccccc1",
+    "Nc1ccccc1",
+    "CC(=O)c1ccccc1",
+    "CCc1ccccc1",
+    "c1ccc(C)cc1",
+    "COc1ccccc1",
+    "O=C(O)c1ccccc1",
+    "O=C(N)c1ccccc1",
+    "CC(=O)Nc1ccccc1",
 ]
 
 # Common bioisosteres for lead optimization
@@ -140,14 +156,16 @@ class OptimizationConfig:
 
     objective_names: list[str] = field(
         default_factory=lambda: [
-            "potency", "selectivity", "solubility", "safety",
-            "synthetic_accessibility", "lipophilicity"
+            "potency",
+            "selectivity",
+            "solubility",
+            "safety",
+            "synthetic_accessibility",
+            "lipophilicity",
         ]
     )
     objective_directions: list[str] = field(
-        default_factory=lambda: [
-            "maximize", "maximize", "maximize", "maximize", "maximize", "maximize"
-        ]
+        default_factory=lambda: ["maximize", "maximize", "maximize", "maximize", "maximize", "maximize"]
     )
     ref_point: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     num_iterations: int = 30
@@ -299,7 +317,6 @@ class RDKitMolecularProperties:
                 "h_bond_acceptors": NumHAcceptors(mol),
                 "rotatable_bonds": NumRotatableBonds(mol),
                 "tpsa": TPSA(mol),
-
                 # Structural features
                 "num_aromatic_rings": NumAromaticRings(mol),
                 "num_heteroatoms": NumHeteroatoms(mol),
@@ -308,14 +325,12 @@ class RDKitMolecularProperties:
                 "num_saturated_rings": CalcNumSaturatedRings(mol),
                 "num_spiro_atoms": CalcNumSpiroAtoms(mol),
                 "num_bridgehead_atoms": CalcNumBridgeheadAtoms(mol),
-
                 # Advanced properties
                 "fraction_csp3": self._calculate_fraction_csp3(mol),
                 "num_aromatic_heterocycles": self._count_aromatic_heterocycles(mol),
                 "num_aromatic_carocycles": self._count_aromatic_carocycles(mol),
                 "hall_kier_alpha": self._calculate_hall_kier_alpha(mol),
                 "labute_asa": self._calculate_labute_asa(mol),
-
                 # Drug-likeness metrics
                 "qed_score": QED.qed(mol),
                 "num_lipinski_violations": self._count_lipinski_violations(mol),
@@ -329,8 +344,8 @@ class RDKitMolecularProperties:
     def _calculate_fraction_csp3(self, mol) -> float:
         """Calculate fraction of sp3 carbons."""
         try:
-            num_csp3 = sum(1 for atom in mol.GetAtoms() if atom.GetIsAromatic() is False and atom.GetSymbol() == 'C')
-            num_carbons = sum(1 for atom in mol.GetAtoms() if atom.GetSymbol() == 'C')
+            num_csp3 = sum(1 for atom in mol.GetAtoms() if atom.GetIsAromatic() is False and atom.GetSymbol() == "C")
+            num_carbons = sum(1 for atom in mol.GetAtoms() if atom.GetSymbol() == "C")
             return num_csp3 / num_carbons if num_carbons > 0 else 0.0
         except Exception:
             return 0.5
@@ -338,20 +353,22 @@ class RDKitMolecularProperties:
     def _count_aromatic_heterocycles(self, mol) -> int:
         """Count aromatic heterocyclic rings."""
         try:
-            return sum(1 for ring in mol.GetRingInfo().BondRings()
-                      if ring.IsAromatic() and any(
-                          mol.GetAtomWithIdx(idx).GetSymbol() != 'C'
-                          for idx in ring))
+            return sum(
+                1
+                for ring in mol.GetRingInfo().BondRings()
+                if ring.IsAromatic() and any(mol.GetAtomWithIdx(idx).GetSymbol() != "C" for idx in ring)
+            )
         except Exception:
             return 0
 
     def _count_aromatic_carocycles(self, mol) -> int:
         """Count aromatic carbocyclic rings."""
         try:
-            return sum(1 for ring in mol.GetRingInfo().BondRings()
-                      if ring.IsAromatic() and all(
-                          mol.GetAtomWithIdx(idx).GetSymbol() == 'C'
-                          for idx in ring))
+            return sum(
+                1
+                for ring in mol.GetRingInfo().BondRings()
+                if ring.IsAromatic() and all(mol.GetAtomWithIdx(idx).GetSymbol() == "C" for idx in ring)
+            )
         except Exception:
             return 0
 
@@ -366,6 +383,7 @@ class RDKitMolecularProperties:
         """Calculate Labute's Approximate Surface Area."""
         try:
             from rdkit.Chem import Descriptors
+
             return Descriptors.LabuteASA(mol)
         except Exception:
             return 100.0
@@ -423,10 +441,12 @@ class RDKitMolecularProperties:
         if fp1 is None or fp2 is None:
             return 0.0
         try:
-            return float(DataStructs.TanimotoSimilarity(
-                DataStructs.CreateFromBitString(''.join(map(str, fp1))),
-                DataStructs.CreateFromBitString(''.join(map(str, fp2)))
-            ))
+            return float(
+                DataStructs.TanimotoSimilarity(
+                    DataStructs.CreateFromBitString("".join(map(str, fp1))),
+                    DataStructs.CreateFromBitString("".join(map(str, fp2))),
+                )
+            )
         except Exception:
             return 0.0
 
@@ -463,13 +483,7 @@ class PhysicsBasedProperties:
         hba_factor = 1.0 / (1.0 + props.get("h_bond_acceptors", 3) ** 2)
 
         # Binding affinity score (higher is better binding)
-        binding_score = (
-            mw_factor * 0.2 +
-            logp_factor * 0.3 +
-            tpsa_factor * 0.2 +
-            hbd_factor * 0.15 +
-            hba_factor * 0.15
-        )
+        binding_score = mw_factor * 0.2 + logp_factor * 0.3 + tpsa_factor * 0.2 + hbd_factor * 0.15 + hba_factor * 0.15
 
         # Estimated binding affinity
         estimated_delta_g = -10 * binding_score  # kcal/mol approximation
@@ -510,7 +524,7 @@ class PhysicsBasedProperties:
 
         # Convert to mg/L
         mw_factor = mw / 1000
-        solubility_mg_l = 10 ** log_s * mw_factor * 1000
+        solubility_mg_l = 10**log_s * mw_factor * 1000
 
         return {
             "log_s": log_s,
@@ -663,10 +677,10 @@ class CustomDrugmakingModule:
             random.seed(seed)
             np.random.seed(seed)
 
-        self._generation_manager: "GenerationManager | None" = None
-        self._toxicity_predictor: "ToxicityPredictor | None" = None
-        self._admet_predictor: "ADMETPredictor | None" = None
-        self._optimizer: "MultiObjectiveBayesianOptimizer | None" = None
+        self._generation_manager: GenerationManager | None = None
+        self._toxicity_predictor: ToxicityPredictor | None = None
+        self._admet_predictor: ADMETPredictor | None = None
+        self._optimizer: MultiObjectiveBayesianOptimizer | None = None
 
         self._generated_candidates: list[str] = []
         self._tested_compounds: list[CompoundTestResult] = []
@@ -689,26 +703,29 @@ class CustomDrugmakingModule:
         return self._physics_props
 
     @property
-    def generation_manager(self) -> "GenerationManager":
+    def generation_manager(self) -> GenerationManager:
         """Lazy-loaded generation manager."""
         if self._generation_manager is None:
             from drug_discovery.generation.backends import GenerationManager
+
             self._generation_manager = GenerationManager()
         return self._generation_manager
 
     @property
-    def toxicity_predictor(self) -> "ToxicityPredictor":
+    def toxicity_predictor(self) -> ToxicityPredictor:
         """Lazy-loaded toxicity predictor."""
         if self._toxicity_predictor is None:
             from drug_discovery.testing.toxicity import ToxicityPredictor
+
             self._toxicity_predictor = ToxicityPredictor()
         return self._toxicity_predictor
 
     @property
-    def admet_predictor(self) -> "ADMETPredictor":
+    def admet_predictor(self) -> ADMETPredictor:
         """Lazy-loaded ADMET predictor."""
         if self._admet_predictor is None:
             from drug_discovery.evaluation.predictor import ADMETPredictor
+
             self._admet_predictor = ADMETPredictor()
         return self._admet_predictor
 
@@ -747,14 +764,14 @@ class CustomDrugmakingModule:
 
         # Add fragment-based generation
         if strategy in ["fragment", "hybrid"]:
-            fragment_candidates = self._generate_fragment_based(
-                max(1, num_candidates - len(candidates))
-            )
+            fragment_candidates = self._generate_fragment_based(max(1, num_candidates - len(candidates)))
             candidates.extend(fragment_candidates)
 
         # Ensure we have enough candidates
         while len(candidates) < num_candidates:
-            candidates.extend(random.sample(BENZENE_DERIVATIVES, min(len(BENZENE_DERIVATIVES), num_candidates - len(candidates))))
+            candidates.extend(
+                random.sample(BENZENE_DERIVATIVES, min(len(BENZENE_DERIVATIVES), num_candidates - len(candidates)))
+            )
 
         # Validate and deduplicate
         valid_candidates = []
@@ -780,8 +797,21 @@ class CustomDrugmakingModule:
         """Generate compounds from privileged scaffolds."""
         candidates = []
         modifications = [
-            "", "C", "CC", "O", "N", "C(=O)", "C(=O)O", "C(=O)N",
-            "Cl", "F", "Br", "OC", "NC", "COC", "CNC"
+            "",
+            "C",
+            "CC",
+            "O",
+            "N",
+            "C(=O)",
+            "C(=O)O",
+            "C(=O)N",
+            "Cl",
+            "F",
+            "Br",
+            "OC",
+            "NC",
+            "COC",
+            "CNC",
         ]
 
         for _ in range(num):
@@ -834,11 +864,11 @@ class CustomDrugmakingModule:
 
         # Combine scores
         effectiveness = (
-            binding.get("binding_score", 0.5) * 0.25 +
-            min(1.0, max(0.0, (solubility.get("log_s", -3) + 6) / 6)) * 0.25 +
-            bioavail.get("bioavailability_score", 0.5) * 0.25 +
-            qed * 0.25 +
-            lipinski_bonus
+            binding.get("binding_score", 0.5) * 0.25
+            + min(1.0, max(0.0, (solubility.get("log_s", -3) + 6) / 6)) * 0.25
+            + bioavail.get("bioavailability_score", 0.5) * 0.25
+            + qed * 0.25
+            + lipinski_bonus
         )
 
         return min(1.0, max(0.0, effectiveness))
@@ -883,10 +913,10 @@ class CustomDrugmakingModule:
 
             # Determine ADMET pass
             admet_passed = (
-                bool(lipinski and lipinski["passes"]) and
-                (qed is not None and qed > 0.3) and
-                overall_toxicity < 0.5 and
-                mol_props.get("num_lipinski_violations", 1) == 0
+                bool(lipinski and lipinski["passes"])
+                and (qed is not None and qed > 0.3)
+                and overall_toxicity < 0.5
+                and mol_props.get("num_lipinski_violations", 1) == 0
             )
 
             effectiveness = self.test_effectiveness(smiles)
@@ -899,7 +929,7 @@ class CustomDrugmakingModule:
                 safety=safety,
                 admet_passed=admet_passed,
                 details={
-                    "toxicity_endpoints": toxicity_results if 'toxicity_results' in dir() else {},
+                    "toxicity_endpoints": toxicity_results if "toxicity_results" in dir() else {},
                     "lipinski": lipinski,
                     "qed": qed,
                     "synthetic_accessibility": sa_score,
@@ -1058,7 +1088,7 @@ class CustomDrugmakingModule:
 
         for iteration in range(config.num_iterations):
             if iteration < len(candidates):
-                batch_smiles = candidates[iteration:iteration + config.batch_size]
+                batch_smiles = candidates[iteration : iteration + config.batch_size]
             else:
                 batch_smiles = self.generate_compounds(
                     num_candidates=config.batch_size,
@@ -1073,17 +1103,16 @@ class CustomDrugmakingModule:
                 objectives = {
                     "potency": test_result.effectiveness,
                     "selectivity": test_result.effectiveness * 0.9,
-                    "solubility": min(1.0, max(0.0, (test_result.physics_properties.get("solubility_log_s", -3) + 6) / 6)),
+                    "solubility": min(
+                        1.0, max(0.0, (test_result.physics_properties.get("solubility_log_s", -3) + 6) / 6)
+                    ),
                     "safety": test_result.safety,
                     "synthetic_accessibility": 1.0 / (1.0 + test_result.details.get("synthetic_accessibility", 5)),
                     "lipophilicity": 1.0 - abs(test_result.physics_properties.get("logd_ph74", 3) - 2.5) / 4,
                 }
 
                 # Add uncertainty (simplified - based on property variance)
-                uncertainties = {
-                    name: 0.1 + 0.1 * np.random.random()
-                    for name in config.objective_names
-                }
+                uncertainties = {name: 0.1 + 0.1 * np.random.random() for name in config.objective_names}
 
                 y_values = [objectives.get(name, 0.5) for name in config.objective_names]
                 Y_batch.append(y_values)
@@ -1102,11 +1131,13 @@ class CustomDrugmakingModule:
 
             self._optimizer.tell(X_batch, Y_batch)
 
-            self._optimization_history.append({
-                "iteration": iteration + 1,
-                "num_candidates": len(all_candidates),
-                "best_score": max(c.composite_score for c in all_candidates) if all_candidates else 0.0,
-            })
+            self._optimization_history.append(
+                {
+                    "iteration": iteration + 1,
+                    "num_candidates": len(all_candidates),
+                    "best_score": max(c.composite_score for c in all_candidates) if all_candidates else 0.0,
+                }
+            )
 
             logger.info(f"Optimization iteration {iteration + 1}/{config.num_iterations}")
 

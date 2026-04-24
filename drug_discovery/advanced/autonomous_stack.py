@@ -8,9 +8,9 @@ the differentiable modules.
 from __future__ import annotations
 
 import logging
-import math
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable, Sequence
+from typing import Any
 
 import numpy as np
 import torch
@@ -107,7 +107,9 @@ class LearnableDockingEngine:
         self.model = model or NeuralDockingModel()
         self.model.to(self.device)
 
-    def predict_pose(self, ligand_coords: torch.Tensor, pocket_coords: torch.Tensor, ligand_mask: torch.Tensor | None = None) -> dict:
+    def predict_pose(
+        self, ligand_coords: torch.Tensor, pocket_coords: torch.Tensor, ligand_mask: torch.Tensor | None = None
+    ) -> dict:
         self.model.eval()
         with torch.no_grad():
             pose, energy = self.model(ligand_coords.to(self.device), pocket_coords.to(self.device), ligand_mask)
@@ -375,9 +377,7 @@ class MultiFidelityRegressor(nn.Module):
     def __init__(self, low_fidelity: nn.Module, correction_head: nn.Module | None = None):
         super().__init__()
         self.low_fidelity = low_fidelity
-        self.correction_head = correction_head or nn.Sequential(
-            nn.Linear(1, 32), nn.ReLU(), nn.Linear(32, 1)
-        )
+        self.correction_head = correction_head or nn.Sequential(nn.Linear(1, 32), nn.ReLU(), nn.Linear(32, 1))
 
     def forward(self, x_low: torch.Tensor, x_high: torch.Tensor | None = None) -> torch.Tensor:
         low_pred = self.low_fidelity(x_low)
@@ -456,7 +456,9 @@ class MetaLearnerMAML:
         self.inner_lr = inner_lr
         self.steps = steps
 
-    def adapt(self, model: nn.Module, loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor], support_x, support_y):
+    def adapt(
+        self, model: nn.Module, loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor], support_x, support_y
+    ):
         cloned = type(model)()  # assumes default constructor is valid
         cloned.load_state_dict(model.state_dict())
         for _ in range(self.steps):
@@ -477,7 +479,11 @@ class HybridSymbolicNeuralEngine:
     def validate(self, smiles: str) -> dict[str, Any]:
         symbolic_ok = self._symbolic_check(smiles)
         neural_score = self.neural_scorer(smiles)
-        return {"symbolic_ok": symbolic_ok, "neural_score": neural_score, "composite": neural_score * (0.5 if not symbolic_ok else 1.0)}
+        return {
+            "symbolic_ok": symbolic_ok,
+            "neural_score": neural_score,
+            "composite": neural_score * (0.5 if not symbolic_ok else 1.0),
+        }
 
     def _symbolic_check(self, smiles: str) -> bool:
         try:

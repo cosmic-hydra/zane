@@ -14,9 +14,8 @@ References:
 from __future__ import annotations
 
 import logging
-import tempfile
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -24,9 +23,9 @@ logger = logging.getLogger(__name__)
 
 try:
     import openmm
-    from openmm import app, unit, Modeller, Topology
-    from openmm import LangevinIntegrator, Platform, MonteCarloBarostat
-    from openmm.app import PDBFile, ForceField, HBonds
+    from openmm import LangevinIntegrator, Modeller, MonteCarloBarostat, Platform, Topology, app, unit
+    from openmm.app import ForceField, HBonds, PDBFile
+
     OPENMM_AVAILABLE = True
 except ImportError:
     OPENMM_AVAILABLE = False
@@ -36,6 +35,7 @@ except ImportError:
 
 try:
     import parmed
+
     PARMED_AVAILABLE = True
 except ImportError:
     PARMED_AVAILABLE = False
@@ -62,7 +62,9 @@ class FEPConfig:
     ionic_strength: float = 0.15
     n_steps_equilibration: int = 50000
     n_steps_production: int = 500000
-    lambda_values: list[float] = field(default_factory=lambda: [0.0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0])
+    lambda_values: list[float] = field(
+        default_factory=lambda: [0.0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0]
+    )
     softcore_alpha: float = 0.5
     timestep: float = 2.0  # femtoseconds
 
@@ -323,14 +325,13 @@ class BindingFreeEnergyCalculator:
             FEPResult with binding free energy.
         """
         import time
+
         start_time = time.time()
 
         try:
             # Prepare system
             if not OPENMM_AVAILABLE:
-                return self._compute_binding_affinity_fallback(
-                    receptor_pdb, ligand_smi or smiles
-                )
+                return self._compute_binding_affinity_fallback(receptor_pdb, ligand_smi or smiles)
 
             # Simplified FEP calculation
             lambda_energies = {}
@@ -405,7 +406,6 @@ class BindingFreeEnergyCalculator:
 
         Uses thermodynamic integration / Bennant's acceptor formula.
         """
-        import warnings
 
         sorted_lambdas = sorted(lambda_energies.keys())
         energies = [lambda_energies[lam] for lam in sorted_lambdas]
@@ -475,7 +475,7 @@ class BindingFreeEnergyCalculator:
                         binding_free_energy_error=error,
                         binding_free_energy_std=error,
                         ddg_decomposition={"score": score},
-                        lambda_energies={0.0: 0.0, 0.5: score/2, 1.0: score},
+                        lambda_energies={0.0: 0.0, 0.5: score / 2, 1.0: score},
                         efficiency=5.0,
                         n_converged=3,
                         total_time=0.1,
@@ -524,7 +524,7 @@ class BindingFreeEnergyCalculator:
             )
 
             simulation = app.Simulation(
-                system.topology if hasattr(system, 'topology') else None,
+                system.topology if hasattr(system, "topology") else None,
                 system,
                 integrator,
             )
@@ -535,10 +535,14 @@ class BindingFreeEnergyCalculator:
 
             # Compute RMSD (simplified)
             final_pos = simulation.context.getState(getPositions=True).getPositions()
-            rmsd = np.sqrt(np.mean([
-                np.linalg.norm(final_pos[i]._value - initial_positions[i])
-                for i in range(min(len(initial_positions), len(final_pos)))
-            ]))
+            rmsd = np.sqrt(
+                np.mean(
+                    [
+                        np.linalg.norm(final_pos[i]._value - initial_positions[i])
+                        for i in range(min(len(initial_positions), len(final_pos)))
+                    ]
+                )
+            )
 
             return {
                 "rmsd_stability": float(rmsd),
@@ -553,7 +557,8 @@ class BindingFreeEnergyCalculator:
 # Helper for RDKit availability
 try:
     from rdkit import Chem
-    from rdkit.Chem import Descriptors, Crippen
+    from rdkit.Chem import Crippen, Descriptors
+
     RDKIT_AVAILABLE = True
 except ImportError:
     RDKIT_AVAILABLE = False

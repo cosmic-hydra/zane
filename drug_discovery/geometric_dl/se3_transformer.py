@@ -12,8 +12,8 @@ References:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -23,6 +23,7 @@ try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -34,6 +35,7 @@ try:
     import e3nn
     from e3nn import o3
     from e3nn.nn import Gate, LayerNorm
+
     E3NN_AVAILABLE = True
 except ImportError:
     E3NN_AVAILABLE = False
@@ -236,8 +238,8 @@ class EquivariantAttention(nn.Module if TORCH_AVAILABLE else object):
 
         # Softmax over destination nodes
         num_nodes = x.shape[0]
-        max_scores = torch.zeros(num_nodes, device=x.device) - float('inf')
-        max_scores.scatter_reduce_(0, dst, attn_scores, reduce='amax')
+        max_scores = torch.zeros(num_nodes, device=x.device) - float("inf")
+        max_scores.scatter_reduce_(0, dst, attn_scores, reduce="amax")
 
         attn_scores = attn_scores - max_scores[dst]
         attn_weights = torch.exp(attn_scores)
@@ -246,7 +248,9 @@ class EquivariantAttention(nn.Module if TORCH_AVAILABLE else object):
         # Aggregate values
         aggr = torch.zeros(num_nodes, self.num_heads, self.head_dim, device=x.device)
         v_src = v[src]  # (num_edges, heads, head_dim)
-        aggr.scatter_add_(0, dst.unsqueeze(-1).unsqueeze(-1).expand_as(v_src), v_src * attn_weights.unsqueeze(-1).unsqueeze(-1))
+        aggr.scatter_add_(
+            0, dst.unsqueeze(-1).unsqueeze(-1).expand_as(v_src), v_src * attn_weights.unsqueeze(-1).unsqueeze(-1)
+        )
 
         # Normalize
         counts = torch.zeros(num_nodes, device=x.device)
@@ -542,7 +546,7 @@ class TransientPocketPredictor:
         pockets = []
 
         try:
-            from scipy.spatial import ConvexHull, Delaunay
+            from scipy.spatial import Delaunay
 
             # Compute Delaunay triangulation
             tri = Delaunay(coords)
@@ -555,12 +559,14 @@ class TransientPocketPredictor:
 
                     if volume > self.min_pocket_size:
                         center = tetrahedron.mean(axis=0)
-                        pockets.append({
-                            "center": center,
-                            "volume": volume,
-                            "atoms": simplex.tolist(),
-                            "score": volume / self.min_pocket_size,
-                        })
+                        pockets.append(
+                            {
+                                "center": center,
+                                "volume": volume,
+                                "atoms": simplex.tolist(),
+                                "score": volume / self.min_pocket_size,
+                            }
+                        )
 
         except Exception as e:
             logger.warning(f"Pocket prediction failed: {e}")

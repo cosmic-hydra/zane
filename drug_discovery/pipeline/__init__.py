@@ -9,18 +9,18 @@ Provides production-grade data pipeline infrastructure with:
 - Orchestration and scheduling
 """
 
-from drug_discovery.pipeline.autonomous_pipeline import (
-    StreamingDataPipeline,
-    PipelineOrchestrator,
-    DataQualityMonitor,
-    FaultTolerantExecutor,
-    DataBatch,
-    PipelineCheckpoint,
-)
-
 # Keep backward compatibility with the legacy high-level pipeline API.
 import importlib.util
 from pathlib import Path
+
+from drug_discovery.pipeline.autonomous_pipeline import (
+    DataBatch,
+    DataQualityMonitor,
+    FaultTolerantExecutor,
+    PipelineCheckpoint,
+    PipelineOrchestrator,
+    StreamingDataPipeline,
+)
 
 _LEGACY_PIPELINE_PATH = Path(__file__).resolve().parent.parent / "pipeline.py"
 _legacy_spec = importlib.util.spec_from_file_location("drug_discovery._legacy_pipeline", _LEGACY_PIPELINE_PATH)

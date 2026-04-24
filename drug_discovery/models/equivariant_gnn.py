@@ -18,10 +18,9 @@ References:
 
 from __future__ import annotations
 
-import math
 import logging
+import math
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -32,6 +31,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EquivariantGNNConfig:
     """Configuration for E(3)-equivariant GNN models."""
+
     hidden_dim: int = 128
     num_layers: int = 6
     num_rbf: int = 50
@@ -47,6 +47,7 @@ class EquivariantGNNConfig:
 
 class GaussianRBF(nn.Module):
     """Gaussian radial basis functions for distance encoding."""
+
     def __init__(self, num_rbf: int = 50, cutoff: float = 5.0):
         super().__init__()
         self.num_rbf = num_rbf
@@ -61,35 +62,36 @@ class GaussianRBF(nn.Module):
 
 class CosineCutoff(nn.Module):
     """Smooth cosine cutoff for distance-based interactions."""
+
     def __init__(self, cutoff: float = 5.0):
         super().__init__()
         self.cutoff = cutoff
 
     def forward(self, distances: torch.Tensor) -> torch.Tensor:
-        return 0.5 * (torch.cos(math.pi * distances / self.cutoff) + 1.0) * (
-            distances <= self.cutoff).float()
+        return 0.5 * (torch.cos(math.pi * distances / self.cutoff) + 1.0) * (distances <= self.cutoff).float()
 
 
 class EGNNLayer(nn.Module):
     """Single E(n)-equivariant graph neural network layer."""
+
     def __init__(self, hidden_dim: int, dropout: float = 0.0, use_layer_norm: bool = True):
         super().__init__()
         self.edge_mlp = nn.Sequential(
-            nn.Linear(2 * hidden_dim + 1, hidden_dim), nn.SiLU(),
-            nn.Linear(hidden_dim, hidden_dim), nn.SiLU())
+            nn.Linear(2 * hidden_dim + 1, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim), nn.SiLU()
+        )
         self.node_mlp = nn.Sequential(
-            nn.Linear(2 * hidden_dim, hidden_dim), nn.SiLU(),
-            nn.Linear(hidden_dim, hidden_dim))
+            nn.Linear(2 * hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
+        )
         self.coord_mlp = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim), nn.SiLU(),
-            nn.Linear(hidden_dim, 1, bias=False))
+            nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, 1, bias=False)
+        )
         self.layer_norm = nn.LayerNorm(hidden_dim) if use_layer_norm else nn.Identity()
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, h, pos, edge_index):
         row, col = edge_index
         diff = pos[row] - pos[col]
-        dist = torch.sqrt((diff ** 2).sum(dim=-1, keepdim=True) + 1e-8)
+        dist = torch.sqrt((diff**2).sum(dim=-1, keepdim=True) + 1e-8)
         edge_feat = torch.cat([h[row], h[col], dist], dim=-1)
         m_ij = self.edge_mlp(edge_feat)
         coord_weights = self.coord_mlp(m_ij)
@@ -106,14 +108,15 @@ class EGNNLayer(nn.Module):
 
 class SchNetLayer(nn.Module):
     """SchNet continuous-filter convolution layer."""
+
     def __init__(self, hidden_dim, num_rbf=50, cutoff=5.0, dropout=0.0):
         super().__init__()
         self.rbf = GaussianRBF(num_rbf, cutoff)
         self.cutoff_fn = CosineCutoff(cutoff)
-        self.filter_net = nn.Sequential(
-            nn.Linear(num_rbf, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim))
+        self.filter_net = nn.Sequential(nn.Linear(num_rbf, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim))
         self.interaction = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim))
+            nn.Linear(hidden_dim, hidden_dim), nn.SiLU(), nn.Linear(hidden_dim, hidden_dim)
+        )
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, h, pos, edge_index):
@@ -130,6 +133,7 @@ class EquivariantGNN(nn.Module):
 
     Supports EGNN, SchNet, and PaiNN variants through a unified interface.
     """
+
     def __init__(self, config: EquivariantGNNConfig):
         super().__init__()
         self.config = config
@@ -143,8 +147,10 @@ class EquivariantGNN(nn.Module):
             else:
                 raise ValueError(f"Unknown variant: {config.variant}")
         self.readout = nn.Sequential(
-            nn.Linear(config.hidden_dim, config.hidden_dim), nn.SiLU(),
-            nn.Linear(config.hidden_dim, config.output_dim * config.num_tasks))
+            nn.Linear(config.hidden_dim, config.hidden_dim),
+            nn.SiLU(),
+            nn.Linear(config.hidden_dim, config.output_dim * config.num_tasks),
+        )
 
     def forward(self, z, pos, edge_index, batch=None):
         h = self.atom_embed(z)
