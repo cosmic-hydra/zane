@@ -280,11 +280,11 @@ The latest analytical figures are generated from the curated JSON artifacts unde
 
 Lower values imply tighter ADMET-proxy error bounds (RMSE/MAE) derived from the evaluation outputs.
 
-#### ADMET endpoint coverage (AdvancedADMETPredictor)
+#### ADMET endpoint coverage (Advanced ADMET Predictor)
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 200" width="760" height="200">
   <rect width="760" height="200" fill="#f7f9fb" rx="8"/>
-  <text x="20" y="22" font-size="13" font-weight="bold" fill="#0f2940">AdvancedADMET — 16-Endpoint Coverage (GNN + Transformer cross-attention fusion)</text>
+  <text x="20" y="22" font-size="13" font-weight="bold" fill="#0f2940">Advanced ADMET — 16-Endpoint Coverage (GNN + Transformer cross-attention fusion)</text>
   <!-- ADME row -->
   <text x="20" y="50" font-size="11" fill="#1b3c68" font-weight="bold">ADME</text>
   <rect x="70"  y="38" width="80" height="22" rx="4" fill="#1f77b4" opacity="0.85"/><text x="110"  y="53" text-anchor="middle" font-size="10" fill="white">Solubility</text>
@@ -686,7 +686,7 @@ flowchart LR
     Frag --> Assemble[Fragment assembly<br/>steric-fit + compatibility]
     Assemble --> Conf[Conformer ensemble<br/>RDKit ETKDG + diffusion trace]
     Conf --> Boltz[Boltzmann weighting<br/>E_eff = -kT log Σ exp(-Eᵢ/kT)]
-    Boltz --> Score[Multi-objective scoring<br/>ADMET · docking · SA · diversity · MD]
+    Boltz --> Score[Multi-objective scoring<br/>ADMET · docking · SA (synth. accessibility) · diversity · MD]
     Score --> Risk[Risk routing<br/>toxicity · reactivity · synthetic difficulty]
     Risk --> Retro[Retrosynthesis check<br/>reaction likelihood]
     Retro --> Rank[Rank & filter<br/>top-k composite]
@@ -783,7 +783,14 @@ graph TD
 
 ### Elite Stack Composite Scoring
 
-The `EliteStackPipeline` aggregates four ranked signals into a single composite score:
+The `EliteStackPipeline` aggregates four ranked signals into a single composite score. Each component is normalized to [0, 1]:
+
+| Component | Weight | Source | Description |
+|-----------|--------|--------|-------------|
+| `S_property` | 35% | TorchDrug / RDKit (QED, LogP, MW) | Drug-likeness and physicochemical fit |
+| `S_reaction` | 20% | Molecular Transformer | Synthesis reaction confidence |
+| `S_docking` | 25% | DiffDock proxy | Estimated binding pose confidence |
+| `S_md_stability` | 20% | OpenMM / MD simulator | Ligand RMSD stability index |
 
 ```
 S_composite = 0.35 × S_property  +  0.20 × S_reaction  +  0.25 × S_docking  +  0.20 × S_md_stability
@@ -818,11 +825,18 @@ S_composite = 0.35 × S_property  +  0.20 × S_reaction  +  0.25 × S_docking  +
 
 ### Program Readiness Scoring (Strategy Engine)
 
-`ProgramStrategyEngine` (in `drug_discovery/strategy/`) combines TPP, process risk, cost, and green chemistry:
+`ProgramStrategyEngine` (in `drug_discovery/strategy/`) combines TPP, process risk, cost, and green chemistry into a normalized [0, 1] readiness score. A candidate is flagged **Go** when `S_readiness ≥ 0.62` **and** route steps ≤ 7 — the 0.62 threshold represents empirically calibrated preclinical progression criteria balancing profile fitness against manufacturing feasibility:
 
 ```
 S_readiness = 0.45 × TPP_score  +  0.20 × (1 − process_risk)  +  0.20 × (1 − COGS_index)  +  0.15 × green_chemistry
 ```
+
+| Component | Weight | Description |
+|-----------|--------|-------------|
+| `TPP_score` | 45% | Target Product Profile alignment (efficacy, safety, bioavailability targets) |
+| `1 − process_risk` | 20% | Inverted process risk (lower risk → higher contribution) |
+| `1 − COGS_index` | 20% | Inverted cost-of-goods index (lower cost → higher contribution) |
+| `green_chemistry` | 15% | Green chemistry score (atom economy, solvent selection, step count)
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 110" width="640" height="110">
   <rect width="640" height="110" fill="#f7f9fb" rx="8"/>
