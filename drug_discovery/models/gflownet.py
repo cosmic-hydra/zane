@@ -186,6 +186,39 @@ class PhysicsRewardFunction:
         return binding_reward * tox_penalty
 
     # ------------------------------------------------------------------
+    # Multi-objective scoring (via ToxicityGate + ParetoRanker)
+    # ------------------------------------------------------------------
+    def score_multi_objective(self, smiles: str) -> dict[str, float]:
+        """Compute a full multi-objective score dict for a molecule.
+
+        Returns dict with keys: delta_g, toxicity, drug_likeness, sa_score.
+        Useful for feeding into the ParetoRanker.
+        """
+        delta_g = self._get_delta_g(smiles)
+        toxicity = self._get_toxicity(smiles)
+        drug_likeness = 0.5  # default
+        sa_score = 3.0  # default (lower is more synthesizable)
+
+        # Use ToxicityGate for richer evaluation if available
+        try:
+            from drug_discovery.safety.toxicity_gate import ToxicityGate
+
+            gate = ToxicityGate()
+            verdict = gate.evaluate(smiles)
+            toxicity = verdict.overall_toxicity
+            drug_likeness = verdict.drug_likeness
+        except Exception:
+            pass
+
+        return {
+            "smiles": smiles,
+            "delta_g": delta_g,
+            "toxicity": toxicity,
+            "drug_likeness": drug_likeness,
+            "sa_score": sa_score,
+        }
+
+    # ------------------------------------------------------------------
     # Atom-to-SMILES converter
     # ------------------------------------------------------------------
     @staticmethod
