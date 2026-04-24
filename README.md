@@ -37,9 +37,12 @@ The repository is intended for scientific teams that need a repeatable, extensib
 11. Workflow Blueprints
 12. Quality and CI/CD
 13. Security and Responsible Use
-14. Troubleshooting
-15. Contribution Standards
-16. License
+14. Dashboard Flags Reference (Comprehensive)
+15. Recent Feature Updates
+16. Troubleshooting
+17. Contribution Standards
+18. License
+19. PyPI Release Workflows
 
 ## 1. Platform Scope
 
@@ -53,7 +56,15 @@ Multi-source collection pipelines span PubChem, ChEMBL, and approved-drug corpor
 
 ### Modeling
 
-Structure-aware Graph Neural Networks, transformer pipelines for sequence and fingerprint modeling, and ensemble configurations run side by side, with training telemetry exposing detailed epoch-level progress (including 100/100 completion tracking) to verify convergence and model health.
+Structure-aware Graph Neural Networks, transformer pipelines for sequence and fingerprint modeling, and ensemble configurations run side by side, with training telemetry exposing detailed epoch-level progress (including 100/100 completion tracking) to verify convergence and model health. E(3)-equivariant GNNs deliver 20–30% binding-affinity accuracy gains over standard GNNs by enforcing 3D rotational/translational invariance. SE(3)-equivariant denoising diffusion provides de-novo generation with optional flow-matching for 10–50× faster sampling.
+
+#### Key reported metrics
+
+| Run | Model | Split | Epochs | RMSE | MAE | Notes |
+|-----|-------|-------|--------|------|-----|-------|
+| Transformer benchmark | MolecularTransformer | scaffold | 4 | 0.496 | 0.429 | 64 synthetic samples |
+| GNN validation | MolecularGNN | scaffold | 3 | 0.062 | 0.062 | approved_drugs slice |
+| Protocol GNN | MolecularGNN | scaffold | 140 | 0.535 | 0.535 | approved_drugs + pubchem |
 
 ### Evaluation and Ranking
 
@@ -268,6 +279,84 @@ The latest analytical figures are generated from the curated JSON artifacts unde
 ![ADMET surrogate errors](docs/assets/analytics/admet_surrogates.png)
 
 Lower values imply tighter ADMET-proxy error bounds (RMSE/MAE) derived from the evaluation outputs.
+
+#### ADMET endpoint coverage (Advanced ADMET Predictor)
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 200" width="760" height="200">
+  <rect width="760" height="200" fill="#f7f9fb" rx="8"/>
+  <text x="20" y="22" font-size="13" font-weight="bold" fill="#0f2940">Advanced ADMET — 16-Endpoint Coverage (GNN + Transformer cross-attention fusion)</text>
+  <!-- ADME row -->
+  <text x="20" y="50" font-size="11" fill="#1b3c68" font-weight="bold">ADME</text>
+  <rect x="70"  y="38" width="80" height="22" rx="4" fill="#1f77b4" opacity="0.85"/><text x="110"  y="53" text-anchor="middle" font-size="10" fill="white">Solubility</text>
+  <rect x="158" y="38" width="80" height="22" rx="4" fill="#1f77b4" opacity="0.85"/><text x="198"  y="53" text-anchor="middle" font-size="10" fill="white">Permeability</text>
+  <rect x="246" y="38" width="80" height="22" rx="4" fill="#1f77b4" opacity="0.85"/><text x="286"  y="53" text-anchor="middle" font-size="10" fill="white">BBB</text>
+  <rect x="334" y="38" width="80" height="22" rx="4" fill="#1f77b4" opacity="0.85"/><text x="374"  y="53" text-anchor="middle" font-size="10" fill="white">P-gp substrate</text>
+  <!-- Metabolism -->
+  <text x="20" y="85" font-size="11" fill="#1b3c68" font-weight="bold">Metab.</text>
+  <rect x="70"  y="73" width="80" height="22" rx="4" fill="#2ca02c" opacity="0.85"/><text x="110"  y="88" text-anchor="middle" font-size="10" fill="white">CYP3A4</text>
+  <rect x="158" y="73" width="80" height="22" rx="4" fill="#2ca02c" opacity="0.85"/><text x="198"  y="88" text-anchor="middle" font-size="10" fill="white">CYP2D6</text>
+  <rect x="246" y="73" width="80" height="22" rx="4" fill="#2ca02c" opacity="0.85"/><text x="286"  y="88" text-anchor="middle" font-size="10" fill="white">CYP2C9</text>
+  <rect x="334" y="73" width="80" height="22" rx="4" fill="#2ca02c" opacity="0.85"/><text x="374"  y="88" text-anchor="middle" font-size="10" fill="white">Half-life</text>
+  <!-- Tox -->
+  <text x="20" y="120" font-size="11" fill="#1b3c68" font-weight="bold">Tox</text>
+  <rect x="70"  y="108" width="80" height="22" rx="4" fill="#d62728" opacity="0.85"/><text x="110"  y="123" text-anchor="middle" font-size="10" fill="white">hERG</text>
+  <rect x="158" y="108" width="80" height="22" rx="4" fill="#d62728" opacity="0.85"/><text x="198"  y="123" text-anchor="middle" font-size="10" fill="white">Ames</text>
+  <rect x="246" y="108" width="80" height="22" rx="4" fill="#d62728" opacity="0.85"/><text x="286"  y="123" text-anchor="middle" font-size="10" fill="white">DILI</text>
+  <rect x="334" y="108" width="80" height="22" rx="4" fill="#d62728" opacity="0.85"/><text x="374"  y="123" text-anchor="middle" font-size="10" fill="white">hERG-blocker</text>
+  <!-- Druglike -->
+  <text x="20" y="155" font-size="11" fill="#1b3c68" font-weight="bold">Drug-like</text>
+  <rect x="70"  y="143" width="80" height="22" rx="4" fill="#ff7f0e" opacity="0.85"/><text x="110"  y="158" text-anchor="middle" font-size="10" fill="white">QED</text>
+  <rect x="158" y="143" width="80" height="22" rx="4" fill="#ff7f0e" opacity="0.85"/><text x="198"  y="158" text-anchor="middle" font-size="10" fill="white">SA score</text>
+  <rect x="246" y="143" width="80" height="22" rx="4" fill="#ff7f0e" opacity="0.85"/><text x="286"  y="158" text-anchor="middle" font-size="10" fill="white">LogP</text>
+  <rect x="334" y="143" width="80" height="22" rx="4" fill="#ff7f0e" opacity="0.85"/><text x="374"  y="158" text-anchor="middle" font-size="10" fill="white">TPSA</text>
+  <!-- legend -->
+  <rect x="460" y="38" width="12" height="12" fill="#1f77b4" rx="2"/><text x="478" y="49" font-size="11" fill="#1b3c68">ADME absorption/distribution</text>
+  <rect x="460" y="58" width="12" height="12" fill="#2ca02c" rx="2"/><text x="478" y="69" font-size="11" fill="#1b3c68">Metabolism endpoints</text>
+  <rect x="460" y="78" width="12" height="12" fill="#d62728" rx="2"/><text x="478" y="89" font-size="11" fill="#1b3c68">Toxicity flags</text>
+  <rect x="460" y="98" width="12" height="12" fill="#ff7f0e" rx="2"/><text x="478" y="109" font-size="11" fill="#1b3c68">Drug-likeness indicators</text>
+  <text x="460" y="135" font-size="11" fill="#555">Multi-task heads · cross-attention</text>
+  <text x="460" y="152" font-size="11" fill="#555">fusion of GNN + Transformer</text>
+  <text x="460" y="169" font-size="11" fill="#555">feature representations</text>
+</svg>
+
+#### Multi-objective Pareto frontier (optimization layer)
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 260" width="520" height="260">
+  <rect width="520" height="260" fill="#f7f9fb" rx="8"/>
+  <text x="20" y="22" font-size="12" font-weight="bold" fill="#0f2940">Multi-Objective Pareto Front — ADMET vs Binding Affinity</text>
+  <line x1="60" y1="220" x2="480" y2="220" stroke="#0f2940" stroke-width="2"/>
+  <line x1="60" y1="40"  x2="60"  y2="220" stroke="#0f2940" stroke-width="2"/>
+  <text x="200" y="248" font-size="11" fill="#1b3c68">Binding affinity proxy (higher = better)</text>
+  <text x="8" y="140" font-size="11" fill="#1b3c68" transform="rotate(-90 14 140)">ADMET score</text>
+  <!-- dominated region shading -->
+  <rect x="61" y="41" width="420" height="179" fill="#f0f4fa" opacity="0.5"/>
+  <!-- dominated points -->
+  <circle cx="110" cy="200" r="6" fill="#9ecae1" opacity="0.7"/>
+  <circle cx="150" cy="190" r="6" fill="#9ecae1" opacity="0.7"/>
+  <circle cx="200" cy="175" r="6" fill="#9ecae1" opacity="0.7"/>
+  <circle cx="180" cy="160" r="6" fill="#9ecae1" opacity="0.7"/>
+  <circle cx="250" cy="170" r="6" fill="#9ecae1" opacity="0.7"/>
+  <circle cx="300" cy="155" r="6" fill="#9ecae1" opacity="0.7"/>
+  <circle cx="350" cy="148" r="6" fill="#9ecae1" opacity="0.7"/>
+  <circle cx="130" cy="155" r="6" fill="#9ecae1" opacity="0.7"/>
+  <!-- Pareto front points -->
+  <circle cx="120" cy="90" r="8" fill="#d62728" opacity="0.9"/>
+  <circle cx="185" cy="100" r="8" fill="#d62728" opacity="0.9"/>
+  <circle cx="255" cy="115" r="8" fill="#d62728" opacity="0.9"/>
+  <circle cx="325" cy="130" r="8" fill="#d62728" opacity="0.9"/>
+  <circle cx="400" cy="145" r="8" fill="#d62728" opacity="0.9"/>
+  <circle cx="455" cy="165" r="8" fill="#d62728" opacity="0.9"/>
+  <!-- Pareto front line -->
+  <polyline points="120,90 185,100 255,115 325,130 400,145 455,165"
+            fill="none" stroke="#d62728" stroke-width="2.5" stroke-dasharray="7 4"/>
+  <!-- legend -->
+  <circle cx="300" cy="50" r="7" fill="#d62728" opacity="0.9"/>
+  <text x="314" y="55" font-size="11" fill="#1b3c68">Pareto-optimal (EHVI)</text>
+  <circle cx="300" cy="70" r="7" fill="#9ecae1" opacity="0.9"/>
+  <text x="314" y="75" font-size="11" fill="#1b3c68">Dominated candidates</text>
+  <text x="68" y="195" font-size="10" fill="#555">low</text>
+  <text x="448" y="195" font-size="10" fill="#555">high</text>
+</svg>
 
 #### Test system status (current constrained run)
 
@@ -486,6 +575,59 @@ Lower values imply tighter ADMET-proxy error bounds (RMSE/MAE) derived from the 
       <div align="center"><sub>Synthesis feasibility funnel</sub></div>
     </td>
   </tr>
+  <tr>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <text x="24" y="26" font-size="12" fill="#1b3c68">Uncertainty quantification (MC-Dropout)</text>
+        <line x1="60" y1="200" x2="380" y2="200" stroke="#0f2940" stroke-width="2"/>
+        <line x1="60" y1="30"  x2="60"  y2="200" stroke="#0f2940" stroke-width="2"/>
+        <text x="175" y="225" font-size="11" fill="#1b3c68">Candidate index</text>
+        <text x="8"   y="120" font-size="11" fill="#1b3c68" transform="rotate(-90 14 120)">Prediction</text>
+        <!-- mean predictions -->
+        <polyline points="80,160 120,130 160,110 200,100 240,95 280,98 320,108 360,130"
+                  fill="none" stroke="#1f77b4" stroke-width="3" stroke-linecap="round"/>
+        <!-- upper confidence bound -->
+        <polyline points="80,145 120,110 160,88 200,76 240,70 280,74 320,86 360,110"
+                  fill="none" stroke="#6fb0e8" stroke-width="1.5" stroke-dasharray="6 3"/>
+        <!-- lower confidence bound -->
+        <polyline points="80,175 120,150 160,132 200,124 240,120 280,122 320,130 360,150"
+                  fill="none" stroke="#6fb0e8" stroke-width="1.5" stroke-dasharray="6 3"/>
+        <!-- fill between -->
+        <polygon points="80,145 120,110 160,88 200,76 240,70 280,74 320,86 360,110 360,150 320,130 280,122 240,120 200,124 160,132 120,150 80,175"
+                 fill="#6fb0e8" opacity="0.2"/>
+        <rect x="265" y="42" width="130" height="54" fill="white" stroke="#c6cbd3" rx="6"/>
+        <line x1="275" y1="60" x2="315" y2="60" stroke="#1f77b4" stroke-width="3"/><text x="322" y="64" font-size="11" fill="#1b3c68">Mean</text>
+        <line x1="275" y1="80" x2="315" y2="80" stroke="#6fb0e8" stroke-width="1.5" stroke-dasharray="6 3"/><text x="322" y="84" font-size="11" fill="#1b3c68">95% CI</text>
+      </svg>
+      <div align="center"><sub>MC-Dropout epistemic uncertainty intervals</sub></div>
+    </td>
+    <td>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 240" width="420" height="240">
+        <rect width="420" height="240" fill="#f7f9fb"/>
+        <text x="24" y="26" font-size="12" fill="#1b3c68">FEP ΔΔG convergence (ML-accelerated)</text>
+        <line x1="60" y1="200" x2="380" y2="200" stroke="#0f2940" stroke-width="2"/>
+        <line x1="60" y1="40"  x2="60"  y2="200" stroke="#0f2940" stroke-width="2"/>
+        <text x="165" y="225" font-size="11" fill="#1b3c68">Lambda windows (TI)</text>
+        <text x="10"  y="130" font-size="11" fill="#1b3c68" transform="rotate(-90 14 130)">ΔΔG (kcal/mol)</text>
+        <!-- reference line at 0 -->
+        <line x1="65" y1="120" x2="375" y2="120" stroke="#c6cbd3" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- FEP trace -->
+        <polyline points="70,160 110,145 150,132 190,122 230,118 270,115 310,112 350,110"
+                  fill="none" stroke="#d62728" stroke-width="3" stroke-linecap="round"/>
+        <!-- GNN surrogate trace -->
+        <polyline points="70,165 110,148 150,134 190,120 230,115 270,112 310,110 350,108"
+                  fill="none" stroke="#2ca02c" stroke-width="2.5" stroke-dasharray="6 4"/>
+        <!-- uncertainty band -->
+        <polygon points="70,155 110,138 150,125 190,113 230,109 270,106 310,104 350,102 350,114 310,116 270,118 230,121 190,127 150,139 110,154 70,171"
+                 fill="#2ca02c" opacity="0.15"/>
+        <rect x="250" y="50" width="140" height="54" fill="white" stroke="#c6cbd3" rx="6"/>
+        <line x1="260" y1="68" x2="300" y2="68" stroke="#d62728" stroke-width="3"/><text x="307" y="72" font-size="11" fill="#1b3c68">TI reference</text>
+        <line x1="260" y1="88" x2="300" y2="88" stroke="#2ca02c" stroke-width="2" stroke-dasharray="6 4"/><text x="307" y="92" font-size="11" fill="#1b3c68">GNN surrogate</text>
+      </svg>
+      <div align="center"><sub>FEP ΔΔG: GNN surrogate vs TI reference</sub></div>
+    </td>
+  </tr>
 </table>
 
 ### 3B. Flow Dynamics and Orchestration Charts
@@ -518,6 +660,39 @@ flowchart LR
     Reports --> Analytics[Scientific Visualization Atlas charts]
 ```
 
+#### Advanced training loop internals
+
+```mermaid
+flowchart TD
+    Init[Initialize AdvancedTrainer<br/>EMA · AMP · cosine-LR · warm restarts] --> LoadDS[Load MolecularDataset<br/>scaffold/random split]
+    LoadDS --> Epoch{Epoch loop}
+    Epoch -->|train batch| FWD[Forward pass<br/>GNN / Transformer / EquivariantGNN]
+    FWD --> LOSS[Compute loss<br/>MSE · MAE · multi-task]
+    LOSS -->|AMP scaler| BWD[Backward pass + gradient clip]
+    BWD --> EMA[Update EMA shadow weights]
+    EMA --> Epoch
+    Epoch -->|end of epoch| VAL[Validation step<br/>RMSE · MAE · Pearson-r]
+    VAL --> LRSched[LR scheduler step<br/>cosine anneal / plateau]
+    LRSched --> EStop{Early stop?}
+    EStop -->|no| Epoch
+    EStop -->|yes| SaveCkpt[(Save best checkpoint<br/>checkpoints/)]
+```
+
+#### Physics-aware generation pipeline
+
+```mermaid
+flowchart LR
+    Seeds[Seed SMILES<br/>user / defaults] --> Frag[BRICS/RECAP<br/>fragment extraction]
+    Frag --> Assemble[Fragment assembly<br/>steric-fit + compatibility]
+    Assemble --> Conf[Conformer ensemble<br/>RDKit ETKDG + diffusion trace]
+    Conf --> Boltz[Boltzmann weighting<br/>E_eff = -kT log Σ exp(-Eᵢ/kT)]
+    Boltz --> Score[Multi-objective scoring<br/>ADMET · docking · SA (synth. accessibility) · diversity · MD]
+    Score --> Risk[Risk routing<br/>toxicity · reactivity · synthetic difficulty]
+    Risk --> Retro[Retrosynthesis check<br/>reaction likelihood]
+    Retro --> Rank[Rank & filter<br/>top-k composite]
+    Rank --> Out[Structured output<br/>SMILES + scores + provenance]
+```
+
 ## 4. Architecture
 
 ZANE follows a layered architecture for maintainability and extension safety:
@@ -529,6 +704,62 @@ ZANE follows a layered architecture for maintainability and extension safety:
 - Data Layer: collection, featurization, datasets
 - Platform Layer: tests, linting, CI/CD, packaging
 
+### Module Dependency Graph
+
+```mermaid
+graph TD
+    subgraph Interface["Interface Layer"]
+        CLI[drug_discovery/cli.py]
+        DASH[drug_discovery/dashboard.py]
+        AI[drug_discovery/ai_support.py]
+    end
+
+    subgraph Orchestration["Orchestration Layer"]
+        PIPE[drug_discovery/pipeline.py]
+        ELITE[drug_discovery/elite_stack.py]
+        APEX[drug_discovery/apex_orchestrator.py]
+        STRAT[drug_discovery/strategy/]
+        INT[drug_discovery/integrations.py]
+    end
+
+    subgraph Intelligence["Intelligence Layer"]
+        MODELS[drug_discovery/models/<br/>GNN · Transformer · Ensemble<br/>EquivariantGNN · DiffusionGen · GFlowNet]
+        TRAIN[drug_discovery/training/<br/>Trainer · AdvancedTrainer<br/>ActiveLearning · Federated]
+        EVAL[drug_discovery/evaluation/<br/>PropertyPredictor · ADMETPredictor<br/>AdvancedADMET · Uncertainty · FEP]
+        OPT[drug_discovery/optimization/<br/>Bayesian · MultiObjective · ActiveLearning]
+        GEN[drug_discovery/generation/<br/>PhysicsAware · Backends · BoltzGen]
+    end
+
+    subgraph Science["Science Layer"]
+        PHYS[drug_discovery/physics/<br/>DiffDock · OpenMM · MolDynamics]
+        SYN[drug_discovery/synthesis/<br/>Retrosynthesis · Feasibility]
+        SIM[drug_discovery/simulation/<br/>FreeEnergy · BiologicalResponse]
+        BENCH[drug_discovery/benchmarking/<br/>MOSES · GuacaMol]
+    end
+
+    subgraph Data["Data Layer"]
+        DAT[drug_discovery/data/<br/>Collector · Featurizer · Dataset]
+        KG[drug_discovery/knowledge_graph/]
+    end
+
+    CLI --> PIPE
+    CLI --> ELITE
+    CLI --> DASH
+    DASH --> AI
+    PIPE --> MODELS
+    PIPE --> TRAIN
+    PIPE --> EVAL
+    PIPE --> DAT
+    ELITE --> INT
+    ELITE --> PHYS
+    APEX --> STRAT
+    MODELS --> PHYS
+    GEN --> SYN
+    GEN --> PHYS
+    EVAL --> OPT
+    DAT --> KG
+```
+
 ### Runtime Flow
 
 1. Collect and merge molecular inputs.
@@ -538,23 +769,237 @@ ZANE follows a layered architecture for maintainability and extension safety:
 5. Score and rank candidate molecules.
 6. Monitor via dashboard and export artifacts.
 
+### Model Architecture Comparison
+
+| Model | File | Key Technique | Best Use Case | Notes |
+|-------|------|---------------|---------------|-------|
+| MolecularGNN | `models/gnn.py` | 4-layer GAT with edge features | Property prediction on 2D graphs | Default baseline |
+| MolecularTransformer | `models/transformer.py` | Sequence/fingerprint transformer | SMILES-based property regression | Fast training |
+| EnsembleModel | `models/ensemble.py` | Multi-model consensus | High-confidence ranking | Combines GNN + Transformer |
+| EquivariantGNN | `models/equivariant_gnn.py` | EGNN / SchNet / PaiNN (E(3)-invariant) | 3D binding affinity, 20–30% SOTA gain | Requires 3D coordinates |
+| DiffusionGenerator | `models/diffusion_generator.py` | SE(3) denoising diffusion | De-novo molecule generation | Flow-matching 10–50× faster |
+| GFlowNet | `models/gflownet.py` | GFlowNet fragment policy | Diverse synthesizable generation | Reward-driven exploration |
+| DMPNN | `models/dmpnn.py` | Directed message-passing NN | Reaction/bond-centric properties | Chemprop-style |
+
+### Elite Stack Composite Scoring
+
+The `EliteStackPipeline` aggregates four ranked signals into a single composite score. Each component is normalized to [0, 1]:
+
+| Component | Weight | Source | Description |
+|-----------|--------|--------|-------------|
+| `S_property` | 35% | TorchDrug / RDKit (QED, LogP, MW) | Drug-likeness and physicochemical fit |
+| `S_reaction` | 20% | Molecular Transformer | Synthesis reaction confidence |
+| `S_docking` | 25% | DiffDock proxy | Estimated binding pose confidence |
+| `S_md_stability` | 20% | OpenMM / MD simulator | Ligand RMSD stability index |
+
+```
+S_composite = 0.35 × S_property  +  0.20 × S_reaction  +  0.25 × S_docking  +  0.20 × S_md_stability
+```
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 110" width="640" height="110">
+  <rect width="640" height="110" fill="#f7f9fb" rx="8"/>
+  <!-- property bar -->
+  <rect x="30"  y="30" width="140" height="36" fill="#1f77b4" rx="4" opacity="0.9"/>
+  <text x="100" y="52" text-anchor="middle" font-size="13" fill="white" font-weight="bold">Property 35%</text>
+  <!-- reaction bar -->
+  <rect x="180" y="30" width="80"  height="36" fill="#2ca02c" rx="4" opacity="0.9"/>
+  <text x="220" y="52" text-anchor="middle" font-size="13" fill="white" font-weight="bold">Rxn 20%</text>
+  <!-- docking bar -->
+  <rect x="270" y="30" width="100" height="36" fill="#d62728" rx="4" opacity="0.9"/>
+  <text x="320" y="52" text-anchor="middle" font-size="13" fill="white" font-weight="bold">Docking 25%</text>
+  <!-- md bar -->
+  <rect x="380" y="30" width="80"  height="36" fill="#ff7f0e" rx="4" opacity="0.9"/>
+  <text x="420" y="52" text-anchor="middle" font-size="13" fill="white" font-weight="bold">MD 20%</text>
+  <!-- equals -->
+  <text x="475" y="53" font-size="20" fill="#1b3c68" font-weight="bold">=</text>
+  <!-- composite -->
+  <rect x="498" y="22" width="120" height="52" fill="#0f2940" rx="6" opacity="0.92"/>
+  <text x="558" y="50" text-anchor="middle" font-size="13" fill="white" font-weight="bold">Composite</text>
+  <text x="558" y="66" text-anchor="middle" font-size="12" fill="#6fb0e8">S_composite</text>
+  <!-- bottom labels -->
+  <text x="100"  y="90" text-anchor="middle" font-size="10" fill="#555">TorchDrug / RDKit</text>
+  <text x="220"  y="90" text-anchor="middle" font-size="10" fill="#555">MolTransformer</text>
+  <text x="320"  y="90" text-anchor="middle" font-size="10" fill="#555">DiffDock proxy</text>
+  <text x="420"  y="90" text-anchor="middle" font-size="10" fill="#555">OpenMM / MD</text>
+</svg>
+
+### Program Readiness Scoring (Strategy Engine)
+
+`ProgramStrategyEngine` (in `drug_discovery/strategy/`) combines TPP, process risk, cost, and green chemistry into a normalized [0, 1] readiness score. A candidate is flagged **Go** when `S_readiness ≥ 0.62` **and** route steps ≤ 7 — the 0.62 threshold represents empirically calibrated preclinical progression criteria balancing profile fitness against manufacturing feasibility:
+
+```
+S_readiness = 0.45 × TPP_score  +  0.20 × (1 − process_risk)  +  0.20 × (1 − COGS_index)  +  0.15 × green_chemistry
+```
+
+| Component | Weight | Description |
+|-----------|--------|-------------|
+| `TPP_score` | 45% | Target Product Profile alignment (efficacy, safety, bioavailability targets) |
+| `1 − process_risk` | 20% | Inverted process risk (lower risk → higher contribution) |
+| `1 − COGS_index` | 20% | Inverted cost-of-goods index (lower cost → higher contribution) |
+| `green_chemistry` | 15% | Green chemistry score (atom economy, solvent selection, step count)
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 110" width="640" height="110">
+  <rect width="640" height="110" fill="#f7f9fb" rx="8"/>
+  <rect x="30"  y="30" width="180" height="36" fill="#1f77b4" rx="4" opacity="0.9"/>
+  <text x="120" y="52" text-anchor="middle" font-size="13" fill="white" font-weight="bold">TPP Score 45%</text>
+  <rect x="220" y="30" width="80"  height="36" fill="#9467bd" rx="4" opacity="0.9"/>
+  <text x="260" y="52" text-anchor="middle" font-size="12" fill="white" font-weight="bold">Risk 20%</text>
+  <rect x="310" y="30" width="80"  height="36" fill="#8c564b" rx="4" opacity="0.9"/>
+  <text x="350" y="52" text-anchor="middle" font-size="12" fill="white" font-weight="bold">COGS 20%</text>
+  <rect x="400" y="30" width="60"  height="36" fill="#2ca02c" rx="4" opacity="0.9"/>
+  <text x="430" y="52" text-anchor="middle" font-size="12" fill="white" font-weight="bold">Green 15%</text>
+  <text x="475" y="53" font-size="20" fill="#1b3c68" font-weight="bold">=</text>
+  <rect x="498" y="22" width="120" height="52" fill="#0f2940" rx="6" opacity="0.92"/>
+  <text x="558" y="50" text-anchor="middle" font-size="13" fill="white" font-weight="bold">Readiness</text>
+  <text x="558" y="66" text-anchor="middle" font-size="12" fill="#6fb0e8">≥ 0.62 → Go</text>
+  <text x="120"  y="90" text-anchor="middle" font-size="10" fill="#555">Target product profile</text>
+  <text x="260"  y="90" text-anchor="middle" font-size="10" fill="#555">Process risk</text>
+  <text x="350"  y="90" text-anchor="middle" font-size="10" fill="#555">Cost of goods</text>
+  <text x="430"  y="90" text-anchor="middle" font-size="10" fill="#555">Green chemistry</text>
+</svg>
+
 ## 5. Repository Layout
 
-Primary modules:
+### Complete Module Inventory
 
-- drug_discovery/data: collection, featurization, dataset logic
-- drug_discovery/models: GNN, Transformer, Ensemble, equivariant components
-- drug_discovery/training: training loop and closed-loop utilities
-- drug_discovery/evaluation: property/ADMET prediction and model evaluation
-- drug_discovery/physics: docking and MD simulation utilities
-- drug_discovery/synthesis: retrosynthesis and feasibility support (optional AiZynthFinder integration via `AIZYNTH_CONFIG`)
-- drug_discovery/generation: optional molecule generation backends (REINVENT4, GT4SD, molecular-design, Molformer)
-- drug_discovery/benchmarking: optional benchmarking backends (MOSES, GuacaMol)
-- drug_discovery/integrations.py: centralized external ecosystem registry and availability checks
-- drug_discovery/optimization: Bayesian and multi-objective optimization
-- drug_discovery/agents: multi-agent orchestration framework
-- drug_discovery/dashboard.py: terminal dashboard implementation
-- drug_discovery/ai_support.py: Meta Llama integration
+```
+drug_discovery/
+├── __init__.py                  # Public API surface (22 modules, lazy imports)
+├── pipeline.py                  # DrugDiscoveryPipeline: end-to-end orchestrator
+├── elite_stack.py               # EliteStackPipeline: 4-signal composite ranker
+├── apex_orchestrator.py         # ApexOrchestrator: meta-level coordination
+├── singularity_engine.py        # SingularityEngine: recursive self-improvement
+├── omega_protocol.py            # OmegaProtocol: trans-physical optimizer
+├── reality_optimizer.py         # RealityOptimizer: information-theoretic scorer
+├── cli.py                       # Argparse CLI entry-point (all commands)
+├── cli_extension.py             # Extended CLI commands
+├── dashboard.py                 # Rich-powered terminal dashboard
+├── ai_support.py                # Meta Llama integration (HF + Cerebras)
+├── integrations.py              # Centralized external ecosystem registry
+├── external_tooling.py          # Bridge to external tool CLIs
+├── integrations_extended.py     # Additional integration adapters
+├── polyglot_integration.py      # Julia / Go / Cython interop layer
+├── boltzgen_adapter.py          # BoltzGen binder design runner
+│
+├── data/                        # Data acquisition and preparation
+│   ├── collector.py             # PubChem / ChEMBL / DrugBank / approved_drugs
+│   ├── featurizer.py            # Graph + fingerprint featurization
+│   ├── dataset.py               # MolecularDataset (torch_geometric Data, .y)
+│   ├── normalizer.py            # Property normalization utilities
+│   ├── feature_store.py         # On-disk feature cache
+│   ├── versioning.py            # Dataset snapshot versioning
+│   └── pipeline.py              # Data preparation pipeline
+│
+├── models/                      # Neural network architectures
+│   ├── gnn.py                   # MolecularGNN: 4-layer GAT baseline
+│   ├── transformer.py           # MolecularTransformer: sequence/fingerprint
+│   ├── ensemble.py              # EnsembleModel: multi-model consensus
+│   ├── equivariant_gnn.py       # EquivariantGNN: EGNN/SchNet/PaiNN (E(3))
+│   ├── diffusion_generator.py   # DiffusionMoleculeGenerator: SE(3) denoising
+│   ├── gflownet.py              # GFlowNet: fragment-based generative policy
+│   ├── dmpnn.py                 # DMPNN: directed message-passing NN
+│   ├── e3_equivariant.py        # SE3Transformer: higher-order equivariance
+│   └── drug_modeling.py         # Drug-specific modeling utilities
+│
+├── training/                    # Training infrastructure
+│   ├── trainer.py               # SelfLearningTrainer: standard loop
+│   ├── advanced_training.py     # AdvancedTrainer: AMP, EMA, cosine-LR, early-stop
+│   ├── closed_loop.py           # Closed-loop active learning trainer
+│   ├── contrastive_pretraining.py # Contrastive pre-training utilities
+│   ├── federated_learning.py    # Flower-based federated learning (Module 9)
+│   ├── federated_node.py        # Federated participant node
+│   ├── cryptography.py          # TenSEAL-based homomorphic encryption
+│   └── distributed.py           # Distributed / DDP training helpers
+│
+├── evaluation/                  # Evaluation and scoring
+│   ├── predictor.py             # PropertyPredictor + ModelEvaluator
+│   ├── advanced_admet.py        # AdvancedADMETPredictor: 16-endpoint GNN+Transformer
+│   ├── uncertainty.py           # MC-Dropout, DeepEnsembles, Conformal Prediction
+│   ├── clinical_success_predictor.py # Clinical success probability model
+│   ├── deep_tox_panel.py        # Deep toxicology panel
+│   ├── failfast_pipeline.py     # Fail-fast triage funnel
+│   ├── structural_alerts.py     # SMARTS-based structural alert detection
+│   └── torchdrug_scorer.py      # TorchDrug property scorer bridge
+│
+├── physics/                     # Physics simulation layer
+│   ├── md_simulator.py          # MolecularDynamicsSimulator: ligand/complex MD
+│   ├── docking.py               # Docking scoring utilities
+│   ├── diffdock_adapter.py      # DiffDock diffusion-based docking
+│   ├── openmm_adapter.py        # OpenMM MD driver
+│   └── protein_structure.py     # OpenFold protein structure adapter
+│
+├── simulation/                  # Simulation modules
+│   ├── free_energy.py           # ML-accelerated FEP (GNN ΔΔG, TI)
+│   └── biological_response.py   # ADME simulation with GT4SD fallback
+│
+├── synthesis/                   # Synthesis planning
+│   ├── retrosynthesis.py        # RetrosynthesisPlanner + SynthesisFeasibilityScorer
+│   ├── backends.py              # AiZynthFinder backend (optional)
+│   └── pistachio.py             # Pistachio reaction dataset integration
+│
+├── generation/                  # Molecule generation
+│   ├── physics_aware.py         # PhysicsAwareGenerator: BRICS/RECAP + diffusion
+│   └── backends.py              # REINVENT4 / GT4SD / Molformer / molecular-design
+│
+├── optimization/                # Optimization algorithms
+│   ├── bayesian.py              # Gaussian Process Bayesian optimizer
+│   ├── multi_objective.py       # EHVI Pareto-front optimizer (2–3× more leads)
+│   ├── active_learning.py       # Active learning acquisition functions
+│   └── hyperparameter_optimization.py # HPO utilities
+│
+├── active_learning/             # Active learning brain (Module 6)
+│   └── ...                      # BayesianOptimizer, ThompsonSampling, UCB, EI
+│
+├── strategy/                    # Strategy planning (Tier 22 lite)
+│   ├── portfolio.py             # ProgramStrategyEngine: TPP + manufacturing readiness
+│   ├── tpp.py                   # TargetProductProfile + TPPScorer
+│   └── manufacturing.py         # ManufacturingStrategyPlanner
+│
+├── agents/ / agentic/           # Agentic orchestration (Module 14)
+├── knowledge_graph/             # Neo4j causal KG (Module 7)
+├── diffusion/                   # 3D diffusion models (Module 5)
+├── geometric_dl/                # SE3Transformer + FEP (Module 4)
+├── qml/                         # Quantum ML / VQE (Module 2)
+├── multi_omics/                 # ADMET + single-cell (Module 3)
+├── advanced/                    # LearnableDockingEngine + differentiable pipeline
+├── neuromorphic/                # SNN Compiler / Lava bridge (Module 12)
+├── quantum_chemistry/           # FermiNet / QED sandbox (Module 13)
+├── quantum_grid/                # Cislunar compute (Module 19)
+├── chronobiology/               # Epigenetic aging / Julia SciML (Module 16)
+├── nanobotics/                  # MARL nanobot swarm (Module 17)
+├── xenobiology/                 # Xenobiological synthesizer (Module 15)
+├── meta_learning/               # Recursive self-improvement (Module 18)
+├── genomics/                    # Germline / CRISPR refactoring (Module 20)
+├── temporal/                    # CTC computing / Module 21
+├── reality_optimizer.py         # Shannon entropy optimizer (Module 22)
+├── intelligence/                # Intelligence routing utilities
+├── continuous_improvement/      # Continuous improvement loop
+├── benchmarking/                # MOSES / GuacaMol benchmark harness
+├── testing/                     # Drug combination testing utilities
+├── web_scraping/                # Web evidence collection
+└── drugmaking/                  # CustomDrugmakingModule
+```
+
+### Data Pipeline Flow
+
+```mermaid
+flowchart LR
+    PubChem([PubChem API]) --> Collect
+    ChEMBL([ChEMBL API])   --> Collect
+    DrugBank([DrugBank CSV]) --> Collect
+    Collect[DataCollector<br/>SMILES validation +<br/>deduplication] --> Cache[(Feature Store<br/>outputs/cache/)]
+    Cache --> Feat[MolecularFeaturizer<br/>graph tensors ·<br/>fingerprints · SMILES]
+    Feat --> DS[MolecularDataset<br/>Data.y torch_geometric]
+    DS --> Split{Split strategy}
+    Split -->|random| TRN[Train split]
+    Split -->|scaffold| TRN
+    TRN --> Trainer[AdvancedTrainer<br/>AMP · EMA · cosine-LR]
+    Trainer --> Ckpt[(checkpoints/)]
+    Ckpt --> Eval[ModelEvaluator<br/>RMSE · MAE · Pearson-r]
+    Eval --> ADMET[AdvancedADMET<br/>16-endpoint predictor]
+    ADMET --> Rank[Composite Ranker<br/>EliteStackPipeline]
+    Rank --> Artifacts[(outputs/reports/)]
+```
 
 ## 6. Installation
 
