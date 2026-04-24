@@ -699,3 +699,42 @@ class DrugDiscoveryPipeline:
 
         simulator = ClinicalTrialSimulator()
         return simulator.simulate_phase3(drug_name, num_patients=num_patients)
+
+    # ------------------------------------------------------------------
+    # Modules 11-14: Space, Neuromorphic, Quantum QED, Agentic
+    # ------------------------------------------------------------------
+
+    def simulate_microgravity(self, duration: float = 3600.0) -> dict[str, Any]:
+        """Simulate protein crystallization in microgravity (Module 11)."""
+        from .simulation import MicrogravitySimulator
+
+        simulator = MicrogravitySimulator(device=self.device)
+        return simulator.simulate_crystallization(geometry={}, initial_concentration=0.5, duration=duration)
+
+    def compile_neuromorphic(self, model: torch.nn.Module) -> Any:
+        """Compile a biological model for neuromorphic hardware (Module 12)."""
+        from .neuromorphic import SNNCompiler
+
+        compiler = SNNCompiler()
+        return compiler.convert_to_spiking(model)
+
+    def run_qed_sandbox(self, smiles: str) -> dict[str, Any]:
+        """Run relativistic sub-atomic QED simulation (Module 13)."""
+        from .quantum_chemistry import QEDSandbox
+
+        sandbox = QEDSandbox()
+        return sandbox.analyze_relativistic_toxicity(smiles)
+
+    async def run_apex_orchestration(self, drug_name: str):
+        """Execute complex asynchronous workflow via Apex (Module 11-14)."""
+        from .apex_orchestrator import ApexOrchestrator
+
+        orchestrator = ApexOrchestrator()
+        return await orchestrator.run_comprehensive_workflow({"name": drug_name})
+
+    def generate_ind_package(self, drug_name: str) -> str:
+        """Generate agentic FDA IND application package (Module 14)."""
+        from .agentic import INDGenerator
+
+        generator = INDGenerator(kg_interface=None)
+        return generator.generate_application({"name": drug_name}, citation_ids=["cit_1", "cit_2"])

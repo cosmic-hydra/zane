@@ -345,6 +345,22 @@ def main():
     trial_parser.add_argument("drug_name", help="Name of the drug candidate")
     trial_parser.add_argument("--patients", type=int, default=1000)
 
+    # Microgravity command
+    micro_parser = subparsers.add_parser("simulate-microgravity", help="Simulate microgravity crystallization")
+    micro_parser.add_argument("--duration", type=float, default=3600.0)
+
+    # QED Sandbox command
+    qed_parser = subparsers.add_parser("qed-sandbox", help="Run relativistic QED sub-atomic simulation")
+    qed_parser.add_argument("smiles", help="Target molecule SMILES")
+
+    # Agentic IND command
+    ind_parser = subparsers.add_parser("generate-ind", help="Generate FDA IND application package")
+    ind_parser.add_argument("drug_name", help="Name of the drug candidate")
+
+    # Apex command
+    apex_parser = subparsers.add_parser("apex-run", help="Run comprehensive asynchronous Apex workflow")
+    apex_parser.add_argument("drug_name", help="Name of the drug candidate")
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -383,6 +399,14 @@ def main():
         run_federated_train(args)
     elif args.command == "simulate-trial":
         run_simulate_trial(args)
+    elif args.command == "simulate-microgravity":
+        run_simulate_microgravity(args)
+    elif args.command == "qed-sandbox":
+        run_qed_sandbox(args)
+    elif args.command == "generate-ind":
+        run_generate_ind(args)
+    elif args.command == "apex-run":
+        run_apex_workflow(args)
     else:
         parser.print_help()
 
@@ -803,6 +827,49 @@ def run_simulate_trial(args):
     result = pipeline.simulate_clinical_trial(args.drug_name, num_patients=args.patients)
     print("\nClinical Trial Simulation Result:")
     print(json.dumps(result, indent=2))
+
+
+def run_simulate_microgravity(args):
+    """Simulate microgravity crystallization."""
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    result = pipeline.simulate_microgravity(duration=args.duration)
+    print("\nMicrogravity Simulation Result:")
+    print(json.dumps(result, indent=2))
+
+
+def run_qed_sandbox(args):
+    """Run relativistic QED sub-atomic simulation."""
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    result = pipeline.run_qed_sandbox(args.smiles)
+    print("\nQED Sandbox Simulation Result:")
+    print(json.dumps(result, indent=2))
+
+
+def run_generate_ind(args):
+    """Generate FDA IND application package."""
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    application = pipeline.generate_ind_package(args.drug_name)
+    print("\nGenerated IND Application Package:")
+    print(application)
+
+
+def run_apex_workflow(args):
+    """Run comprehensive asynchronous Apex workflow."""
+    import asyncio
+
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    print(f"Starting Apex workflow for {args.drug_name}...")
+    result = asyncio.run(pipeline.run_apex_orchestration(args.drug_name))
+    print("\nApex Workflow Completed:")
+    print(result)
 
 
 if __name__ == "__main__":

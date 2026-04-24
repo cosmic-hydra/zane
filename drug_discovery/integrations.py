@@ -223,6 +223,62 @@ INTEGRATIONS: dict[str, IntegrationSpec] = {
         url="https://github.com/pymc-dev/pymc",
         python_modules=("pymc",),
     ),
+    "modulus": IntegrationSpec(
+        key="modulus",
+        name="NVIDIA Modulus",
+        purpose="Physics-Informed Neural Networks (PINNs)",
+        url="https://github.com/NVIDIA/modulus",
+        python_modules=("modulus",),
+    ),
+    "lava": IntegrationSpec(
+        key="lava",
+        name="Lava",
+        purpose="Neuromorphic computing framework",
+        url="https://github.com/lava-nc/lava",
+        python_modules=("lava",),
+    ),
+    "snntorch": IntegrationSpec(
+        key="snntorch",
+        name="snnTorch",
+        purpose="Spiking Neural Networks in PyTorch",
+        url="https://github.com/jeshraghian/snntorch",
+        python_modules=("snntorch",),
+    ),
+    "pyscf": IntegrationSpec(
+        key="pyscf",
+        name="PySCF",
+        purpose="Quantum chemistry software",
+        url="https://github.com/pyscf/pyscf",
+        python_modules=("pyscf",),
+    ),
+    "psi4": IntegrationSpec(
+        key="psi4",
+        name="Psi4",
+        purpose="Ab initio quantum chemistry",
+        url="https://github.com/psi4/psi4",
+        python_modules=("psi4",),
+    ),
+    "ferminet": IntegrationSpec(
+        key="ferminet",
+        name="FermiNet",
+        purpose="Deep learning for many-electron Schrödinger equation",
+        url="https://github.com/google-deepmind/ferminet",
+        python_modules=("ferminet",),
+    ),
+    "langgraph": IntegrationSpec(
+        key="langgraph",
+        name="LangGraph",
+        purpose="Agentic workflows for LLMs",
+        url="https://github.com/langchain-ai/langgraph",
+        python_modules=("langgraph",),
+    ),
+    "llamaindex": IntegrationSpec(
+        key="llamaindex",
+        name="LlamaIndex",
+        purpose="Data framework for LLM applications",
+        url="https://github.com/run-llama/llama_index",
+        python_modules=("llama_index",),
+    ),
 }
 
 
