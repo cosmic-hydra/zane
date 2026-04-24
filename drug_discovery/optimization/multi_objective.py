@@ -60,16 +60,16 @@ class GaussianProcessSurrogate:
     def fit(self, X, y):
         self.X_train = X.copy()
         self.y_train = y.copy()
-        K = self._kernel(X, X) + self.noise * np.eye(len(X))
-        self._K_inv = np.linalg.inv(K + 1e-8 * np.eye(len(K)))
+        k_matrix = self._kernel(X, X) + self.noise * np.eye(len(X))
+        self._K_inv = np.linalg.inv(k_matrix + 1e-8 * np.eye(len(k_matrix)))
 
     def predict(self, X):
         if self.X_train is None:
             raise RuntimeError("Call fit() first")
-        Ks = self._kernel(X, self.X_train)
-        Kss = self._kernel(X, X)
-        mean = Ks @ self._K_inv @ self.y_train
-        var = np.maximum(np.diag(Kss - Ks @ self._K_inv @ Ks.T), 1e-8)
+        ks_matrix = self._kernel(X, self.X_train)
+        kss_matrix = self._kernel(X, X)
+        mean = ks_matrix @ self._K_inv @ self.y_train
+        var = np.maximum(np.diag(kss_matrix - ks_matrix @ self._K_inv @ ks_matrix.T), 1e-8)
         return mean, var
 
 
@@ -149,14 +149,14 @@ class MultiObjectiveBayesianOptimizer:
     def _compute_ehvi(self, candidates):
         ref = np.array(self.config.ref_point[: self.n_obj])
         if self.Y_obs is not None:
-            Ym = self.Y_obs.copy()
+            ym_vals = self.Y_obs.copy()
             for i, d in enumerate(self.config.objective_directions):
                 if d == "minimize":
-                    Ym[:, i] = -Ym[:, i]
-            pm = is_pareto_efficient(-Ym)
-            cur_hv = hypervolume_indicator(Ym[pm][:, :2], ref[:2])
+                    ym_vals[:, i] = -ym_vals[:, i]
+            pm = is_pareto_efficient(-ym_vals)
+            cur_hv = hypervolume_indicator(ym_vals[pm][:, :2], ref[:2])
         else:
-            Ym = None
+            ym_vals = None
             cur_hv = 0.0
         ehvi = np.zeros(len(candidates))
         for idx in range(len(candidates)):
@@ -172,7 +172,7 @@ class MultiObjectiveBayesianOptimizer:
                 for i, d in enumerate(self.config.objective_directions):
                     if d == "minimize":
                         samp[i] = -samp[i]
-                aug = np.vstack([Ym, samp.reshape(1, -1)]) if Ym is not None else samp.reshape(1, -1)
+                aug = np.vstack([ym_vals, samp.reshape(1, -1)]) if ym_vals is not None else samp.reshape(1, -1)
                 am = is_pareto_efficient(-aug)
                 imps.append(max(0, hypervolume_indicator(aug[am][:, :2], ref[:2]) - cur_hv))
             ehvi[idx] = np.mean(imps)
@@ -181,16 +181,16 @@ class MultiObjectiveBayesianOptimizer:
     def get_pareto_front(self):
         if self.Y_obs is None:
             return {"X": np.array([]), "Y": np.array([]), "mask": np.array([])}
-        Yo = self.Y_obs.copy()
+        yo_vals = self.Y_obs.copy()
         for i, d in enumerate(self.config.objective_directions):
             if d == "minimize":
-                Yo[:, i] = -Yo[:, i]
-        mask = is_pareto_efficient(-Yo)
+                yo_vals[:, i] = -yo_vals[:, i]
+        mask = is_pareto_efficient(-yo_vals)
         return {
             "X": self.X_obs[mask],
             "Y": self.Y_obs[mask],
             "mask": mask,
-            "hypervolume": hypervolume_indicator(Yo[mask][:, :2], np.array(self.config.ref_point[:2])),
+            "hypervolume": hypervolume_indicator(yo_vals[mask][:, :2], np.array(self.config.ref_point[:2])),
         }
 
     def summary(self):

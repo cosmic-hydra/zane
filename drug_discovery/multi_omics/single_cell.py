@@ -213,11 +213,10 @@ class SingleCellLoader:
 
         try:
             obs_names = adata.obs_names.tolist() if hasattr(adata.obs_names, "tolist") else list(adata.obs_names)
-            var_names = adata.var_names.tolist() if hasattr(adata.var_names, "tolist") else list(adata.var_names)
 
             for i, cell_id in enumerate(obs_names):
                 # Gene expression
-                expr = adata.X[i] if hasattr(adata.X, "__getitem__") else adata.X[i, :]
+                expr = adata.x_data[i] if hasattr(adata.x_data, "__getitem__") else adata.x_data[i, :]
                 if hasattr(expr, "toarray"):
                     expr = expr.toarray().flatten()
                 else:
@@ -266,14 +265,14 @@ class SingleCellLoader:
         n_cells = 500
         n_genes = self.n_top_genes or 100
 
-        X = np.random.randn(n_cells, n_genes)
+        x_data = np.random.randn(n_cells, n_genes)
         obs = {"cell_type": np.random.choice(["T_cell", "B_cell", "Macrophage", "Fibroblast"], n_cells)}
 
         if SCANPY_AVAILABLE and ad is not None:
-            return ad.AnnData(X=X, obs=obs)
+            return ad.AnnData(x_data=x_data, obs=obs)
         else:
             # Simple dict mock
-            return {"X": X, "obs": obs}
+            return {"x_data": x_data, "obs": obs}
 
 
 class SpatialTranscriptomicsLoader:
@@ -418,13 +417,13 @@ class SpatialTranscriptomicsLoader:
         n_cells = 500
         n_genes = 100
 
-        X = np.random.randn(n_cells, n_genes)
+        x_data = np.random.randn(n_cells, n_genes)
         coords = np.random.rand(n_cells, 2) * 100  # 100x100 micron area
 
         if SCANPY_AVAILABLE and ad is not None:
-            adata = ad.AnnData(X=X)
+            adata = ad.AnnData(x_data=x_data)
             adata.obsm["spatial"] = coords
             adata.obs["cell_type"] = np.random.choice(["T_cell", "B_cell", "Macrophage", "Fibroblast"], n_cells)
             return adata
         else:
-            return {"X": X, "spatial": coords}
+            return {"x_data": x_data, "spatial": coords}

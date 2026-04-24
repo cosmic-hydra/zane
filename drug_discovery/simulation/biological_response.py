@@ -169,7 +169,6 @@ class ADMEPredictor:
                 mol = Chem.MolFromSmiles(smiles)
                 if mol is None:
                     return {"drug_like": False, "violations": ["Invalid SMILES"]}
-                mol_weight = Descriptors.MolWt(mol)
                 logp = Crippen.MolLogP(mol)
                 num_hbd = Descriptors.NumHDonors(mol)
                 num_hba = Descriptors.NumHAcceptors(mol)
@@ -361,7 +360,6 @@ class CellularResponseSimulator:
 
             # Simplified simulation based on molecular properties
             logp = Crippen.MolLogP(mol)
-            mol_weight = Descriptors.MolWt(mol)
 
             # Cell viability (decreases with dose and lipophilicity)
             toxicity_factor = max(0.0, (logp / 5.0) * (dose / 10.0))

@@ -1,29 +1,37 @@
-"""
-Custom Drugmaking Process Module for ZANE.
-
-This module provides end-to-end drug design capabilities:
-- Generation of novel compounds from scratch
-- Effectiveness and toxicity testing
-- Multi-objective optimization to balance success and safety
-- Counter-substance finder for risk mitigation
-- Delivery system generation (LNPs, polymers)
-"""
+"""Custom Drugmaking Process Module for ZANE."""
 
 from __future__ import annotations
 
 from drug_discovery.drugmaking.process import (
-    CandidateResult,
-    CompoundTestResult,
-    CustomDrugmakingModule,
-    OptimizationConfig,
+    CandidateResult as CandidateResult,
+)
+from drug_discovery.drugmaking.process import (
+    CompoundTestResult as CompoundTestResult,
+)
+from drug_discovery.drugmaking.process import (
+    CustomDrugmakingModule as CustomDrugmakingModule,
+)
+from drug_discovery.drugmaking.process import (
+    OptimizationConfig as OptimizationConfig,
 )
 from drug_discovery.drugmaking.risk_mitigation import (
-    CounterSubstanceFinder,
-    CounterSubstanceResult,
+    CounterSubstanceFinder as CounterSubstanceFinder,
+)
+from drug_discovery.drugmaking.risk_mitigation import (
+    CounterSubstanceResult as CounterSubstanceResult,
 )
 
-from .delivery_systems import LNP, DeliverySystem, PolymericSystem
-from .vae_generator import DeliveryGenerator, DeliveryVAE
+from .delivery_systems import (
+    LNP as LNP,
+)
+from .delivery_systems import (
+    DeliverySystem as DeliverySystem,
+)
+from .delivery_systems import (
+    PolymericSystem as PolymericSystem,
+)
+from .vae_generator import DeliveryGenerator as DeliveryGenerator
+from .vae_generator import DeliveryVAE as DeliveryVAE
 
 __all__ = [
     "CustomDrugmakingModule",

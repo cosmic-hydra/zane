@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 try:
     import torch
     import torch.nn as nn
-    import torch.nn.functional as F
 
     TORCH_AVAILABLE = True
 except ImportError:
@@ -28,9 +27,6 @@ except ImportError:
 
 try:
     import gpytorch
-    from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
-    from gpytorch.likelihoods import GaussianLikelihood
-    from gpytorch.means import ConstantMean, LinearMean
     from gpytorch.models import ExactGP
 
     GPYTORCH_AVAILABLE = True
@@ -149,32 +145,32 @@ class SimpleGPModel:
         n = len(X)
 
         # Compute kernel matrix
-        K = self._rbf_kernel(X, X)
+        k_mat = self._rbf_kernel(X, X)
 
         # Add noise
-        K = K + self.noise_std**2 * np.eye(n)
+        k_mat = k_mat + self.noise_std**2 * np.eye(n)
 
         # Cholesky decomposition
         try:
-            self.L = np.linalg.cholesky(K)
+            self.L = np.linalg.cholesky(k_mat)
             self.alpha = np.linalg.solve(self.L.T, np.linalg.solve(self.L, y))
         except np.linalg.LinAlgError:
             # Fallback: add small jitter
-            K = K + 1e-6 * np.eye(n)
-            self.L = np.linalg.cholesky(K)
+            k_mat = k_mat + 1e-6 * np.eye(n)
+            self.L = np.linalg.cholesky(k_mat)
             self.alpha = np.linalg.solve(self.L.T, np.linalg.solve(self.L, y))
 
         self.X_train = X
 
     def _rbf_kernel(self, X1: np.ndarray, X2: np.ndarray, length_scale: float = 1.0) -> np.ndarray:
         """RBF kernel computation."""
-        X1_sq = np.sum(X1**2, axis=1, keepdims=True)
-        X2_sq = np.sum(X2**2, axis=1, keepdims=True)
+        x1_sq = np.sum(X1**2, axis=1, keepdims=True)
+        x2_sq = np.sum(X2**2, axis=1, keepdims=True)
 
-        K = X1_sq + X2_sq.T - 2 * np.dot(X1, X2.T)
-        K = np.exp(-0.5 * K / (length_scale**2))
+        k_mat = x1_sq + x2_sq.T - 2 * np.dot(X1, X2.T)
+        k_mat = np.exp(-0.5 * k_mat / (length_scale**2))
 
-        return K
+        return k_mat
 
     def predict(self, X: np.ndarray, return_std: bool = True) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -200,15 +196,15 @@ class SimpleGPModel:
     def _predict_manual(self, X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Manual GP prediction."""
         # Kernel with training data
-        K_star = self._rbf_kernel(X, self.X_train)
+        k_star = self._rbf_kernel(X, self.X_train)
 
         # Predictive mean
-        y_mean = np.dot(K_star, self.alpha)
+        y_mean = np.dot(k_star, self.alpha)
 
         # Predictive variance
-        K_ss = self._rbf_kernel(X, X)
-        v = np.linalg.solve(self.L, K_star.T)
-        y_var = np.diag(K_ss) - np.sum(v**2, axis=0)
+        k_ss = self._rbf_kernel(X, X)
+        v = np.linalg.solve(self.L, k_star.T)
+        y_var = np.diag(k_ss) - np.sum(v**2, axis=0)
         y_var = np.maximum(y_var, 1e-10)
         y_std = np.sqrt(y_var)
 
@@ -301,10 +297,10 @@ class GaussianProcessSurrogate:
         self.X_buffer.append(X)
         self.y_buffer.append(y)
 
-        X_all = np.vstack(self.X_buffer)
+        x_all = np.vstack(self.X_buffer)
         y_all = np.concatenate(self.y_buffer)
 
-        self.gp.fit(X_all, y_all)
+        self.gp.fit(x_all, y_all)
 
     def predict(
         self,
@@ -414,7 +410,9 @@ class GaussianProcessSurrogate:
     @staticmethod
     def _norm_cdf(x: np.ndarray) -> np.ndarray:
         """Standard normal CDF."""
-        return 0.5 * (1 + np.erf(x / np.sqrt(2)))
+        from scipy.special import erf
+
+        return 0.5 * (1 + erf(x / np.sqrt(2)))
 
     @staticmethod
     def _norm_pdf(x: np.ndarray) -> np.ndarray:
@@ -436,10 +434,10 @@ class GaussianProcessSurrogate:
     def load(self, path: str) -> None:
         """Load model state."""
         data = np.load(path)
-        X = data["X_buffer"]
-        y = data["y_buffer"]
+        x_loaded = data["X_buffer"]
+        y_loaded = data["y_buffer"]
 
-        if len(X) > 0:
-            self.fit(X, y)
+        if len(x_loaded) > 0:
+            self.fit(x_loaded, y_loaded)
 
         logger.info(f"Model loaded from {path}")

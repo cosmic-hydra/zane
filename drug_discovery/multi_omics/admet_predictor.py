@@ -23,7 +23,7 @@ try:
     import torch.nn as nn
     import torch.nn.functional as F
 
-    from torch_geometric.data import Batch, Data
+    from torch_geometric.data import Data
     from torch_geometric.nn import MessagePassing, global_max_pool, global_mean_pool
 
     TORCH_AVAILABLE = True
@@ -36,7 +36,7 @@ except ImportError:
 
 try:
     from rdkit import Chem
-    from rdkit.Chem import AllChem, Crippen, Descriptors
+    from rdkit.Chem import Crippen, Descriptors
 
     RDKIT_AVAILABLE = True
 except ImportError:

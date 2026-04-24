@@ -843,7 +843,6 @@ def _compute_combo_rankings(
         efficacy_proxy = (float(left["qed"]) + float(right["qed"])) / 2.0
         risk_proxy = (float(left["risk_proxy"]) + float(right["risk_proxy"])) / 2.0
         match_score = (float(left["match"]) + float(right["match"])) / 2.0
-        combo_score = (0.45 * match_score) + (0.40 * efficacy_proxy) - (0.25 * risk_proxy)
 
         combo_rows.append(
             {

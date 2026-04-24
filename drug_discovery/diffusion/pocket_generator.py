@@ -171,14 +171,11 @@ class PocketAwareGenerator:
         """
         # Extract pocket information
         pocket_coords = pocket_context.pocket_coords
-        pocket_volume = pocket_context.pocket_volume
 
         if pocket_coords is not None:
             center = pocket_coords.mean(axis=0)
-            extent = pocket_coords.max(axis=0) - pocket_coords.min(axis=0)
         else:
             center = np.zeros(3)
-            extent = np.ones(3) * 8.0
 
         # Generate candidates
         candidates = []

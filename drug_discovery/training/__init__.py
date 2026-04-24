@@ -1,8 +1,10 @@
 """ZANE Training — Training loops and advanced utilities."""
 
-from .cryptography import EncryptionProvider, PrivacyControl
-from .federated_learning import FederatedServer, RobustFedAvg
-from .federated_node import FederatedClient
+from .cryptography import EncryptionProvider as EncryptionProvider
+from .cryptography import PrivacyControl as PrivacyControl
+from .federated_learning import FederatedServer as FederatedServer
+from .federated_learning import RobustFedAvg as RobustFedAvg
+from .federated_node import FederatedClient as FederatedClient
 
 __all__ = [
     "FederatedServer",

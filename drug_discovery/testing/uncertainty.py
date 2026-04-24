@@ -129,8 +129,8 @@ class UncertaintyEstimator:
         )
 
         # Reshape for sklearn
-        X_dummy = np.zeros((len(predictions), 1))
-        calibrated_clf.fit(X_dummy, true_labels)
+        x_dummy = np.zeros((len(predictions), 1))
+        calibrated_clf.fit(x_dummy, true_labels)
 
         # Compute calibration curve
         fraction_of_positives, mean_predicted_value = calibration_curve(
@@ -267,20 +267,20 @@ class UncertaintyEstimator:
             Dictionary with uncertainty decomposition
         """
         # Total evidence
-        S = np.sum(alpha)
+        s_total = np.sum(alpha)
 
         # Expected probability
-        prob = alpha / S
+        prob = alpha / s_total
 
         # Aleatoric uncertainty (data uncertainty)
-        aleatoric = prob * (1 - prob) / (S + 1)
+        aleatoric = prob * (1 - prob) / (s_total + 1)
 
         # Epistemic uncertainty (model uncertainty)
-        epistemic = prob * (1 - prob) / (S + 1) * (1 / S)
+        epistemic = prob * (1 - prob) / (s_total + 1) * (1 / s_total)
 
         results = {
             "predicted_probability": prob.tolist() if isinstance(prob, np.ndarray) else float(prob),
-            "total_evidence": float(S),
+            "total_evidence": float(s_total),
             "aleatoric_uncertainty": aleatoric.tolist() if isinstance(aleatoric, np.ndarray) else float(aleatoric),
             "epistemic_uncertainty": epistemic.tolist() if isinstance(epistemic, np.ndarray) else float(epistemic),
         }

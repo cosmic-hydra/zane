@@ -133,7 +133,6 @@ class LocalSimulator(QuantumSimulator):
         self.n_qubits = n_qubits
         self.circuit = []
 
-        dtype = np.float32 if self.precision == "float32" else np.float64
         # Initial state |0...0>
         self._state = np.zeros(2**n_qubits, dtype=complex)
         self._state[0] = 1.0 + 0j
@@ -245,7 +244,6 @@ class LocalSimulator(QuantumSimulator):
             probs = np.abs(state) ** 2
 
             # Z^i expectation
-            n_z = observable.count("Z")
             for i, char in enumerate(reversed(observable)):
                 if char == "Z":
                     exp_z = 0.0
@@ -391,7 +389,6 @@ class AWSBraketDriver(QuantumSimulator):
             result = task.result()
 
             # Extract expectation values
-            measurements = result.measurements
             counts = result.measurement_counts
 
             expectation_values = {}
@@ -529,7 +526,6 @@ class QuantumDriver:
         backends = ["local"]
 
         try:
-            import boto3
 
             backends.append("aws_braket")
         except ImportError:

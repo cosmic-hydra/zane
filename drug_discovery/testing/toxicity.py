@@ -21,11 +21,11 @@ from drug_discovery.utils.rdkit_fallback import heuristic_props, is_smiles_plaus
 
 try:  # pragma: no cover - optional dependency
     from rdkit import Chem  # type: ignore
-    from rdkit.Chem import Descriptors, rdMolDescriptors  # type: ignore
+    from rdkit.Chem import Descriptors, rd_mol_descriptors  # type: ignore
 except Exception:  # pragma: no cover - default path when RDKit unavailable
     Chem = None  # type: ignore
     Descriptors = None  # type: ignore
-    rdMolDescriptors = None  # type: ignore
+    rd_mol_descriptors = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -106,8 +106,8 @@ class ToxicityPredictor:
                 Descriptors.FractionCSP3(mol),
                 Descriptors.NumHeteroatoms(mol),
                 Descriptors.RingCount(mol),
-                rdMolDescriptors.CalcNumSpiroAtoms(mol),
-                rdMolDescriptors.CalcNumBridgeheadAtoms(mol),
+                rd_mol_descriptors.CalcNumSpiroAtoms(mol),
+                rd_mol_descriptors.CalcNumBridgeheadAtoms(mol),
             ]
 
             return np.array(descriptors, dtype=np.float32)

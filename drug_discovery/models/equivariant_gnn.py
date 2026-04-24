@@ -122,9 +122,9 @@ class SchNetLayer(nn.Module):
     def forward(self, h, pos, edge_index):
         row, col = edge_index
         dist = torch.sqrt(((pos[row] - pos[col]) ** 2).sum(-1) + 1e-8)
-        W = self.filter_net(self.rbf(dist)) * self.cutoff_fn(dist).unsqueeze(-1)
+        w_filt = self.filter_net(self.rbf(dist)) * self.cutoff_fn(dist).unsqueeze(-1)
         agg = torch.zeros_like(h)
-        agg.index_add_(0, row, h[col] * W)
+        agg.index_add_(0, row, h[col] * w_filt)
         return h + self.dropout(self.interaction(agg))
 
 

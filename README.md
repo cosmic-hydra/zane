@@ -69,9 +69,48 @@ A Meta Llama-backed assistant supports strategy and interpretation, injecting co
 
 ## 3. 2026 Upgrade Highlights
 
-This release adds deep external-ecosystem interoperability and upgrades simulation/research execution paths.
+This release adds deep external-ecosystem interoperability and completes the full 22-tier discovery stack.
 
-### 3.1 External Ecosystem Integration Layer
+### 3.1 ZANE Elite Intelligence Tiers (Tier 1-22)
+
+ZANE has evolved beyond standard property prediction into a comprehensive trans-physical discovery ecosystem.
+
+- **Tiers 1-6: Core Discovery Stack**
+  - Data ingestion, GNN/Transformer modeling, ADMET prediction, and active learning.
+- **Module 7: Causal Knowledge Graph & RAG**
+  - Neo4j-backed knowledge mapping and retrieval-augmented research intelligence.
+- **Module 8: LNP & Polymeric Delivery Systems**
+  - Generative design of lipid nanoparticles and polymer vehicles for targeted delivery.
+- **Module 9: Cryptographic Federated Learning**
+  - Multi-node collaborative training with Flower and TenSEAL-based encryption.
+- **Module 10: In Silico Phase 3 Clinical Trials**
+  - Synthetic patient cohort generation (SDV) and Bayesian PK/PD simulation (PyMC).
+- **Module 11: Microgravity & Orbital Synthesis**
+  - Physics-Informed Neural Networks (PINNs) for zero-G protein crystallization.
+- **Module 12: Neuromorphic SNN Compiler**
+  - Translating biological models to Spiking Neural Networks for Intel Lava/Loihi hardware.
+- **Module 13: Sub-Atomic QED Sandbox**
+  - Many-electron Schrödinger solvers (FermiNet) and relativistic toxicity modeling.
+- **Module 14: Agentic IND & Bioethics Engine**
+  - Multi-agent regulatory swarms (LangGraph) for autonomous FDA IND generation.
+- **Module 15: Xenobiological Synthesizer**
+  - Design of proteins using an expanded 100+ synthetic amino acid alphabet.
+- **Module 16: Epigenetic Aging Engine**
+  - Lifespan simulations using Julia-based SciML and Universal Differential Equations.
+- **Module 17: Programmable Nanobot Swarm**
+  - MARL-trained (Ray RLlib) DNA origami nanobots with In Vivo logic gates.
+- **Module 18: Recursive Self-Improvement**
+  - Autonomous hypothesis generation and programmatic source code mutation.
+- **Module 19: Cislunar Quantum Compute Grid**
+  - Distributed orbital load balancing with entanglement-based telemetry.
+- **Module 20: Post-Human Ontological Redesign**
+  - Germline refactoring using CRISPR/Prime Editing to delete disease vulnerabilities.
+- **Module 21: Closed Timelike Curve Computing**
+  - Theoretical quantum non-causal optimization for instant global parameter solving.
+- **Module 22: Base-Reality Information Theory**
+  - Optimizing molecular Shannon entropy to exploit universal physical "rounding errors."
+
+### 3.2 External Ecosystem Integration Layer
 
 The external integration layer is anchored by a centralized registry in `drug_discovery/integrations.py` and an external tooling bridge in `drug_discovery/external_tooling.py`, with an accompanying status command:
 

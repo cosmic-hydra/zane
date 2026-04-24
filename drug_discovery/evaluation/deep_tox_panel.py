@@ -69,7 +69,6 @@ class DeepToxPanel:
         r = ToxPanelReport(smiles=smiles)
         mw = descriptors.get("mol_weight", 300)
         lp = descriptors.get("logp", 2)
-        hbd = descriptors.get("hbd", 1)
         tpsa = descriptors.get("tpsa", 70)
         aro = descriptors.get("aromatic_rings", 1)
         # 1. hERG: logP>3.7, PSA<75

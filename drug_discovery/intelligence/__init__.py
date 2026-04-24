@@ -1,26 +1,31 @@
-"""
-Biomedical Intelligence Module
-
-Provides web-scale biomedical literature mining with:
-- Multi-source ingestion (PubMed, arXiv, bioRxiv, patents)
-- Named Entity Recognition (NER)
-- Relationship extraction
-- Knowledge graph construction
-- RAG engine for deep insights
-"""
+"""Biomedical Intelligence Module."""
 
 from drug_discovery.intelligence.biomedical_intelligence import (
-    ArXivIngester,
-    BiomedicalIntelligence,
-    BiomedicalNER,
-    ExtractedEntity,
-    ExtractedRelationship,
-    LiteratureDocument,
-    PubMedIngester,
-    RelationshipExtractor,
+    ArXivIngester as ArXivIngester,
+)
+from drug_discovery.intelligence.biomedical_intelligence import (
+    BiomedicalIntelligence as BiomedicalIntelligence,
+)
+from drug_discovery.intelligence.biomedical_intelligence import (
+    BiomedicalNER as BiomedicalNER,
+)
+from drug_discovery.intelligence.biomedical_intelligence import (
+    ExtractedEntity as ExtractedEntity,
+)
+from drug_discovery.intelligence.biomedical_intelligence import (
+    ExtractedRelationship as ExtractedRelationship,
+)
+from drug_discovery.intelligence.biomedical_intelligence import (
+    LiteratureDocument as LiteratureDocument,
+)
+from drug_discovery.intelligence.biomedical_intelligence import (
+    PubMedIngester as PubMedIngester,
+)
+from drug_discovery.intelligence.biomedical_intelligence import (
+    RelationshipExtractor as RelationshipExtractor,
 )
 
-from .rag_engine import RAGEngine
+from .rag_engine import RAGEngine as RAGEngine
 
 __all__ = [
     "BiomedicalIntelligence",

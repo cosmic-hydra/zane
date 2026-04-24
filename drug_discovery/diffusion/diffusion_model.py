@@ -25,7 +25,7 @@ try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    from torch.utils.data import DataLoader, Dataset
+    from torch.utils.data import Dataset
 
     TORCH_AVAILABLE = True
 except ImportError:
@@ -48,7 +48,7 @@ except ImportError:
 
 try:
     from rdkit import Chem
-    from rdkit.Chem import AllChem, Descriptors, SlogP_VSA
+    from rdkit.Chem import Descriptors
 
     RDKIT_AVAILABLE = True
 except ImportError:
@@ -429,7 +429,6 @@ class EquivariantDiffusionModel(nn.Module if TORCH_AVAILABLE else object):
             mol = Chem.RWMol()
 
             # Add atoms
-            atom_symbols = {0: "C", 1: "N", 2: "O", 3: "F", 4: "P", 5: "S", 6: "Cl", 7: "Br", 8: "I"}
             symbol_map = {6: "C", 7: "N", 8: "O", 9: "F", 15: "P", 16: "S", 17: "Cl", 35: "Br", 53: "I"}
 
             for atype in atom_types:
@@ -594,7 +593,6 @@ class MolecularDiffuser:
 
         alpha = self.alphas[t]
         alpha_prod = self.alphas_cumprod[t]
-        beta = self.betas[t]
 
         x0_pred = (x_t - torch.sqrt(1 - alpha_prod) * model_output) / torch.sqrt(alpha_prod)
         x_prev = torch.sqrt(alpha) * x0_pred + torch.sqrt(1 - alpha) * model_output

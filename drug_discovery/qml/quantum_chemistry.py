@@ -305,7 +305,6 @@ class ActiveSpaceApproximator:
         """Compute molecular orbitals from RDKit molecule."""
         if RDKIT_AVAILABLE and mol is not None:
             # Simplified orbital model based on atomic properties
-            num_atoms = mol.GetNumAtoms()
             num_electrons = sum(atom.GetTotalValence() for atom in mol.GetAtoms())
 
             # Estimate orbital energies based on atom types
@@ -374,12 +373,12 @@ class ActiveSpaceApproximator:
         for i in range(n):
             for j in range(n):
                 for k in range(n):
-                    for l in range(n):
+                    for l_idx in range(n):
                         # Simplified: (ij|kl) ≈ 1/(1 + |r_ij - r_kl|)
-                        if i == k and j == l:
-                            two_e[i, j, k, l] = 1.0  # Coulomb
-                        elif i == l and j == k:
-                            two_e[i, j, k, l] = 0.5  # Exchange
+                        if i == k and j == l_idx:
+                            two_e[i, j, k, l_idx] = 1.0  # Coulomb
+                        elif i == l_idx and j == k:
+                            two_e[i, j, k, l_idx] = 0.5  # Exchange
 
         return one_e, two_e
 
@@ -415,8 +414,8 @@ class ActiveSpaceApproximator:
                         if abs(coef) > 1e-10 and p == r and q == s:
                             # (pp|qq) type terms
                             hamiltonian["I"] = hamiltonian.get("I", 0.0) + coef * 0.25
-                            for Z in [f"Z{p}", f"Z{q}"]:
-                                hamiltonian[Z] = hamiltonian.get(Z, 0.0) - coef * 0.25
+                            for z_op in [f"Z{p}", f"Z{q}"]:
+                                hamiltonian[z_op] = hamiltonian.get(z_op, 0.0) - coef * 0.25
                             hamiltonian[f"Z{p}Z{q}"] = hamiltonian.get(f"Z{p}Z{q}", 0.0) + coef * 0.25
 
         return hamiltonian

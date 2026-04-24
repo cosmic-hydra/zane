@@ -1,29 +1,24 @@
-"""
-Target-Aware 3D Molecular Diffusion Module.
-
-Implements a generative AI model that designs drugs de novo based on physics
-derived from previous modules, using structure-based equivariant diffusion models.
-
-Features:
-- Structure-based equivariant diffusion model
-- Pocket-aware molecular generation
-- Binding affinity optimization
-- Synthetic accessibility scoring
-
-Tech Stack: Diffusers, PyTorch3D, RDKit
-"""
+"""Target-Aware 3D Molecular Diffusion Module."""
 
 from __future__ import annotations
 
 from drug_discovery.diffusion.diffusion_model import (
-    DiffusionConfig,
-    DiffusionResult,
-    EquivariantDiffusionModel,
+    DiffusionConfig as DiffusionConfig,
+)
+from drug_discovery.diffusion.diffusion_model import (
+    DiffusionResult as DiffusionResult,
+)
+from drug_discovery.diffusion.diffusion_model import (
+    EquivariantDiffusionModel as EquivariantDiffusionModel,
 )
 from drug_discovery.diffusion.pocket_generator import (
-    GeneratedMolecule,
-    PocketAwareGenerator,
-    PocketContext,
+    GeneratedMolecule as GeneratedMolecule,
+)
+from drug_discovery.diffusion.pocket_generator import (
+    PocketAwareGenerator as PocketAwareGenerator,
+)
+from drug_discovery.diffusion.pocket_generator import (
+    PocketContext as PocketContext,
 )
 
 __all__ = [

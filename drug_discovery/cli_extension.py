@@ -61,13 +61,7 @@ def register_commands(subparsers):
 
 
 def cmd_train_advanced(args):
-    from drug_discovery.models import get_model
-    from drug_discovery.training.advanced_training import AdvancedTrainingConfig
 
-    model = get_model(args.model, hidden_dim=128, num_layers=6)
-    config = AdvancedTrainingConfig(
-        epochs=args.epochs, learning_rate=args.lr, use_amp=args.use_amp, use_ema=args.use_ema, scheduler=args.scheduler
-    )
     print(f"Model: {args.model} | Epochs: {args.epochs} | LR: {args.lr} | AMP: {args.use_amp} | EMA: {args.use_ema}")
     print("Trainer ready. Call trainer.fit(train_loader, val_loader) with your data.")
 

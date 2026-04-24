@@ -1,11 +1,11 @@
 """ZANE Simulation — Physics-based simulation and ML-accelerated FEP."""
 
-from .bayesian_pkpd import BayesianPKPD
-from .clinical_trial import ClinicalTrialSimulator
-from .coarse_grained_md import CGSimulator
-from .microgravity import MicrogravitySimulator
-from .orbital_logistics import OrbitalLogisticsOptimizer
-from .patient_generator import PatientGenerator
+from .bayesian_pkpd import BayesianPKPD as BayesianPKPD
+from .clinical_trial import ClinicalTrialSimulator as ClinicalTrialSimulator
+from .coarse_grained_md import CGSimulator as CGSimulator
+from .microgravity import MicrogravitySimulator as MicrogravitySimulator
+from .orbital_logistics import OrbitalLogisticsOptimizer as OrbitalLogisticsOptimizer
+from .patient_generator import PatientGenerator as PatientGenerator
 
 __all__ = [
     "CGSimulator",

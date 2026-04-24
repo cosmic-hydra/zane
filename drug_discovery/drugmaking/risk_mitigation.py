@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 # RDKit imports with graceful fallback
 try:
     from rdkit import Chem
-    from rdkit.Chem import QED, AllChem, Crippen, Descriptors, Lipinski
+    from rdkit.Chem import QED, AllChem
     from rdkit.Chem.Descriptors import TPSA, MolLogP, MolWt, NumHAcceptors, NumHDonors
 
     RDKIT_AVAILABLE = True
@@ -348,7 +348,6 @@ class CounterSubstanceFinder:
             if len(groups & chelating_groups) >= 2:
                 score += 0.4
             return min(1.0, score)
-        neutralizers = NEUTRALIZATION_RULES[target_toxicity]["neutralizers"]
         target_groups = set()
         for key, info in ANTIDOTE_FUNCTIONAL_GROUPS.items():
             if info["neutralizes"] and any(target_toxicity.replace("_", " ") in n for n in info["neutralizes"]):

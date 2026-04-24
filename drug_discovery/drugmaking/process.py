@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # RDKit imports with graceful fallback
 try:
     from rdkit import Chem, DataStructs
-    from rdkit.Chem import QED, AllChem, Crippen, Descriptors, Lipinski, rdMolDescriptors
+    from rdkit.Chem import QED, AllChem, Descriptors
     from rdkit.Chem.Descriptors import (
         TPSA,
         MolLogP,
@@ -497,9 +497,9 @@ class PhysicsBasedProperties:
 
     def _delta_g_to_ki(self, delta_g: float) -> float:
         """Convert delta G to Ki estimate."""
-        R = 0.001987  # kcal/(mol·K)
-        T = 298.15  # K
-        return math.exp(delta_g / (R * T))
+        r_const = 0.001987  # kcal/(mol·K)
+        t_temp = 298.15  # K
+        return math.exp(delta_g / (r_const * t_temp))
 
     def predict_solubility(self, smiles: str) -> dict[str, float]:
         """Predict aqueous solubility.
@@ -1095,8 +1095,8 @@ class CustomDrugmakingModule:
                     strategy="hybrid",
                 )
 
-            X_batch = np.array([self._featurize_smiles(s) for s in batch_smiles])
-            Y_batch = []
+            x_batch = np.array([self._featurize_smiles(s) for s in batch_smiles])
+            y_batch = []
 
             for smiles in batch_smiles:
                 test_result = self.test_toxicity(smiles)
@@ -1115,7 +1115,7 @@ class CustomDrugmakingModule:
                 uncertainties = {name: 0.1 + 0.1 * np.random.random() for name in config.objective_names}
 
                 y_values = [objectives.get(name, 0.5) for name in config.objective_names]
-                Y_batch.append(y_values)
+                y_batch.append(y_values)
 
                 candidate = CandidateResult(
                     smiles=smiles,
@@ -1127,9 +1127,9 @@ class CustomDrugmakingModule:
                 candidate.confidence = 1.0 - np.mean(list(uncertainties.values()))
                 all_candidates.append(candidate)
 
-            Y_batch = np.array(Y_batch, dtype=np.float32)
+            y_batch = np.array(y_batch, dtype=np.float32)
 
-            self._optimizer.tell(X_batch, Y_batch)
+            self._optimizer.tell(x_batch, y_batch)
 
             self._optimization_history.append(
                 {

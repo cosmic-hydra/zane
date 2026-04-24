@@ -23,10 +23,8 @@ logger = logging.getLogger(__name__)
 try:
     import torch
     import torch.nn as nn
-    import torch.nn.functional as F
 
     from torch_geometric.data import HeteroData
-    from torch_geometric.nn import GATConv, HeteroConv, SAGEConv
 
     TORCH_GEOMETRIC_AVAILABLE = True
 except ImportError:
@@ -422,11 +420,11 @@ class HeterogeneousGraph:
         try:
             import networkx as nx
 
-            G = nx.MultiGraph()
+            graph_nx = nx.MultiGraph()
 
             # Add nodes
             for node_id, node in self.nodes.items():
-                G.add_node(
+                graph_nx.add_node(
                     node_id,
                     node_type=node.node_type.value,
                     **node.metadata,
@@ -434,7 +432,7 @@ class HeterogeneousGraph:
 
             # Add edges
             for edge in self.edges:
-                G.add_edge(
+                graph_nx.add_edge(
                     edge.source,
                     edge.target,
                     edge_type=edge.edge_type.value,
@@ -442,7 +440,7 @@ class HeterogeneousGraph:
                     **edge.metadata,
                 )
 
-            return G
+            return graph_nx
 
         except ImportError:
             logger.warning("NetworkX not available. Returning None.")

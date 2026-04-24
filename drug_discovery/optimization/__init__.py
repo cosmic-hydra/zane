@@ -3,18 +3,26 @@
 __all__ = []
 try:
     from drug_discovery.optimization.multi_objective import (
-        GaussianProcessSurrogate,
-        MOBOConfig,
-        MultiObjectiveBayesianOptimizer,
-        hypervolume_indicator,
-        is_pareto_efficient,
+        GaussianProcessSurrogate as GaussianProcessSurrogate,
+    )
+    from drug_discovery.optimization.multi_objective import (
+        MOBOConfig as MOBOConfig,
+    )
+    from drug_discovery.optimization.multi_objective import (
+        MultiObjectiveBayesianOptimizer as MultiObjectiveBayesianOptimizer,
+    )
+    from drug_discovery.optimization.multi_objective import (
+        hypervolume_indicator as hypervolume_indicator,
+    )
+    from drug_discovery.optimization.multi_objective import (
+        is_pareto_efficient as is_pareto_efficient,
     )
 
     __all__.extend(
         [
-            "MultiObjectiveBayesianOptimizer",
-            "MOBOConfig",
             "GaussianProcessSurrogate",
+            "MOBOConfig",
+            "MultiObjectiveBayesianOptimizer",
             "is_pareto_efficient",
             "hypervolume_indicator",
         ]

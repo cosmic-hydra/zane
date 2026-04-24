@@ -32,6 +32,7 @@ from drug_discovery.geometric_dl.se3_transformer import (
 
 __all__ = [
     "SE3Transformer",
+    "SE3Config",
     "SE3EquivariantBlock",
     "EquivariantAttention",
     "BindingFreeEnergyCalculator",

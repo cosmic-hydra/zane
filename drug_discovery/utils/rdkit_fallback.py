@@ -16,14 +16,14 @@ logger = logging.getLogger(__name__)
 
 try:  # pragma: no cover - exercised indirectly when RDKit is installed
     from rdkit import Chem  # type: ignore
-    from rdkit.Chem import Crippen, Descriptors, rdMolDescriptors  # type: ignore
+    from rdkit.Chem import Crippen, Descriptors, rd_mol_descriptors  # type: ignore
 
     HAS_RDKIT = True
 except Exception:  # pragma: no cover - default path in constrained environments
     Chem = None
     Crippen = None
     Descriptors = None
-    rdMolDescriptors = None
+    rd_mol_descriptors = None
     HAS_RDKIT = False
 
 
@@ -107,7 +107,7 @@ def is_smiles_plausible(smiles: str) -> bool:
 
 def rdkit_or_none():
     """Return RDKit modules when available."""
-    return Chem, Descriptors, Crippen, rdMolDescriptors
+    return Chem, Descriptors, Crippen, rd_mol_descriptors
 
 
 def get_props_with_rdkit(smiles: str) -> HeuristicProperties | None:

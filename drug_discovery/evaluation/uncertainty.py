@@ -143,5 +143,5 @@ def regression_calibration_error(preds, true_vals, uncertainties, bins=10):
     cal_errs = [abs(o - e) for o, e in zip(coverages, levels)]
     return {
         "mean_calibration_error": float(np.mean(cal_errs)),
-        "interval_coverages": dict(zip([f"{l:.1f}" for l in levels], coverages)),
+        "interval_coverages": dict(zip([f"{level_val:.1f}" for level_val in levels], coverages)),
     }

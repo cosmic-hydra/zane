@@ -100,7 +100,7 @@ def _check_smarts(smiles, smarts_dict, cls, severity):
                 q = Chem.MolFromSmarts(pat)
                 if q and mol.HasSubstructMatch(q):
                     alerts.append(AlertResult(name, cls, pat, severity))
-            except:
+            except Exception:
                 continue
     except ImportError:
         smi = smiles.lower()

@@ -67,7 +67,6 @@ class NeuralDockingModel(nn.Module):
         lig_embed = self.ligand_proj(ligand_coords)
         pocket_embed = self.pocket_proj(pocket_coords)
         pocket_context = pocket_embed.mean(dim=1, keepdim=True)
-        lig_context = lig_embed.mean(dim=1, keepdim=True)
         fused = torch.cat(
             [
                 lig_embed,

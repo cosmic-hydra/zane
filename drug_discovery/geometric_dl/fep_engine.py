@@ -22,8 +22,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 try:
-    import openmm
-    from openmm import LangevinIntegrator, Modeller, MonteCarloBarostat, Platform, Topology, app, unit
+    from openmm import LangevinIntegrator, Modeller, Platform, app, unit
     from openmm.app import ForceField, HBonds, PDBFile
 
     OPENMM_AVAILABLE = True
