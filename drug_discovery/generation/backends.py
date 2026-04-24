@@ -206,6 +206,90 @@ class MolecularDesignBackend(BaseGeneratorBackend):
         )
 
 
+class NvidiaChemLLMBackend(BaseGeneratorBackend):
+    """NVIDIA NIM LLM backend — database-enriched, LLM-guided molecule generation.
+
+    Uses NVIDIA's NIM-hosted LLMs (e.g., Llama-3.1-Nemotron-70B) together
+    with a multi-database retrieval step (PubChem, ChEMBL, ZINC20, BindingDB,
+    UniProt, RCSB PDB, KEGG, HMDB) to generate novel drug candidates.
+
+    Requires:
+    - ``openai`` Python package (``pip install openai``).
+    - ``NVIDIA_NIM_API_KEY`` environment variable set to a valid NIM API key.
+      Obtain one at https://build.nvidia.com/explore/discover.
+    """
+
+    name = "nvidia-nim"
+
+    def __init__(
+        self,
+        target: str = "",
+        seed_smiles: list[str] | None = None,
+        databases: list[str] | None = None,
+        use_molmim: bool = False,
+        temperature: float = 0.5,
+    ) -> None:
+        self.target = target
+        self.seed_smiles = seed_smiles or []
+        self.databases = databases
+        self.use_molmim = use_molmim
+        self.temperature = temperature
+
+    def is_available(self) -> bool:
+        try:
+            from drug_discovery.nvidia_nim.client import NvidiaNIMClient
+
+            return NvidiaNIMClient().is_available()
+        except Exception:
+            return False
+
+    def generate(self, prompt: str | None, num: int = 10, **kwargs) -> GenerationResult:
+        if not self.is_available():
+            return GenerationResult.failure(
+                self.name,
+                "NVIDIA NIM not available. Install 'openai' and set NVIDIA_NIM_API_KEY.",
+                warnings=[
+                    "Install the 'openai' package: pip install openai",
+                    "Set NVIDIA_NIM_API_KEY (https://build.nvidia.com/explore/discover).",
+                ],
+            )
+        try:
+            from drug_discovery.nvidia_nim import DrugDesignRequest, NvidiaLLMDrugDesigner
+
+            seed = kwargs.get("seed_smiles") or self.seed_smiles
+            designer = NvidiaLLMDrugDesigner()
+            result = designer.design(
+                DrugDesignRequest(
+                    target=self.target,
+                    prompt=prompt or "",
+                    seed_smiles=seed,
+                    num=num,
+                    databases=self.databases,
+                    use_molmim=self.use_molmim,
+                    temperature=self.temperature,
+                )
+            )
+            if not result.success:
+                return GenerationResult.failure(
+                    self.name,
+                    result.error or "NvidiaChemLLMBackend failed",
+                    warnings=result.warnings,
+                )
+            return GenerationResult(
+                backend=self.name,
+                success=True,
+                molecules=result.molecules,
+                warnings=result.warnings,
+                info={
+                    "db_context_summary": result.db_context_summary,
+                    "molmim_molecules": result.molmim_molecules,
+                    "reasoning_snippet": result.reasoning[:400] if result.reasoning else "",
+                },
+            )
+        except Exception as exc:  # pragma: no cover - runtime guard
+            return GenerationResult.failure(self.name, str(exc))
+
+
 class GenerationManager:
     """
     Orchestrates multiple generation backends and picks the first successful one.

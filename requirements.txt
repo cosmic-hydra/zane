@@ -44,6 +44,7 @@ pubchempy>=1.0.4
 biopython>=1.81
 scrapy>=2.11.0
 playwright>=1.40.0
+openai>=1.0.0
 
 # Knowledge Graph
 rdflib>=7.0.0

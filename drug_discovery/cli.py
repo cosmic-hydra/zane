@@ -288,6 +288,94 @@ def main():
         help="Optional dataset path required by some benchmarks.",
     )
 
+    # NVIDIA NIM LLM-aided drug generation command
+    nvidia_gen_parser = subparsers.add_parser(
+        "nvidia-gen",
+        help=(
+            "LLM-guided drug generation powered by NVIDIA NIM + multi-database retrieval "
+            "(PubChem, ChEMBL, ZINC20, BindingDB, UniProt, RCSB PDB, KEGG, HMDB)."
+        ),
+    )
+    nvidia_gen_parser.add_argument(
+        "--target",
+        default="",
+        help="High-level design objective (e.g. 'EGFR kinase inhibitor for NSCLC').",
+    )
+    nvidia_gen_parser.add_argument(
+        "--prompt",
+        default="",
+        help="Additional free-form design instructions passed to the LLM.",
+    )
+    nvidia_gen_parser.add_argument(
+        "--seed-smiles",
+        nargs="+",
+        default=None,
+        help="Seed / scaffold SMILES to guide LLM generation.",
+    )
+    nvidia_gen_parser.add_argument(
+        "--num",
+        type=int,
+        default=10,
+        help="Number of candidate molecules to request.",
+    )
+    nvidia_gen_parser.add_argument(
+        "--databases",
+        nargs="+",
+        default=None,
+        choices=["pubchem", "chembl", "zinc20", "bindingdb", "uniprot", "pdb", "kegg", "hmdb"],
+        help="Databases to query for context (default: all).",
+    )
+    nvidia_gen_parser.add_argument(
+        "--db-limit",
+        type=int,
+        default=5,
+        help="Max records retrieved per database.",
+    )
+    nvidia_gen_parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.5,
+        help="LLM sampling temperature (higher → more diverse).",
+    )
+    nvidia_gen_parser.add_argument(
+        "--use-molmim",
+        action="store_true",
+        help="Also call BioNeMo MolMIM on seed SMILES for additional candidates.",
+    )
+    nvidia_gen_parser.add_argument(
+        "--pharmacophore",
+        default=None,
+        help='JSON pharmacophore constraints, e.g. \'{"min_hba":2,"max_rings":3}\'.',
+    )
+    nvidia_gen_parser.add_argument(
+        "--model",
+        default=None,
+        help="Override NIM chat model (default: nvidia/llama-3.1-nemotron-70b-instruct).",
+    )
+    nvidia_gen_parser.add_argument(
+        "--explain",
+        default=None,
+        help="SMILES string: ask the LLM to explain this molecule instead of generating.",
+    )
+    nvidia_gen_parser.add_argument(
+        "--combine",
+        nargs="+",
+        default=None,
+        metavar="SMILES",
+        help="Combine / scaffold-hop these molecules via the LLM.",
+    )
+    nvidia_gen_parser.add_argument(
+        "--optimize",
+        default=None,
+        metavar="SMILES",
+        help="Lead SMILES: ask the LLM for optimised analogues.",
+    )
+    nvidia_gen_parser.add_argument(
+        "--strategy",
+        default="scaffold_hop",
+        help="Combination strategy hint used with --combine (default: scaffold_hop).",
+    )
+
     subparsers.add_parser("integrations", help="Show status of optional external integrations and submodules")
 
     elite_parser = subparsers.add_parser(
@@ -410,6 +498,8 @@ def main():
         run_physics_generation(args)
     elif args.command == "benchmark":
         run_benchmark(args)
+    elif args.command == "nvidia-gen":
+        run_nvidia_gen(args)
     elif args.command == "integrations":
         run_integrations_status()
     elif args.command == "elite-pipeline":
@@ -784,6 +874,76 @@ def run_benchmark(args):
     result = runner.run(suite=args.suite, dataset_path=args.dataset)
     print(json.dumps(result, indent=2))
     if not result.get("success"):
+        sys.exit(1)
+
+
+def run_nvidia_gen(args):
+    """NVIDIA NIM LLM-guided drug design with multi-database knowledge retrieval."""
+    from drug_discovery.nvidia_nim import (
+        DrugDesignRequest,
+        NvidiaLLMDrugDesigner,
+        NvidiaNIMConfig,
+        NvidiaNIMClient,
+    )
+
+    # Optional model override
+    nim_config = None
+    if args.model:
+        nim_config = NvidiaNIMConfig(chat_model=args.model)
+
+    designer = NvidiaLLMDrugDesigner(nim_config=nim_config)
+
+    # --explain mode
+    if args.explain:
+        client = NvidiaNIMClient(nim_config)
+        result = client.explain_molecule(args.explain)
+        print(json.dumps(result, indent=2))
+        if not result.get("success"):
+            sys.exit(1)
+        return
+
+    # --combine mode
+    if args.combine:
+        result = designer.combine(
+            smiles_list=list(args.combine),
+            strategy=args.strategy,
+            num=args.num,
+        )
+        print(json.dumps(result.as_dict(), indent=2))
+        if not result.success:
+            sys.exit(1)
+        return
+
+    # --optimize mode
+    if args.optimize:
+        result = designer.optimize(smiles=args.optimize, num=args.num)
+        print(json.dumps(result.as_dict(), indent=2))
+        if not result.success:
+            sys.exit(1)
+        return
+
+    # Default: design mode
+    pharmacophore = None
+    if args.pharmacophore:
+        try:
+            pharmacophore = json.loads(args.pharmacophore)
+        except Exception:
+            print(f"Warning: could not parse --pharmacophore JSON: {args.pharmacophore}", file=sys.stderr)
+
+    request = DrugDesignRequest(
+        target=args.target,
+        prompt=args.prompt,
+        seed_smiles=list(args.seed_smiles) if args.seed_smiles else [],
+        num=args.num,
+        databases=args.databases,
+        db_limit_per_source=args.db_limit,
+        use_molmim=args.use_molmim,
+        temperature=args.temperature,
+        pharmacophore=pharmacophore,
+    )
+    result = designer.design(request)
+    print(json.dumps(result.as_dict(), indent=2))
+    if not result.success:
         sys.exit(1)
 
 

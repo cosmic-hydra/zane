@@ -335,6 +335,13 @@ INTEGRATIONS: dict[str, IntegrationSpec] = {
         url="https://github.com/qutip/qutip",
         python_modules=("qutip",),
     ),
+    "nvidia_nim": IntegrationSpec(
+        key="nvidia_nim",
+        name="NVIDIA NIM / BioNeMo",
+        purpose="NVIDIA-hosted LLMs (Nemotron, Llama) + MolMIM for LLM-guided drug design",
+        url="https://build.nvidia.com/explore/discover",
+        python_modules=("openai",),
+    ),
 }
 
 
