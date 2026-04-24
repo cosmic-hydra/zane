@@ -350,35 +350,41 @@ class DrugDiscoveryPipeline:
         print("\n=== Generating Drug Candidates ===")
         print(f"Target: {target_protein or 'General'}")
 
-        # For demonstration, we'll use molecules from the database
-        # In a real implementation, this would use generative models
-        print("Note: Using existing molecules. Generative models not yet implemented.")
+        from .generation.backends import GenerationManager
 
-        # Load some molecules
-        cache_file = os.path.join(self.cache_dir, "approved_drugs.csv")
-        if os.path.exists(cache_file):
-            df = pd.read_csv(cache_file)
-            candidates = df.head(num_candidates).copy()
+        manager = GenerationManager()
 
-            # Add predictions for each candidate
-            predictions = []
-            for smiles in candidates["smiles"]:
-                try:
-                    pred = self.predict_properties(smiles, include_admet=True)
-                    predictions.append(pred)
-                except Exception:
-                    predictions.append({})
+        prompt = target_protein or "General drug-like molecules"
+        result = manager.generate(prompt=prompt, num=num_candidates)
 
-            # Merge predictions
-            for i, pred in enumerate(predictions):
-                for key, value in pred.items():
-                    if key != "smiles":
-                        candidates.loc[i, key] = value
-
-            return candidates
+        if result["success"] and result["molecules"]:
+            candidates = pd.DataFrame({"smiles": result["molecules"]})
         else:
-            print("No cached data available. Run collect_data() first.")
-            return pd.DataFrame()
+            print("Generation failed. Falling back to cached data.")
+            cache_file = os.path.join(self.cache_dir, "approved_drugs.csv")
+            if os.path.exists(cache_file):
+                df = pd.read_csv(cache_file)
+                candidates = df.head(num_candidates).copy()
+            else:
+                print("No cached data available. Run collect_data() first.")
+                return pd.DataFrame()
+
+        # Add predictions for each candidate
+        predictions = []
+        for smiles in candidates["smiles"]:
+            try:
+                pred = self.predict_properties(smiles, include_admet=True)
+                predictions.append(pred)
+            except Exception:
+                predictions.append({})
+
+        # Merge predictions
+        for i, pred in enumerate(predictions):
+            for key, value in pred.items():
+                if key != "smiles":
+                    candidates.loc[i, key] = value
+
+        return candidates
 
     def evaluate(self, test_loader: DataLoader, is_graph: bool | None = None) -> dict[str, float]:
         """

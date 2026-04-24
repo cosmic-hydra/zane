@@ -8,6 +8,7 @@ pipeline can consume them uniformly.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -206,6 +207,63 @@ class MolecularDesignBackend(BaseGeneratorBackend):
         )
 
 
+class NvidiaLlmBackend(BaseGeneratorBackend):
+    """Wrapper for NVIDIA LLM generative pipeline."""
+
+    name = "nvidia_llm"
+
+    def __init__(self, assistant: Any | None = None):
+        self.assistant = assistant
+
+    def is_available(self) -> bool:
+        return True
+
+    def generate(self, prompt: str | None, num: int = 10, **kwargs) -> GenerationResult:
+        if self.assistant is None:
+            from drug_discovery.nvidia_support import NvidiaLlmSupportAssistant
+
+            self.assistant = NvidiaLlmSupportAssistant()
+
+        llm_prompt = f"Generate {num} valid novel drug SMILES strings based on: {prompt}. Return ONLY comma separated SMILES strings."
+
+        try:
+            response_text = self.assistant.respond(llm_prompt)
+            raw_smiles = re.split(r"[,\n\s]+", response_text)
+
+            import rdkit.Chem as Chem
+
+            valid_smiles = []
+            warnings = []
+
+            for smi in raw_smiles:
+                smi = smi.strip(" '\"`")
+                if not smi:
+                    continue
+                mol = Chem.MolFromSmiles(smi)
+                if mol is not None:
+                    valid_smiles.append(smi)
+                else:
+                    warnings.append(f"Invalid SMILES hallucinated: {smi}")
+
+            if not valid_smiles:
+                return GenerationResult.failure(
+                    self.name,
+                    "NVIDIA LLM generated no valid SMILES.",
+                    warnings=warnings,
+                )
+
+            return GenerationResult(
+                backend=self.name,
+                success=True,
+                molecules=valid_smiles[:num],
+                warnings=warnings,
+                info={"prompt": prompt, "num_requested": num},
+            )
+
+        except Exception as e:
+            return GenerationResult.failure(self.name, f"NVIDIA LLM generation failed: {str(e)}")
+
+
 class GenerationManager:
     """
     Orchestrates multiple generation backends and picks the first successful one.
@@ -216,6 +274,7 @@ class GenerationManager:
             list(backends)
             if backends is not None
             else [
+                NvidiaLlmBackend(),
                 ReinventBackend(),
                 GT4SDBackend(),
                 MolformerBackend(),
