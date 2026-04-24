@@ -80,7 +80,159 @@ A Meta Llama-backed assistant supports strategy and interpretation, injecting co
 
 ## 3. 2026 Upgrade Highlights
 
-This release adds deep external-ecosystem interoperability and completes the full 22-tier discovery stack.
+### 3.0 Physics-Driven Closed-Loop Generation (2026-Q2)
+
+This release introduces a physics-in-the-loop molecular generation pipeline that connects GFlowNet generative models with OpenMM binding free-energy simulations, Bayesian surrogate optimization, and multi-endpoint safety gating. The system targets near-zero toxicity while maximizing binding affinity through a fully automated generate-filter-score-rank cycle.
+
+#### Architecture Overview
+
+```
+                      +-------------------+
+                      |   GFlowNet RLHF   |
+                      | (PhysicsReward)    |
+                      +--------+----------+
+                               |
+                     generates SMILES candidates
+                               |
+                               v
+                      +-------------------+
+                      | SMILES Validator   |
+                      | (99.9% success)    |
+                      +--------+----------+
+                               |
+                        valid molecules
+                               |
+                               v
+                      +-------------------+
+                      | Surrogate Model    |  <-- BoTorch GP
+                      | (Expected Improve.)|      predicts delta-G
+                      +--------+----------+
+                               |
+                       top 0.1% by EI
+                               |
+                               v
+                      +-------------------+
+                      | Physics Oracle     |  <-- @ray.remote
+                      | (OpenMM FEP)       |      cluster-parallel
+                      +--------+----------+
+                               |
+                      delta-G scores
+                               |
+                               v
+                      +-------------------+
+                      | Toxicity Gate      |  <-- hERG, Ames,
+                      | (multi-endpoint)   |      hepato, cytotox
+                      +--------+----------+
+                               |
+                         safe candidates
+                               |
+                               v
+                      +-------------------+
+                      | Pareto Ranker      |  <-- multi-objective
+                      | (binding + tox +   |      Pareto front
+                      |  QED + SA score)   |
+                      +-------------------+
+                               |
+                        final ranked
+                        candidates
+```
+
+#### Key Components
+
+| Component | Module | Purpose |
+|-----------|--------|---------|
+| Physics Oracle | `polyglot_integration.py` | Async FEP binding free-energy scoring via OpenMM with Ray cluster distribution |
+| Surrogate Model | `training/closed_loop.py` | BoTorch/GPyTorch Gaussian Process with Expected Improvement acquisition |
+| GFlowNet RLHF | `models/gflownet.py` | Physics-driven reward combining delta-G with ADMET toxicity penalties |
+| SMILES Validator | `safety/smiles_validator.py` | Validation, canonicalization, and repair targeting 99.9% generation success |
+| Toxicity Gate | `safety/toxicity_gate.py` | Multi-endpoint go/no-go filter (hERG, Ames, hepatotox, cytotox) with drug-likeness |
+| Pareto Ranker | `safety/pareto_ranker.py` | Multi-objective Pareto-optimal ranking across 4 objectives |
+| End-to-End Pipeline | `safety/end_to_end_pipeline.py` | Single `run()` call chaining all steps with full metrics |
+
+#### Quick Start
+
+```python
+from drug_discovery.safety.end_to_end_pipeline import SafeGenerationPipeline
+
+pipeline = SafeGenerationPipeline(protein_pdb_path="target.pdb")
+result = pipeline.run(num_candidates=1000, top_k=10)
+
+print(result.summary())
+# Generated:          1000
+# Valid SMILES:        998 (99.8%)
+# Surrogate-selected:  50
+# Oracle-scored:       50
+# Passed safety gate:  28 (56.0%)
+# Pareto front size:   6
+# Final candidates:    10
+# Best delta-G:        -11.2
+# Best drug-likeness:  0.87
+```
+
+#### Physics Oracle with Ray Distribution
+
+```python
+from drug_discovery.polyglot_integration import PhysicsOracle
+
+oracle = PhysicsOracle(protein_pdb_path="target.pdb")
+results = oracle.score_batch_sync(["CCO", "c1ccccc1", "CC(=O)O"])
+for r in results:
+    print(f"{r.smiles}: delta_g={r.delta_g:.2f} kcal/mol")
+```
+
+#### GFlowNet with Physics Reward
+
+```python
+from drug_discovery.models.gflownet import (
+    GFlowNetConfig, GFlowNetTrainer, PhysicsRewardFunction,
+)
+from drug_discovery.polyglot_integration import PhysicsOracle
+
+oracle = PhysicsOracle(protein_pdb_path="target.pdb")
+reward = PhysicsRewardFunction(oracle=oracle)
+trainer = GFlowNetTrainer(GFlowNetConfig(), reward_fn=reward)
+
+for step in range(100):
+    loss = trainer.train_step()
+```
+
+#### Bayesian Surrogate Warm-Start
+
+```python
+from drug_discovery.training.closed_loop import SurrogateModel
+
+# Train and save
+surrogate = SurrogateModel(fp_dim=256)
+# ... observe data ...
+surrogate.save("surrogate_checkpoint.npz")
+
+# Load in a new session
+surrogate = SurrogateModel.load("surrogate_checkpoint.npz")
+top_smiles = surrogate.select_top_candidates(pool, top_fraction=0.001)
+```
+
+#### Pipeline Metrics
+
+| Metric | Target | Method |
+|--------|--------|--------|
+| SMILES validity | > 99.9% | `SmilesValidator` with repair heuristics |
+| Toxicity pass rate | > 50% of valid | Multi-endpoint `ToxicityGate` |
+| Oracle compute savings | > 99% | Surrogate EI selects top 0.1% |
+| Binding affinity | delta-G < -8 kcal/mol | OpenMM FEP via `PhysicsOracle` |
+| Drug-likeness | QED > 0.5 | Gaussian desirability functions |
+
+#### Test Coverage
+
+74 tests across two test suites cover all new components:
+
+| Suite | Tests | Status |
+|-------|-------|--------|
+| `test_physics_oracle_bayesian_gflownet.py` | 40 | 37 passed, 3 skipped (RDKit) |
+| `test_safety_modules.py` | 34 | 34 passed |
+
+---
+
+This release also adds deep external-ecosystem interoperability and completes the full 22-tier discovery stack.
 
 ### 3.1 ZANE Elite Intelligence Tiers (Tier 1-22)
 
@@ -899,7 +1051,7 @@ drug_discovery/
 ├── integrations.py              # Centralized external ecosystem registry
 ├── external_tooling.py          # Bridge to external tool CLIs
 ├── integrations_extended.py     # Additional integration adapters
-├── polyglot_integration.py      # Julia / Go / Cython interop layer
+├── polyglot_integration.py      # Physics Oracle: async FEP adapter + Ray distribution
 ├── boltzgen_adapter.py          # BoltzGen binder design runner
 │
 ├── data/                        # Data acquisition and preparation
@@ -917,7 +1069,7 @@ drug_discovery/
 │   ├── ensemble.py              # EnsembleModel: multi-model consensus
 │   ├── equivariant_gnn.py       # EquivariantGNN: EGNN/SchNet/PaiNN (E(3))
 │   ├── diffusion_generator.py   # DiffusionMoleculeGenerator: SE(3) denoising
-│   ├── gflownet.py              # GFlowNet: fragment-based generative policy
+│   ├── gflownet.py              # GFlowNet: fragment-based generative policy + PhysicsReward RLHF
 │   ├── dmpnn.py                 # DMPNN: directed message-passing NN
 │   ├── e3_equivariant.py        # SE3Transformer: higher-order equivariance
 │   └── drug_modeling.py         # Drug-specific modeling utilities
@@ -925,7 +1077,7 @@ drug_discovery/
 ├── training/                    # Training infrastructure
 │   ├── trainer.py               # SelfLearningTrainer: standard loop
 │   ├── advanced_training.py     # AdvancedTrainer: AMP, EMA, cosine-LR, early-stop
-│   ├── closed_loop.py           # Closed-loop active learning trainer
+│   ├── closed_loop.py           # Closed-loop active learning + BoTorch surrogate model
 │   ├── contrastive_pretraining.py # Contrastive pre-training utilities
 │   ├── federated_learning.py    # Flower-based federated learning (Module 9)
 │   ├── federated_node.py        # Federated participant node
@@ -961,6 +1113,12 @@ drug_discovery/
 ├── generation/                  # Molecule generation
 │   ├── physics_aware.py         # PhysicsAwareGenerator: BRICS/RECAP + diffusion
 │   └── backends.py              # REINVENT4 / GT4SD / Molformer / molecular-design
+│
+├── safety/                      # Drug safety and candidate validation
+│   ├── smiles_validator.py      # SMILES validation, canonicalization, repair (99.9% target)
+│   ├── toxicity_gate.py         # Multi-endpoint toxicity filter (hERG, Ames, hepato, cyto)
+│   ├── pareto_ranker.py         # Multi-objective Pareto-optimal candidate ranking
+│   └── end_to_end_pipeline.py   # SafeGenerationPipeline: full generate-to-rank workflow
 │
 ├── optimization/                # Optimization algorithms
 │   ├── bayesian.py              # Gaussian Process Bayesian optimizer

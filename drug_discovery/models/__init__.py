@@ -62,6 +62,12 @@ try:
     from drug_discovery.models.gflownet import (
         GFlowNetTrainer as GFlowNetTrainer,
     )
+    from drug_discovery.models.gflownet import (
+        PhysicsRewardConfig as PhysicsRewardConfig,
+    )
+    from drug_discovery.models.gflownet import (
+        PhysicsRewardFunction as PhysicsRewardFunction,
+    )
 
     MODEL_REGISTRY["gflownet"] = {
         "class": GFlowNetPolicy,
@@ -124,4 +130,6 @@ __all__ = [
     "GFlowNetPolicy",
     "GFlowNetConfig",
     "GFlowNetTrainer",
+    "PhysicsRewardFunction",
+    "PhysicsRewardConfig",
 ]

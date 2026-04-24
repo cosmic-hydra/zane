@@ -34,6 +34,14 @@ except ImportError:
     pass
 
 try:
+    from drug_discovery.polyglot_integration import FEPResult as FEPResult
+    from drug_discovery.polyglot_integration import PhysicsOracle as PhysicsOracle
+
+    __all__.extend(["PhysicsOracle", "FEPResult"])
+except ImportError:
+    pass
+
+try:
     from drug_discovery.physics.protein_structure import OpenFoldAdapter as OpenFoldAdapter
 
     __all__.append("OpenFoldAdapter")
