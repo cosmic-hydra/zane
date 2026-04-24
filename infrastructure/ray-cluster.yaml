@@ -1,0 +1,57 @@
+# Ray Cluster configuration for Kubernetes
+apiVersion: ray.io/v1
+kind: RayCluster
+metadata:
+  name: zane-ray-cluster
+  namespace: zane
+spec:
+  rayVersion: '2.9.0'
+  headGroupSpec:
+    rayStartParams:
+      dashboard-host: '0.0.0.0'
+    template:
+      spec:
+        containers:
+          - name: ray-head
+            image: zane-drug-discovery:latest
+            resources:
+              limits:
+                cpu: "2"
+                memory: "4Gi"
+              requests:
+                cpu: "1"
+                memory: "2Gi"
+            ports:
+              - containerPort: 6379
+                name: gcs-server
+              - containerPort: 8265
+                name: dashboard
+              - containerPort: 10001
+                name: client
+  workerGroupSpecs:
+    - replicas: 5
+      minReplicas: 1
+      maxReplicas: 100
+      groupName: gpu-group
+      rayStartParams: {}
+      template:
+        spec:
+          containers:
+            - name: ray-worker
+              image: zane-drug-discovery:latest
+              resources:
+                limits:
+                  cpu: "4"
+                  memory: "16Gi"
+                  nvidia.com/gpu: 1
+                requests:
+                  cpu: "2"
+                  memory: "8Gi"
+                  nvidia.com/gpu: 1
+          nodeSelector:
+            hardware: gpu
+          tolerations:
+            - key: "hardware"
+              operator: "Equal"
+              value: "gpu"
+              effect: "NoSchedule"

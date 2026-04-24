@@ -74,6 +74,35 @@ class LlamaSupportAssistant:
             "and experimental planning. Keep answers concise, technical, and safety-aware."
         )
 
+    def respond_with_knowledge(
+        self,
+        user_prompt: str,
+        kg: Any | None = None,
+        max_new_tokens: int = 256,
+    ) -> str:
+        """Respond to user request using Knowledge Graph context if available."""
+        context = ""
+        if kg is not None:
+            try:
+                # Attempt to retrieve relevant nodes/triplets from KG
+                # Use hybrid_search if available (assuming query embedding is handled internally or simplified)
+                if hasattr(kg, "hybrid_search"):
+                    # Simplified: just using the prompt text as "embedding" or assuming kg handles it
+                    results = kg.hybrid_search(user_prompt, top_k=5)
+                elif hasattr(kg, "search"):
+                    results = kg.search(user_prompt, limit=5)
+                else:
+                    results = []
+
+                if results:
+                    context = "Knowledge Graph Insights:\n"
+                    for item in results:
+                        context += f"- {item}\n"
+            except Exception as e:
+                context = f"Note: Knowledge Graph context partially available. Search error: {e}"
+
+        return self.respond(user_prompt, context=context, max_new_tokens=max_new_tokens)
+
     def respond(
         self,
         user_prompt: str,
