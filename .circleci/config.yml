@@ -1,0 +1,90 @@
+# This config was automatically generated from your source code
+# Stacks detected: artifact:go-executable:,cicd:github-actions:.github/workflows,deps:go:tools/go/fastsearch,deps:python:.,file:setup.py:.
+version: 2.1
+orbs:
+  python: circleci/python@2
+jobs:
+  test-go:
+    # Install go modules and run tests
+    docker:
+      - image: cimg/go:1.20
+    working_directory: ~/project/tools/go/fastsearch
+    steps:
+      - checkout:
+          path: ~/project
+      - run:
+          name: Run tests
+          command: gotestsum --junitfile junit.xml
+      - store_test_results:
+          path: junit.xml
+  build-go-executables:
+    # Build go executables and store them as artifacts
+    docker:
+      - image: cimg/go:1.20
+    steps:
+      - checkout:
+          path: ~/project
+      - run:
+          name: Create the ~/artifacts directory if it doesn't exist
+          command: mkdir -p ~/artifacts
+      - run:
+          name: Build executables
+          command: go build -o ~/artifacts ./...
+      - store_artifacts:
+          path: ~/artifacts
+          destination: executables
+  test-python:
+    # Install dependencies and run tests
+    docker:
+      - image: cimg/python:3.8-node
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip-dist
+      - run:
+          name: Run tests
+          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
+      - store_test_results:
+          path: junit.xml
+  build-package:
+    # build python package
+    docker:
+      - image: cimg/python:3.8-node
+    steps:
+      - checkout
+      - run:
+          name: Create the ~/artifacts directory if it doesn't exist
+          command: mkdir -p ~/artifacts
+      - python/dist
+      - store_artifacts:
+          path: dist
+          destination: ~/artifacts
+  deploy:
+    # This is an example deploy job, not actually used by the workflow
+    docker:
+      - image: cimg/base:stable
+    steps:
+      # Replace this with steps to deploy to users
+      - run:
+          name: deploy
+          command: '#e.g. ./deploy.sh'
+      - run:
+          name: found github actions config
+          command: ':'
+workflows:
+  build-and-test:
+    jobs:
+      - test-go
+      - build-go-executables:
+          requires:
+            - test-go
+            - test-python
+      - test-python
+      - build-package:
+          requires:
+            - test-go
+            - test-python
+    # - deploy:
+    #     requires:
+    #       - build-go-executables
+    #       - build-package
