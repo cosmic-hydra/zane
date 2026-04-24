@@ -563,4 +563,4 @@ def test_nvidia_nim_in_integrations_registry():
     assert "nvidia_nim" in INTEGRATIONS
     spec = INTEGRATIONS["nvidia_nim"]
     assert "openai" in spec.python_modules
-    assert "build.nvidia.com" in spec.url
+    assert spec.url == "https://build.nvidia.com/explore/discover"

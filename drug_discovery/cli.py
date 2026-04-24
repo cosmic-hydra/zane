@@ -226,7 +226,11 @@ def main():
         "--backends",
         nargs="+",
         default=["reinvent4", "gt4sd", "molformer", "molecular-design"],
-        help="Priority-ordered list of backends to try.",
+        help=(
+            "Priority-ordered list of backends to try. "
+            "Available: reinvent4, gt4sd, molformer, molecular-design, nvidia-nim. "
+            "nvidia-nim requires NVIDIA_NIM_API_KEY and the openai package."
+        ),
     )
 
     physics_generate_parser = subparsers.add_parser(
@@ -821,6 +825,7 @@ def run_generation(args):
         GT4SDBackend,
         MolecularDesignBackend,
         MolformerBackend,
+        NvidiaChemLLMBackend,
         ReinventBackend,
     )
 
@@ -829,6 +834,7 @@ def run_generation(args):
         "gt4sd": GT4SDBackend(),
         "molformer": MolformerBackend(),
         "molecular-design": MolecularDesignBackend(),
+        "nvidia-nim": NvidiaChemLLMBackend(target=args.prompt or ""),
     }
     selected = [backend_map[b] for b in args.backends if b in backend_map]
     manager = GenerationManager(backends=selected or None)

@@ -291,8 +291,17 @@ class NvidiaChemLLMBackend(BaseGeneratorBackend):
 
 
 class GenerationManager:
-    """
-    Orchestrates multiple generation backends and picks the first successful one.
+    """Orchestrates multiple generation backends and picks the first successful one.
+
+    Default backends (``ReinventBackend``, ``GT4SDBackend``, ``MolformerBackend``,
+    ``MolecularDesignBackend``) do not require external API keys.
+    :class:`NvidiaChemLLMBackend` is intentionally excluded from the default
+    list because it requires ``NVIDIA_NIM_API_KEY`` and the ``openai`` package.
+    To use it, pass it explicitly::
+
+        manager = GenerationManager(backends=[NvidiaChemLLMBackend(target="EGFR")])
+
+    Or use the dedicated ``nvidia-gen`` CLI command instead of ``generate``.
     """
 
     def __init__(self, backends: Sequence[BaseGeneratorBackend] | None = None):
