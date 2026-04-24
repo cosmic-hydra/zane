@@ -8,13 +8,22 @@ non-convective fluid dynamics and protein crystallization in microgravity.
 import logging
 from typing import Any
 
-import torch
-import torch.nn as nn
+try:
+    import torch
+    import torch.nn as nn
+
+    _TORCH_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    torch = None  # type: ignore[assignment]
+    nn = None  # type: ignore[assignment]
+    _TORCH_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
+_BaseModule = nn.Module if _TORCH_AVAILABLE else object  # type: ignore[misc]
 
-class CrystallizationPINN(nn.Module):
+
+class CrystallizationPINN(_BaseModule):  # type: ignore[misc]
     """
     PINN model for simulating crystallization kinetics under microgravity.
     Governed by Navier-Stokes and diffusion-reaction equations without buoyancy.
@@ -22,19 +31,20 @@ class CrystallizationPINN(nn.Module):
 
     def __init__(self, input_dim: int = 4, hidden_dim: int = 128):
         super().__init__()
-        # Inputs: (x, y, z, t)
-        self.net = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, 5),  # Outputs: (u, v, w, p, concentration)
-        )
+        if _TORCH_AVAILABLE:
+            # Inputs: (x, y, z, t)
+            self.net = nn.Sequential(  # type: ignore[union-attr]
+                nn.Linear(input_dim, hidden_dim),  # type: ignore[union-attr]
+                nn.Tanh(),  # type: ignore[union-attr]
+                nn.Linear(hidden_dim, hidden_dim),  # type: ignore[union-attr]
+                nn.Tanh(),  # type: ignore[union-attr]
+                nn.Linear(hidden_dim, hidden_dim),  # type: ignore[union-attr]
+                nn.Tanh(),  # type: ignore[union-attr]
+                nn.Linear(hidden_dim, 5),  # type: ignore[union-attr]  # Outputs: (u, v, w, p, concentration)
+            )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net(x)
+    def forward(self, x: Any) -> Any:
+        return self.net(x)  # type: ignore[attr-defined]
 
 
 class MicrogravitySimulator:
@@ -43,8 +53,12 @@ class MicrogravitySimulator:
     """
 
     def __init__(self, device: str = "cpu"):
-        self.device = torch.device(device)
-        self.model = CrystallizationPINN().to(self.device)
+        if _TORCH_AVAILABLE:
+            self.device = torch.device(device)  # type: ignore[union-attr]
+            self.model: Any = CrystallizationPINN().to(self.device)
+        else:
+            self.device = device  # type: ignore[assignment]
+            self.model = None
 
     def simulate_crystallization(
         self, geometry: dict[str, Any], initial_concentration: float, duration: float
@@ -64,7 +78,8 @@ class MicrogravitySimulator:
 
         # Mock simulation logic - in reality, this would involve training/inference
         # of the PINN constrained by Zero-G physics.
-        self.model.eval()
+        if self.model is not None and _TORCH_AVAILABLE:
+            self.model.eval()
 
         # Simulate non-convective flow
         # In microgravity, convective currents are absent, leading to diffusion-limited growth.

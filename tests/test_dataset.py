@@ -3,7 +3,9 @@ Tests for Molecular Dataset and Featurization
 """
 
 import pandas as pd
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
 from drug_discovery.data import (
     MolecularDataset,
     MolecularFeaturizer,

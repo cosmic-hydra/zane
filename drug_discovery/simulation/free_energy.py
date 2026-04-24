@@ -18,8 +18,16 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
-import torch
-import torch.nn as nn
+
+try:
+    import torch
+    import torch.nn as nn
+
+    _TORCH_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    torch = None  # type: ignore[assignment]
+    nn = None  # type: ignore[assignment]
+    _TORCH_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +57,16 @@ def generate_lambda_schedule(n_windows: int, schedule_type: str = "optimal") -> 
         return np.linspace(0, 1, n_windows)
 
 
-class FEPSurrogateNetwork(nn.Module):
+_BaseModule = nn.Module if _TORCH_AVAILABLE else object  # type: ignore[misc]
+
+
+class FEPSurrogateNetwork(_BaseModule):  # type: ignore[misc]
     """GNN surrogate for predicting relative binding free energies."""
 
     def __init__(self, config: FEPConfig, atom_types: int = 50):
         super().__init__()
+        if not _TORCH_AVAILABLE:
+            return
         hd = config.surrogate_hidden_dim
         self.atom_embed = nn.Embedding(atom_types, hd)
         self.lambda_embed = nn.Linear(1, hd)
@@ -108,26 +121,34 @@ class FEPPipeline:
 
     def __init__(self, config: FEPConfig, device: str = "cpu"):
         self.config = config
-        self.device = torch.device(device)
+        if _TORCH_AVAILABLE:
+            self.device = torch.device(device)  # type: ignore[union-attr]
+        else:
+            self.device = device  # type: ignore[assignment]
         self.lambdas = generate_lambda_schedule(config.num_lambda_windows, config.lambda_schedule)
-        self.surrogate = FEPSurrogateNetwork(config).to(self.device) if config.use_surrogate else None
+        if config.use_surrogate and _TORCH_AVAILABLE:
+            self.surrogate: Any = FEPSurrogateNetwork(config).to(self.device)
+        else:
+            self.surrogate = None
 
-    @torch.no_grad()
-    def predict_dd_g(self, ligand_a: dict[str, torch.Tensor], ligand_b: dict[str, torch.Tensor]) -> dict[str, Any]:
+    def predict_dd_g(self, ligand_a: dict[str, Any], ligand_b: dict[str, Any]) -> dict[str, Any]:
+        if not _TORCH_AVAILABLE:
+            raise RuntimeError("PyTorch is required for FEPPipeline.predict_dd_g()")
         if self.surrogate is None:
             raise RuntimeError("Surrogate not initialized")
         self.surrogate.eval()
         energies_a, energies_b = [], []
-        for lv in self.lambdas:
-            lam = torch.tensor([lv], device=self.device, dtype=torch.float32)
-            ea = self.surrogate(
-                ligand_a["z"].to(self.device), ligand_a["pos"].to(self.device), ligand_a["edges"].to(self.device), lam
-            ).item()
-            eb = self.surrogate(
-                ligand_b["z"].to(self.device), ligand_b["pos"].to(self.device), ligand_b["edges"].to(self.device), lam
-            ).item()
-            energies_a.append(ea)
-            energies_b.append(eb)
+        with torch.no_grad():  # type: ignore[union-attr]
+            for lv in self.lambdas:
+                lam = torch.tensor([lv], device=self.device, dtype=torch.float32)  # type: ignore[union-attr]
+                ea = self.surrogate(
+                    ligand_a["z"].to(self.device), ligand_a["pos"].to(self.device), ligand_a["edges"].to(self.device), lam
+                ).item()
+                eb = self.surrogate(
+                    ligand_b["z"].to(self.device), ligand_b["pos"].to(self.device), ligand_b["edges"].to(self.device), lam
+                ).item()
+                energies_a.append(ea)
+                energies_b.append(eb)
         diffs = np.array(energies_b) - np.array(energies_a)
         dd_g = float(np.trapz(diffs, self.lambdas))
         return {

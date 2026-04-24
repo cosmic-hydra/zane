@@ -6,8 +6,15 @@ from typing import Any
 
 # pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 import numpy as np
-import torch
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+try:
+    import torch
+
+    _TORCH_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    torch = None  # type: ignore[assignment]
+    _TORCH_AVAILABLE = False
 
 from drug_discovery.utils.rdkit_fallback import heuristic_props, is_smiles_plausible
 
@@ -25,18 +32,22 @@ except Exception:  # pragma: no cover - default path when RDKit unavailable
 class PropertyPredictor:
     """Predicts various molecular properties using trained models."""
 
-    def __init__(self, model: torch.nn.Module, device: str = "cpu"):
+    def __init__(self, model: Any, device: str = "cpu"):
         """Initialize property predictor.
 
         Args:
             model: Trained PyTorch model.
             device: Device to run predictions on.
         """
-        self.model = model.to(device)
+        if _TORCH_AVAILABLE:
+            self.model = model.to(device)
+        else:
+            self.model = model
         self.device = device
-        self.model.eval()
+        if hasattr(self.model, "eval"):
+            self.model.eval()
 
-    def predict(self, features: torch.Tensor) -> np.ndarray:
+    def predict(self, features: Any) -> np.ndarray:
         """Predict properties for given features.
 
         Args:
@@ -45,12 +56,14 @@ class PropertyPredictor:
         Returns:
             Predictions as numpy array.
         """
-        with torch.no_grad():
+        if not _TORCH_AVAILABLE:
+            raise RuntimeError("PyTorch is required for PropertyPredictor.predict()")
+        with torch.no_grad():  # type: ignore[union-attr]
             features = features.to(self.device)
             predictions = self.model(features)
             return predictions.cpu().numpy()
 
-    def predict_from_smiles(self, smiles: str, featurizer) -> float | None:
+    def predict_from_smiles(self, smiles: str, featurizer: Any) -> float | None:
         """Predict property from SMILES string.
 
         Args:
@@ -60,11 +73,13 @@ class PropertyPredictor:
         Returns:
             Predicted property value or None if SMILES is invalid.
         """
+        if not _TORCH_AVAILABLE:
+            raise RuntimeError("PyTorch is required for PropertyPredictor.predict_from_smiles()")
         features = featurizer.smiles_to_fingerprint(smiles)
         if features is None:
             return None
 
-        features = torch.FloatTensor(features).unsqueeze(0)
+        features = torch.FloatTensor(features).unsqueeze(0)  # type: ignore[union-attr]
         prediction = self.predict(features)
 
         return float(prediction[0])

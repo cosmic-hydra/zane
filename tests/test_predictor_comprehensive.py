@@ -4,7 +4,8 @@ Tests molecular property prediction and ADMET evaluation
 """
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")
 import numpy as np
 from unittest.mock import Mock, MagicMock, patch
 

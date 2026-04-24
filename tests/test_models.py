@@ -2,7 +2,9 @@
 Tests for Models
 """
 
-import torch
+import pytest
+
+torch = pytest.importorskip("torch")
 from torch_geometric.data import Data
 
 from drug_discovery.models import EnsembleModel, MolecularGNN, MolecularTransformer

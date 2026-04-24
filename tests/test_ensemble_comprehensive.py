@@ -4,7 +4,8 @@ Tests ensemble model operations, multi-task learning, hybrid models
 """
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")
 import torch.nn as nn
 import numpy as np
 from unittest.mock import Mock, MagicMock, patch

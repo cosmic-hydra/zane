@@ -4,7 +4,8 @@ Tests edge cases, error handling, performance, and integration scenarios
 """
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")
 import numpy as np
 import pandas as pd
 from unittest.mock import Mock, MagicMock, patch

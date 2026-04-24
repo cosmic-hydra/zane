@@ -5,7 +5,14 @@ Utility Functions for Drug Discovery
 import random
 
 import numpy as np
-import torch
+
+try:
+    import torch as torch
+
+    _TORCH_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    torch = None  # type: ignore[assignment]
+    _TORCH_AVAILABLE = False
 
 
 def set_seed(seed: int = 42):
@@ -17,12 +24,13 @@ def set_seed(seed: int = 42):
     """
     random.seed(seed)
     np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
+    if _TORCH_AVAILABLE:
+        torch.manual_seed(seed)  # type: ignore[union-attr]
+        if torch.cuda.is_available():  # type: ignore[union-attr]
+            torch.cuda.manual_seed(seed)  # type: ignore[union-attr]
+            torch.cuda.manual_seed_all(seed)  # type: ignore[union-attr]
+            torch.backends.cudnn.deterministic = True  # type: ignore[union-attr]
+            torch.backends.cudnn.benchmark = False  # type: ignore[union-attr]
 
 
 def get_device(prefer_cuda: bool = True) -> str:
@@ -35,12 +43,12 @@ def get_device(prefer_cuda: bool = True) -> str:
     Returns:
         Device string ('cuda' or 'cpu')
     """
-    if prefer_cuda and torch.cuda.is_available():
+    if _TORCH_AVAILABLE and prefer_cuda and torch.cuda.is_available():  # type: ignore[union-attr]
         return "cuda"
     return "cpu"
 
 
-def count_parameters(model: torch.nn.Module) -> int:
+def count_parameters(model: "torch.nn.Module") -> int:
     """
     Count trainable parameters in a model
 

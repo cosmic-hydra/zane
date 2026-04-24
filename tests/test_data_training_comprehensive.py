@@ -6,7 +6,8 @@ Tests data collection, processing, and training workflows
 import pytest
 import pandas as pd
 import numpy as np
-import torch
+
+torch = pytest.importorskip("torch")
 from unittest.mock import Mock, MagicMock, patch
 from pathlib import Path
 

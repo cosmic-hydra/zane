@@ -1,7 +1,8 @@
 """Tests for Llama AI support helpers."""
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")
 
 from drug_discovery.ai_support import LlamaSupportAssistant
 
