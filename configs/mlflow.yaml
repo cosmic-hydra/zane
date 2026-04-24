@@ -1,0 +1,19 @@
+# MLflow Tracking Server Configuration
+tracking_uri: "http://mlflow-server:5000"
+experiment_name: "ZANE_Drug_Discovery_Simulation"
+
+# Metrics to track
+metrics:
+  - "Binding Free Energy (ΔG)"
+  - "QML Noise Profile"
+  - "Lipinski_Ro5"
+  - "QED"
+  - "SAscore"
+
+# Artifact storage (linked to DVC/S3)
+artifact_location: "s3://zane-data-lake/mlflow-artifacts"
+
+# Model Registry
+registry_config:
+  automatic_registration: true
+  transition_to_production: "manual"
