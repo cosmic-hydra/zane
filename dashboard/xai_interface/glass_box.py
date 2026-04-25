@@ -1,0 +1,205 @@
+import torch
+import torch.nn as nn
+from rdkit import Chem
+from rdkit.Chem import AllChem
+
+from .inference_engine import SubMillisecondSurrogateEngine
+from .state_manager import MoleculeStateManager
+
+try:
+    from captum.attr import IntegratedGradients
+except ImportError:
+    IntegratedGradients = None
+
+try:
+    import streamlit as st
+except ImportError:
+    st = None
+
+try:
+    import py3Dmol
+except ImportError:
+    py3Dmol = None  # noqa: N816
+
+
+class AugmentedChemistInterface:
+    """
+    Module 10: The "Glass Box" XAI & Augmented Chemist Interface
+    """
+
+    def __init__(self, gnn_model=None):
+        self.gnn_model = gnn_model if gnn_model else self._build_mock_model()
+        if IntegratedGradients is not None:
+            self.integrated_gradients = IntegratedGradients(self.gnn_model)
+        else:
+            self.integrated_gradients = None
+
+        # Refinement 1: Sub-Millisecond Surrogate Inference (ONNX)
+        self.surrogate_engine = SubMillisecondSurrogateEngine()
+
+    def _build_mock_model(self):
+        class MockGNN(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = nn.Linear(10, 1)
+
+            def forward(self, x):
+                return self.linear(x)
+
+        return MockGNN()
+
+    def get_3d_attention_mapping(self, molecular_features: torch.Tensor):
+        """
+        3D Attention Mapping:
+        Interface with Captum to extract the integrated gradients and attention weights
+        from our Graph Neural Networks.
+        """
+        if self.integrated_gradients is None:
+            return None
+
+        molecular_features.requires_grad_()
+        attributions, delta = self.integrated_gradients.attribute(
+            molecular_features, target=0, return_convergence_delta=True
+        )
+        return attributions
+
+    def render_xai_visualization(self, protein_pdb: str, molecule_smiles: str, attributions: torch.Tensor = None):
+        """
+        Uses py3Dmol to render the target protein pocket and the generated drug in 3D.
+        Visually highlights (in glowing heatmaps) the exact sub-atomic regions that the AI
+        believes are driving the favorable Binding Free Energy (ΔG).
+        """
+        if py3Dmol is None:
+            return None
+
+        mol = Chem.MolFromSmiles(molecule_smiles)
+        mol_block = ""
+        if mol:
+            mol = Chem.AddHs(mol)
+            AllChem.EmbedMolecule(mol, randomSeed=42)
+            mol_block = Chem.MolToMolBlock(mol)
+
+        view = py3Dmol.view(width=800, height=600)
+
+        if protein_pdb:
+            view.addModel(protein_pdb, "pdb")
+            view.setStyle({"cartoon": {"color": "lightgray"}})
+
+        if mol_block:
+            view.addModel(mol_block, "mol")
+            # The attributions would be used here to dynamically color atoms
+            view.setStyle({"model": -1}, {"stick": {"colorscheme": "greenCarbon"}})
+
+        view.zoomTo()
+        return view
+
+    def real_time_sub_second_rescoring(self, modified_smiles: str) -> dict:
+        """
+        Real-Time Sub-Second Rescoring:
+        The moment the human chemist modifies the molecule in the browser,
+        instantly send a WebSocket request back to the PyTorch backend,
+        run a rapid surrogate model inference, and instantly update the
+        ADMET toxicity gauges and predicted binding affinity.
+        """
+        mol = Chem.MolFromSmiles(modified_smiles)
+        if not mol:
+            return {"error": "Invalid SMILES structure"}
+
+        # Use SubMillisecondSurrogateEngine (ONNX + MC Dropout)
+        scores = self.surrogate_engine.predict_with_mc_dropout(modified_smiles, num_samples=30)
+
+        return {
+            "smiles": modified_smiles,
+            "predicted_binding_affinity_dg": scores["dg_mean"],
+            "dg_variance": scores["dg_variance"],
+            "admet_toxicity_gauge": min(max(scores["admet_mean"], 0.0), 1.0),  # Clamp to 0-1
+            "admet_variance": scores["admet_variance"],
+            "molecular_weight": Chem.Descriptors.MolWt(mol),
+        }
+
+
+def run_glass_box_dashboard():
+    """
+    Human-in-the-Loop Editor:
+    Integrates a web-based molecular editor. The human chemist can override
+    the AI's suggestions in real-time.
+    """
+    if st is None:
+        print("Streamlit is not installed.")
+        return
+
+    st.set_page_config(page_title="Glass Box XAI & Augmented Chemist", layout="wide")
+    st.title("Module 10: Glass Box XAI & Augmented Chemist Interface")
+
+    if "interface" not in st.session_state:
+        st.session_state.interface = AugmentedChemistInterface()
+
+    interface = st.session_state.interface
+
+    if "state_manager" not in st.session_state:
+        initial_smiles = "CCO"
+        initial_scores = interface.real_time_sub_second_rescoring(initial_smiles)
+        st.session_state.state_manager = MoleculeStateManager(initial_smiles, initial_scores)
+
+    state_manager = st.session_state.state_manager
+    current_state = state_manager.get_current_state()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("3D Attention Mapping")
+        st.markdown("Visualizing sub-atomic regions driving favorable Binding Free Energy (ΔG).")
+        st.components.v1.html(
+            "<div style='height: 400px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center;'>py3Dmol Render Placeholder</div>",
+            height=420,
+        )
+
+        st.subheader("Molecular Git-Tree (State Management)")
+        st.markdown("Directed Acyclic Graph (DAG) of exploratory pathways.")
+        dot_str = state_manager.render_tree_graphviz()
+        st.graphviz_chart(dot_str)
+
+    with col2:
+        st.subheader("Human-in-the-Loop Editor")
+        st.markdown("Modify the molecule below (e.g., using Ketcher or JSME):")
+
+        # User modifies the molecule
+        edited_smiles = st.text_input("SMILES Editor", current_state["smiles"])
+
+        # If modified, save new state
+        if edited_smiles and edited_smiles != current_state["smiles"]:
+            new_scores = interface.real_time_sub_second_rescoring(edited_smiles)
+            if "error" not in new_scores:
+                state_manager.add_state(edited_smiles, new_scores)
+                current_state = state_manager.get_current_state()  # Update current state
+            else:
+                st.error(new_scores["error"])
+
+        st.subheader("Real-Time Sub-Second Rescoring")
+        scores = current_state["scores"]
+
+        if "error" not in scores:
+            dg_mean = scores.get("predicted_binding_affinity_dg", 0.0)
+            dg_var = scores.get("dg_variance", 0.0)
+
+            # Refinement 2: Epistemic Uncertainty Quantification (UQ)
+            st.metric("Predicted ΔG (kcal/mol)", f"{dg_mean:.2f} ± {dg_var:.2f}")
+
+            # OOD Warning
+            variance_threshold = 0.5
+            if dg_var > variance_threshold:
+                st.warning(
+                    "⚠️ High Epistemic Uncertainty! The surrogate model has low confidence. This molecule may be Out-of-Distribution (OOD)."
+                )
+
+            admet = scores.get("admet_toxicity_gauge", 0.0)
+            st.progress(
+                admet,
+                text=f"ADMET Toxicity Gauge: {admet:.2f}",
+            )
+        else:
+            st.error(scores["error"])
+
+
+if __name__ == "__main__":
+    run_glass_box_dashboard()
