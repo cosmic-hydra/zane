@@ -1,8 +1,10 @@
-import numpy as np
 import torch
 import torch.nn as nn
 from rdkit import Chem
 from rdkit.Chem import AllChem
+
+from .inference_engine import SubMillisecondSurrogateEngine
+from .state_manager import MoleculeStateManager
 
 try:
     from captum.attr import IntegratedGradients
@@ -31,6 +33,9 @@ class AugmentedChemistInterface:
             self.integrated_gradients = IntegratedGradients(self.gnn_model)
         else:
             self.integrated_gradients = None
+
+        # Refinement 1: Sub-Millisecond Surrogate Inference (ONNX)
+        self.surrogate_engine = SubMillisecondSurrogateEngine()
 
     def _build_mock_model(self):
         class MockGNN(nn.Module):
@@ -100,14 +105,15 @@ class AugmentedChemistInterface:
         if not mol:
             return {"error": "Invalid SMILES structure"}
 
-        # Surrogate model inference mock
-        predicted_dg = -(8.0 + np.random.random() * 4.0)
-        admet_toxicity = np.random.random()
+        # Use SubMillisecondSurrogateEngine (ONNX + MC Dropout)
+        scores = self.surrogate_engine.predict_with_mc_dropout(modified_smiles, num_samples=30)
 
         return {
             "smiles": modified_smiles,
-            "predicted_binding_affinity_dg": predicted_dg,
-            "admet_toxicity_gauge": admet_toxicity,
+            "predicted_binding_affinity_dg": scores["dg_mean"],
+            "dg_variance": scores["dg_variance"],
+            "admet_toxicity_gauge": min(max(scores["admet_mean"], 0.0), 1.0),  # Clamp to 0-1
+            "admet_variance": scores["admet_variance"],
             "molecular_weight": Chem.Descriptors.MolWt(mol),
         }
 
@@ -125,7 +131,18 @@ def run_glass_box_dashboard():
     st.set_page_config(page_title="Glass Box XAI & Augmented Chemist", layout="wide")
     st.title("Module 10: Glass Box XAI & Augmented Chemist Interface")
 
-    interface = AugmentedChemistInterface()
+    if "interface" not in st.session_state:
+        st.session_state.interface = AugmentedChemistInterface()
+
+    interface = st.session_state.interface
+
+    if "state_manager" not in st.session_state:
+        initial_smiles = "CCO"
+        initial_scores = interface.real_time_sub_second_rescoring(initial_smiles)
+        st.session_state.state_manager = MoleculeStateManager(initial_smiles, initial_scores)
+
+    state_manager = st.session_state.state_manager
+    current_state = state_manager.get_current_state()
 
     col1, col2 = st.columns(2)
 
@@ -137,22 +154,51 @@ def run_glass_box_dashboard():
             height=420,
         )
 
+        st.subheader("Molecular Git-Tree (State Management)")
+        st.markdown("Directed Acyclic Graph (DAG) of exploratory pathways.")
+        dot_str = state_manager.render_tree_graphviz()
+        st.graphviz_chart(dot_str)
+
     with col2:
         st.subheader("Human-in-the-Loop Editor")
         st.markdown("Modify the molecule below (e.g., using Ketcher or JSME):")
-        edited_smiles = st.text_input("SMILES Editor", "CCO")
+
+        # User modifies the molecule
+        edited_smiles = st.text_input("SMILES Editor", current_state["smiles"])
+
+        # If modified, save new state
+        if edited_smiles and edited_smiles != current_state["smiles"]:
+            new_scores = interface.real_time_sub_second_rescoring(edited_smiles)
+            if "error" not in new_scores:
+                state_manager.add_state(edited_smiles, new_scores)
+                current_state = state_manager.get_current_state()  # Update current state
+            else:
+                st.error(new_scores["error"])
 
         st.subheader("Real-Time Sub-Second Rescoring")
-        if edited_smiles:
-            scores = interface.real_time_sub_second_rescoring(edited_smiles)
-            if "error" not in scores:
-                st.metric("Predicted ΔG (kcal/mol)", f"{scores['predicted_binding_affinity_dg']:.2f}")
-                st.progress(
-                    scores["admet_toxicity_gauge"],
-                    text=f"ADMET Toxicity Gauge: {scores['admet_toxicity_gauge']:.2f}",
+        scores = current_state["scores"]
+
+        if "error" not in scores:
+            dg_mean = scores.get("predicted_binding_affinity_dg", 0.0)
+            dg_var = scores.get("dg_variance", 0.0)
+
+            # Refinement 2: Epistemic Uncertainty Quantification (UQ)
+            st.metric("Predicted ΔG (kcal/mol)", f"{dg_mean:.2f} ± {dg_var:.2f}")
+
+            # OOD Warning
+            variance_threshold = 0.5
+            if dg_var > variance_threshold:
+                st.warning(
+                    "⚠️ High Epistemic Uncertainty! The surrogate model has low confidence. This molecule may be Out-of-Distribution (OOD)."
                 )
-            else:
-                st.error(scores["error"])
+
+            admet = scores.get("admet_toxicity_gauge", 0.0)
+            st.progress(
+                admet,
+                text=f"ADMET Toxicity Gauge: {admet:.2f}",
+            )
+        else:
+            st.error(scores["error"])
 
 
 if __name__ == "__main__":
