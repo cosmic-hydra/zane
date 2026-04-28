@@ -6,12 +6,13 @@ Tests edge cases, error handling, performance, and integration scenarios
 import pytest
 
 torch = pytest.importorskip("torch")
+import os
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
+
 import numpy as np
 import pandas as pd
-from unittest.mock import Mock, MagicMock, patch
-import tempfile
-import os
-from pathlib import Path
 
 
 class TestErrorHandling:
@@ -26,7 +27,7 @@ class TestErrorHandling:
             try:
                 model_type = str(invalid_type).lower()
                 assert isinstance(model_type, str)
-            except Exception as e:
+            except Exception:
                 assert True  # Error handling working
 
     def test_missing_dependencies(self):
@@ -319,7 +320,7 @@ class TestLogging:
         """Test different log levels"""
         import logging
 
-        logger = logging.getLogger("test_logger")
+        _logger = logging.getLogger("test_logger")
 
         # Should handle all log levels
         log_levels = [
@@ -335,8 +336,8 @@ class TestLogging:
 
     def test_logging_messages(self):
         """Test logging messages"""
-        import logging
         import io
+        import logging
 
         # Capture log output
         logger = logging.getLogger("test_logger")
@@ -510,7 +511,7 @@ class TestEdgeCaseIntegration:
 
     def test_empty_batch_handling(self):
         """Test handling empty batches"""
-        model = torch.nn.Linear(10, 1)
+        _model = torch.nn.Linear(10, 1)
         # Empty batch would typically fail, but should handle gracefully
 
     def test_single_sample_batch(self):

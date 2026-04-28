@@ -3,13 +3,11 @@ Comprehensive test suite for scraper.py - 80+ tests
 Tests web scraping, data ingestion from PubMed and biomedical sources
 """
 
-import pytest
-import json
-import requests
-from datetime import datetime, timedelta
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
-from drug_discovery.web_scraping.scraper import PubMedAPI, BiomedicalScraper
+import requests
+
+from drug_discovery.web_scraping.scraper import BiomedicalScraper, PubMedAPI
 
 
 class TestPubMedAPIBasics:
@@ -195,7 +193,7 @@ class TestPubMedFetchAbstracts:
 
         api = PubMedAPI()
         pmids = [str(i) for i in range(250)]  # More than batch size
-        articles = api.fetch_abstracts(pmids)
+        _articles = api.fetch_abstracts(pmids)
 
         # Should make multiple requests
         assert mock_get.call_count >= 2
@@ -272,8 +270,8 @@ class TestBiomedicalScraper:
         scraper = BiomedicalScraper()
 
         # These should be considered trusted
-        trusted = ["https://www.nih.gov/article", "https://harvard.edu/study"]
-        untrusted = ["https://sketchy.com", "https://unknown.org"]
+        _trusted = ["https://www.nih.gov/article", "https://harvard.edu/study"]
+        _untrusted = ["https://sketchy.com", "https://unknown.org"]
 
         # Validate domains are in trusted list
         for domain in scraper.trusted_domains:

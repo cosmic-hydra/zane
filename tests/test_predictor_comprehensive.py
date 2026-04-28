@@ -6,10 +6,11 @@ Tests molecular property prediction and ADMET evaluation
 import pytest
 
 torch = pytest.importorskip("torch")
-import numpy as np
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock
 
-from drug_discovery.evaluation.predictor import PropertyPredictor, ADMETPredictor
+import numpy as np
+
+from drug_discovery.evaluation.predictor import ADMETPredictor, PropertyPredictor
 
 
 class MockPyTorchModel(torch.nn.Module):

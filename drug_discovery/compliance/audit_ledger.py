@@ -21,14 +21,15 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 try:
     from sqlalchemy import Column, DateTime, Integer, String, Text, create_engine
-    from sqlalchemy.orm import Session, declarative_base, sessionmaker
+    from sqlalchemy.orm import declarative_base, sessionmaker
 
     _SQLALCHEMY = True
     Base = declarative_base()

@@ -3,15 +3,13 @@ Comprehensive test suite for synthesis modules - 90+ tests
 Tests synthesis, retrosynthesis, reaction prediction modules
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-import numpy as np
+from unittest.mock import MagicMock, patch
 
 from drug_discovery.synthesis import (
-    retrosynthesis,
-    reaction_prediction,
     backends,
     pistachio_datasets,
+    reaction_prediction,
+    retrosynthesis,
 )
 
 

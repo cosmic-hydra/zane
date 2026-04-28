@@ -13,9 +13,9 @@ simultaneously high-affinity, low-toxicity, and synthesizable.
 from __future__ import annotations
 
 import logging
-import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -94,7 +94,6 @@ class ParetoRanker:
             return []
 
         # Extract objective matrix
-        n = len(candidates)
         obj_matrix = self._build_objective_matrix(candidates)
 
         # Normalise to [0, 1] where 0 is best

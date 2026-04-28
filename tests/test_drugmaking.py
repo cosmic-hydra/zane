@@ -2,7 +2,6 @@
 Comprehensive tests for the drugmaking module - State-of-the-Art Drug Design.
 """
 
-import pytest
 import numpy as np
 
 
@@ -12,12 +11,12 @@ class TestDrugmakingImports:
     def test_imports(self):
         """Test that all expected classes can be imported."""
         from drug_discovery.drugmaking import (
-            CustomDrugmakingModule,
-            CompoundTestResult,
             CandidateResult,
-            OptimizationConfig,
+            CompoundTestResult,
             CounterSubstanceFinder,
             CounterSubstanceResult,
+            CustomDrugmakingModule,
+            OptimizationConfig,
         )
         assert CustomDrugmakingModule is not None
         assert CompoundTestResult is not None
@@ -29,10 +28,10 @@ class TestDrugmakingImports:
     def test_dataclass_instantiation(self):
         """Test that dataclasses can be instantiated."""
         from drug_discovery.drugmaking import (
-            CompoundTestResult,
             CandidateResult,
-            OptimizationConfig,
+            CompoundTestResult,
             CounterSubstanceResult,
+            OptimizationConfig,
         )
 
         opt_config = OptimizationConfig(

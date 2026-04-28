@@ -2,8 +2,8 @@
 Additional comprehensive tests for physics and knowledge graph modules - 50+ tests
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 
 
@@ -35,7 +35,7 @@ class TestProteinStructureBasics:
     def test_residue_distance_calculation(self):
         """Test calculating distances between residues"""
         # Mock distance calculation
-        residues = [
+        _residues = [
             {"pos": [0.0, 0.0, 0.0]},
             {"pos": [1.0, 1.0, 1.0]},
             {"pos": [2.0, 2.0, 2.0]},

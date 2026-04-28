@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import time
 
 import pytest
 
@@ -11,7 +10,6 @@ from drug_discovery.compliance.audit_ledger import (
     AuditEntry,
     AuditLedger,
     compliance_log,
-    get_default_ledger,
     sha256_hash,
 )
 from drug_discovery.compliance.rbac import (
@@ -25,18 +23,18 @@ from drug_discovery.compliance.rbac import (
     require_permission,
     require_signature,
 )
+from external.supply_chain import (
+    EnamineAdapter,
+    MculeAdapter,
+    RetrosynthesisResult,
+    SupplyChainAnalyzer,
+    Synthon,
+    decompose_molecule,
+)
 from infrastructure.api_gateway import (
     GenerateRequest,
     TaskStore,
     _execute_generation_task,
-)
-from external.supply_chain import (
-    SupplyChainAnalyzer,
-    EnamineAdapter,
-    MculeAdapter,
-    Synthon,
-    RetrosynthesisResult,
-    decompose_molecule,
 )
 
 
@@ -238,7 +236,7 @@ class TestRBACDecorators:
         )
         # Set a real password hash
         import hashlib
-        user.password_hash = hashlib.sha256("u3:mypass".encode()).hexdigest()
+        user.password_hash = hashlib.sha256(b"u3:mypass").hexdigest()
 
         @require_signature(reason="test export")
         def export(user=None, password=None):

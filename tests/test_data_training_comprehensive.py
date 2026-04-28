@@ -3,13 +3,13 @@ Comprehensive test suite for data and training modules - 100+ tests
 Tests data collection, processing, and training workflows
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 
 torch = pytest.importorskip("torch")
-from unittest.mock import Mock, MagicMock, patch
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from drug_discovery.data import (
     DataCollector,
@@ -355,7 +355,7 @@ class TestBatchProcessing:
 
         num_batches = 0
         for i in range(0, len(df), batch_size):
-            batch = df[i:i+batch_size]
+            _batch = df[i:i+batch_size]
             num_batches += 1
 
         assert num_batches == 4

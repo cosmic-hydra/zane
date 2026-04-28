@@ -5,9 +5,8 @@ Tests for Models
 import pytest
 
 torch = pytest.importorskip("torch")
-from torch_geometric.data import Data
-
 from drug_discovery.models import EnsembleModel, MolecularGNN, MolecularTransformer
+from torch_geometric.data import Data
 
 
 class TestMolecularGNN:

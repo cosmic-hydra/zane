@@ -8,12 +8,12 @@ Tests for:
 - Uncertainty estimation
 """
 
-import pytest
 import numpy as np
-import pandas as pd
-from drug_discovery.testing.toxicity import ToxicityPredictor
+import pytest
+
 from drug_discovery.testing.drug_combinations import DrugCombinationTester
 from drug_discovery.testing.robustness import RobustnessTester
+from drug_discovery.testing.toxicity import ToxicityPredictor
 from drug_discovery.testing.uncertainty import UncertaintyEstimator
 
 

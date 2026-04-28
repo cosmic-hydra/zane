@@ -105,15 +105,15 @@ class QualificationResult:
 
     def summary(self) -> str:
         lines = [
-            f"=== SaMD Qualification Report ===",
+            "=== SaMD Qualification Report ===",
             f"Timestamp: {self.timestamp}",
             f"Python: {self.system_info.get('python', 'unknown')}",
             f"Platform: {self.system_info.get('platform', 'unknown')}",
-            f"",
+            "",
             f"IQ (Installation): {'PASS' if self.iq_passed else 'FAIL'} ({sum(c.passed for c in self.iq_checks)}/{len(self.iq_checks)})",
             f"OQ (Operational):  {'PASS' if self.oq_passed else 'FAIL'} ({sum(c.passed for c in self.oq_checks)}/{len(self.oq_checks)})",
             f"PQ (Performance):  {'PASS' if self.pq_passed else 'FAIL'} ({sum(c.passed for c in self.pq_checks)}/{len(self.pq_checks)})",
-            f"",
+            "",
             f"Overall: {'PASS' if self.overall_passed else 'FAIL'}",
             f"Elapsed: {self.total_elapsed_seconds:.2f}s",
             f"Report hash: {self.report_hash[:16]}...",

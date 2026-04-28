@@ -18,10 +18,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import math
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,7 @@ def _fep_openmm(
     import openmm as mm  # type: ignore[import-untyped]
     import openmm.unit as unit  # type: ignore[import-untyped]
 
-    integrator = mm.LangevinMiddleIntegrator(
+    _integrator = mm.LangevinMiddleIntegrator(
         temperature * unit.kelvin,
         1.0 / unit.picosecond,
         timestep * unit.femtoseconds,

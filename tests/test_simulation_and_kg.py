@@ -9,23 +9,22 @@ Tests for:
 - Vector database
 """
 
-import pytest
 import numpy as np
-import pandas as pd
+import pytest
 
-from drug_discovery.simulation.biological_response import (
-    BiologicalResponseSimulator,
-    ADMEPredictor,
-    DoseResponseSimulator,
-    CellularResponseSimulator,
-)
 from drug_discovery.knowledge_graph.knowledge_graph import (
-    KnowledgeGraph,
-    VectorDatabase,
-    KGNode,
-    KGEdge,
-    NodeType,
     EdgeType,
+    KGEdge,
+    KGNode,
+    KnowledgeGraph,
+    NodeType,
+    VectorDatabase,
+)
+from drug_discovery.simulation.biological_response import (
+    ADMEPredictor,
+    BiologicalResponseSimulator,
+    CellularResponseSimulator,
+    DoseResponseSimulator,
 )
 
 
