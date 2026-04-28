@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+message: "If you use ZANE in your research, please cite it as below."
+title: "ZANE: Pharmaceutical Operating System for Autonomous Molecular Engineering"
+abstract: >
+  ZANE is an AI-native pharmaceutical operating system that unifies target
+  intelligence, molecule generation, free-energy physics, preclinical safety
+  triage, compliance telemetry, and laboratory execution interfaces into one
+  continuous computational substrate. It combines graph neural networks,
+  transformer-based molecular predictors, free-energy perturbation pathways,
+  GLP-style toxicology gates, cryptographic audit trails, and LIMS/ELN
+  integration APIs to enable end-to-end autonomous drug discovery workflows.
+authors:
+  - name: "cosmic-hydra"
+    alias: "cosmic-hydra"
+    website: "https://github.com/cosmic-hydra"
+repository-code: "https://github.com/cosmic-hydra/zane"
+url: "https://github.com/cosmic-hydra/zane"
+license: "LicenseRef-ZANE-Proprietary"
+version: "1.0.0"
+date-released: "2024-01-01"
+keywords:
+  - drug discovery
+  - pharmaceutical operating system
+  - autonomous molecular engineering
+  - AI drug design
+  - molecular generation
+  - graph neural networks
+  - ADMET prediction
+  - free energy perturbation
+  - molecular docking
+  - cheminformatics
+  - bioinformatics
+  - deep learning
+  - machine learning
+  - molecular dynamics
+  - computational chemistry
+  - toxicity prediction
+  - active learning
+  - federated learning
+  - retrosynthesis
+  - pharmacophore
+  - hERG
+  - SMILES
+  - RDKit
+  - PubChem
+  - ChEMBL
+  - LIMS
+  - ELN
+  - clinical intelligence
+  - compliance
+  - GNN

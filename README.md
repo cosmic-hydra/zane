@@ -12,6 +12,18 @@ ZANE is an AI-native pharmaceutical operating system designed to unify target in
 
 Rather than functioning as an isolated model endpoint, ZANE is organized as an orchestration-grade runtime where each molecular decision is generated, stress-tested, cryptographically auditable, and promoted through governed decision gates.
 
+<p align="center">
+  <a href="https://github.com/cosmic-hydra/zane/stargazers"><img src="https://img.shields.io/github/stars/cosmic-hydra/zane?style=social" alt="GitHub stars" /></a>
+  <a href="https://github.com/cosmic-hydra/zane/network/members"><img src="https://img.shields.io/github/forks/cosmic-hydra/zane?style=social" alt="GitHub forks" /></a>
+  <a href="https://github.com/cosmic-hydra/zane/issues"><img src="https://img.shields.io/github/issues/cosmic-hydra/zane" alt="Open issues" /></a>
+  <a href="https://github.com/cosmic-hydra/zane/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-ZANE%20Proprietary-blue" alt="License" /></a>
+  <img src="https://img.shields.io/badge/python-3.8%2B-blue" alt="Python 3.8+" />
+  <img src="https://img.shields.io/badge/domain-drug%20discovery-brightgreen" alt="Drug Discovery" />
+  <img src="https://img.shields.io/badge/AI-molecular%20engineering-orange" alt="AI Molecular Engineering" />
+</p>
+
+**Keywords:** drug discovery · pharmaceutical AI · autonomous molecular engineering · molecular generation · graph neural networks · ADMET · free energy perturbation · molecular docking · cheminformatics · toxicity prediction · active learning · retrosynthesis · pharmacophore · hERG · SMILES · RDKit · PubChem · ChEMBL · LIMS · ELN · computational chemistry · federated learning · clinical intelligence
+
 ![Pharmaceutical Operating System Overview](assets/high_throughput_test_results.png)
 
 ---
