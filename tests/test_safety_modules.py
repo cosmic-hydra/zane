@@ -4,18 +4,14 @@ and end-to-end pipeline.
 
 from __future__ import annotations
 
-import math
-
-import numpy as np
 import pytest
 
-from drug_discovery.safety.smiles_validator import SmilesValidator, ValidationResult
+from drug_discovery.safety.end_to_end_pipeline import PipelineConfig, PipelineResult, SafeGenerationPipeline
+from drug_discovery.safety.pareto_ranker import ObjectiveSpec, ParetoRanker
+from drug_discovery.safety.smiles_validator import SmilesValidator
 from drug_discovery.safety.toxicity_gate import ToxicityGate, ToxicityGateConfig, ToxicityVerdict
-from drug_discovery.safety.pareto_ranker import ParetoRanker, RankedCandidate, ObjectiveSpec
-from drug_discovery.safety.end_to_end_pipeline import SafeGenerationPipeline, PipelineConfig, PipelineResult
 
 try:
-    from rdkit import Chem
 
     _RDKIT = True
 except Exception:

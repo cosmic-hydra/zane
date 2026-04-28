@@ -6,13 +6,13 @@ Tests orchestration, model architectures, optimization workflows
 import pytest
 
 torch = pytest.importorskip("torch")
-import torch.nn as nn
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-from unittest.mock import Mock, MagicMock, patch
 import pandas as pd
+import torch.nn as nn
 
 from drug_discovery.models import (
-    EnsembleModel,
     MolecularGNN,
     MolecularTransformer,
 )

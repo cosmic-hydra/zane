@@ -16,8 +16,9 @@ from __future__ import annotations
 
 import logging
 import math
-from dataclasses import dataclass, field
-from typing import Any, Callable, Sequence
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 import torch
 import torch.nn as nn

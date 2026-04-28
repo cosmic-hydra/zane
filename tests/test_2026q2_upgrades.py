@@ -2,6 +2,7 @@
 import numpy as np
 import pytest
 
+
 class TestScientificValidation:
     def test_metrics_regression(self):
         from drug_discovery.validation.scientific_validation import compute_metrics
@@ -85,7 +86,7 @@ class TestMultiObjective:
         m, v = gp.predict(np.random.rand(2,3)); assert m.shape == (2,) and all(v > 0)
 
     def test_mobo(self):
-        from drug_discovery.optimization.multi_objective import MultiObjectiveBayesianOptimizer, MOBOConfig
+        from drug_discovery.optimization.multi_objective import MOBOConfig, MultiObjectiveBayesianOptimizer
         opt = MultiObjectiveBayesianOptimizer(MOBOConfig(objective_names=["a","b"],
             objective_directions=["maximize","maximize"], ref_point=[0.,0.], num_mc_samples=10))
         opt.tell(np.random.rand(5,3), np.random.rand(5,2))

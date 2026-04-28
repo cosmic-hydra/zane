@@ -3,13 +3,13 @@ Comprehensive test suite for data and training modules - 100+ tests
 Tests data collection, processing, and training workflows
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 
 torch = pytest.importorskip("torch")
-from unittest.mock import Mock, MagicMock, patch
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from drug_discovery.data import (
     DataCollector,

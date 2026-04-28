@@ -11,11 +11,11 @@ physical FEP simulation.
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import logging
 import math
-from typing import Any, Callable, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -36,8 +36,8 @@ except ImportError:  # pragma: no cover
 
 try:
     from botorch.acquisition import ExpectedImprovement  # type: ignore[import-untyped]
-    from botorch.models import SingleTaskGP  # type: ignore[import-untyped]
     from botorch.fit import fit_gpytorch_mll  # type: ignore[import-untyped]
+    from botorch.models import SingleTaskGP  # type: ignore[import-untyped]
 
     _BOTORCH_AVAILABLE = True
 except ImportError:  # pragma: no cover
@@ -270,7 +270,7 @@ class SurrogateModel:
         logger.info("SurrogateModel saved to %s (%d observations)", path, self.n_observations)
 
     @classmethod
-    def load(cls, path: str, device: str = "cpu") -> "SurrogateModel":
+    def load(cls, path: str, device: str = "cpu") -> SurrogateModel:
         """Load a previously saved surrogate and re-fit.
 
         Returns a new :class:`SurrogateModel` with all prior observations

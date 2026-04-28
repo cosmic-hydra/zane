@@ -1,4 +1,4 @@
-from drug_discovery.benchmarking.backends import BenchmarkResult, BenchmarkRunner, BaseBenchmarkBackend
+from drug_discovery.benchmarking.backends import BaseBenchmarkBackend, BenchmarkResult, BenchmarkRunner
 
 
 class DummyBenchmarkBackend(BaseBenchmarkBackend):

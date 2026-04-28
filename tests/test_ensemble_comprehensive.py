@@ -6,11 +6,10 @@ Tests ensemble model operations, multi-task learning, hybrid models
 import pytest
 
 torch = pytest.importorskip("torch")
-import torch.nn as nn
-import numpy as np
-from unittest.mock import Mock, MagicMock, patch
 
-from drug_discovery.models.ensemble import EnsembleModel, MultiTaskModel, HybridModel
+import torch.nn as nn
+
+from drug_discovery.models.ensemble import EnsembleModel, HybridModel, MultiTaskModel
 
 
 class MockModel(nn.Module):

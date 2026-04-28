@@ -63,7 +63,6 @@ GFlowNetPolicy = _gflownet.GFlowNetPolicy
 
 # Check if RDKit is available (the fallback FEP path needs it)
 try:
-    from rdkit import Chem  # type: ignore[import-untyped]
 
     _RDKIT = True
 except Exception:

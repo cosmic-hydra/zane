@@ -2,8 +2,8 @@
 Additional comprehensive tests for physics and knowledge graph modules - 50+ tests
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 
 

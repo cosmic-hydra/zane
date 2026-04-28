@@ -3,23 +3,20 @@ Comprehensive test suite for dashboard.py - 80+ tests
 Tests complex UI logic, theme rendering, animation, data visualization
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from datetime import datetime
-from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
-from rich.console import Console
-from rich.table import Table
 
 from drug_discovery.dashboard import (
-    DashboardSnapshot,
-    DashboardTheme,
-    DashboardAIAdvisor,
-    _resolve_theme,
-    _phase_glyph,
-    _animated_bar,
-    _get_admet_predictor,
     _DASHBOARD_THEMES,
     _SIMULATION_LIBRARY,
+    DashboardAIAdvisor,
+    DashboardSnapshot,
+    DashboardTheme,
+    _animated_bar,
+    _get_admet_predictor,
+    _phase_glyph,
+    _resolve_theme,
 )
 
 

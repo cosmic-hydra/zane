@@ -13,9 +13,9 @@ simultaneously high-affinity, low-toxicity, and synthesizable.
 from __future__ import annotations
 
 import logging
-import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 

@@ -3,13 +3,11 @@ Comprehensive test suite for scraper.py - 80+ tests
 Tests web scraping, data ingestion from PubMed and biomedical sources
 """
 
-import pytest
-import json
-import requests
-from datetime import datetime, timedelta
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
-from drug_discovery.web_scraping.scraper import PubMedAPI, BiomedicalScraper
+import requests
+
+from drug_discovery.web_scraping.scraper import BiomedicalScraper, PubMedAPI
 
 
 class TestPubMedAPIBasics:
