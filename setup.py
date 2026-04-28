@@ -61,6 +61,6 @@ setup(
         "console_scripts": [
             "zane=drug_discovery.cli:main",
             "drug-discovery=drug_discovery.cli:main",
+            "unicorn-orchestrator=unicorn_platform_orchestrator:main",
         ],
-    },
-)
+    },)

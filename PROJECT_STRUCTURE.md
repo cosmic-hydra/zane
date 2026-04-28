@@ -152,3 +152,29 @@ python -m drug_discovery.cli collect --sources pubchem chembl --limit 1000
     - `--motion-intensity` (1-3)
 - Reproducible benchmark reports are stored in `outputs/reports/`.
 - Latest benchmark artifact: `outputs/reports/scientific_benchmark_20260323.json`.
+
+## Unicorn Platform Modules 14-16
+
+```
+infrastructure/
+│   ├── cryptography/ (Module 14: ZKP Federated Data Bourse)
+│   │   ├── __init__.py
+│   │   └── zkp_marketplace.py  # PySyft federation, snarkjs proofs, Fabric royalties, FPGA offload
+│   └── cloud_lab/ (Module 15: Cloud-Lab OS Kernel)
+│       ├── __init__.py
+│       └── os_kernel.py        # LabOP compilation, Bacalhau dispatch, closed-loop
+models/biologics/
+│   ├── crispr_foundry.py       # Module 16: De Novo CRISPR (ESM3, RoseTTAFold, RMSD verify)
+│   └── mrna_designer.py (existing)
+
+Root level:
+└── unicorn_platform_orchestrator.py  # CLI orchestrator &amp; integration
+```
+
+**Install &amp; Run:**
+```bash
+pip install -e .[unicorn]
+unicorn-orchestrator run --help
+unicorn-orchestrator run &quot;ATCG...&quot; --fpga-device /dev/fpga0
+```
+
