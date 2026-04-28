@@ -39,7 +39,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Stage 2: Final runtime image
 FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 
-LABEL maintainer="ZANE AI <engineering@zane.ai>"
+LABEL maintainer="cosmic-hydra"
 LABEL description="ZANE Drug Discovery Platform - GPU Optimized"
 
 ENV DEBIAN_FRONTEND=noninteractive

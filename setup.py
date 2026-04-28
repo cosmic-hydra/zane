@@ -2,18 +2,18 @@
 Setup script for AI Drug Discovery Platform
 """
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("README.md", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open("requirements.txt", "r", encoding="utf-8") as fh:
+with open("requirements.txt", encoding="utf-8") as fh:
     requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
 
 setup(
     name="zane",
     version="1.0.0",
-    author="AI Drug Discovery Team",
+    author="cosmic-hydra",
     description="State-of-the-art AI-powered drug discovery platform with self-learning capabilities",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -63,4 +63,5 @@ setup(
             "drug-discovery=drug_discovery.cli:main",
             "unicorn-orchestrator=unicorn_platform_orchestrator:main",
         ],
-    },)
+    },
+)
