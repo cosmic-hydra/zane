@@ -356,11 +356,11 @@ ZANE validation is framed as a multi-domain stress system that jointly evaluates
 
 A candidate or subsystem is promoted only when it satisfies all active acceptance operators:
 
-\[
+$$
 \mathcal{A} = \mathcal{A}_{ABFE} \cap \mathcal{A}_{SMD} \cap \mathcal{A}_{ZKP} \cap \mathcal{A}_{CiPA}
-\]
+$$
 
-where each \(\mathcal{A}_i\) is a measurable pass region with explicit numerical bounds.
+where each $\mathcal{A}_i$ is a measurable pass region with explicit numerical bounds.
 
 ---
 
@@ -368,17 +368,17 @@ where each \(\mathcal{A}_i\) is a measurable pass region with explicit numerical
 
 **Objective:** verify free-energy estimates stabilize under block-wise accumulation.
 
-For each ligand, define running estimate \(\Delta G_t\) and terminal estimate \(\Delta G^*\). Tail error operator:
+For each ligand, define running estimate $\Delta G_t$ and terminal estimate $\Delta G^*$. Tail error operator:
 
-\[
+$$
 \varepsilon_{tail} = \frac{1}{T}\sum_{t=N-T+1}^{N} |\Delta G_t - \Delta G^*|
-\]
+$$
 
 Acceptance in harness:
 
-- Convergence rate \(\ge 0.80\)
-- Global tail \(L_1\) drift \(\le 0.20\) kcal/mol
-- Global tail standard deviation \(\le 0.12\) kcal/mol
+- Convergence rate $\ge 0.80$
+- Global tail $L_1$ drift $\le 0.20$ kcal/mol
+- Global tail standard deviation $\le 0.12$ kcal/mol
 
 Observed (2026-04-28 UTC run):
 
@@ -399,20 +399,20 @@ Result: **PASS**
 
 Survival model:
 
-\[
+$$
 S(t) = \exp\left(-\int_0^t k_{off}(F(\tau))\,d\tau\right)
-\]
+$$
 
 Residence time estimator:
 
-\[
+$$
 \tau_{res} = \int_0^{t_{max}} S(t)\,dt
-\]
+$$
 
 Harness acceptance:
 
-- Median residence time \(\ge 1.0\) ns
-- Max bootstrap CI95 width \(\le 1.8\) ns
+- Median residence time $\ge 1.0$ ns
+- Max bootstrap CI95 width $\le 1.8$ ns
 
 Observed:
 
@@ -440,14 +440,14 @@ Attack families executed in harness:
 
 Core risk metric:
 
-\[
+$$
 \text{FAR} = \frac{\text{False Accepts}}{\text{Total Adversarial Attempts}}
-\]
+$$
 
 Harness acceptance:
 
-- Global attack block rate \(\ge 0.995\)
-- FAR \(\le 0.001\)
+- Global attack block rate $\ge 0.995$
+- FAR $\le 0.001$
 
 Observed:
 
@@ -469,14 +469,14 @@ Interpretation: the tested envelope checks rejected all synthetic tamper classes
 
 Band logic in harness:
 
-- Low: \(p_{hERG} \le 0.2\)
-- Intermediate: \(0.2 < p_{hERG} \le 0.4\)
-- High: \(p_{hERG} > 0.4\)
+- Low: $p_{hERG} \le 0.2$
+- Intermediate: $0.2 < p_{hERG} \le 0.4$
+- High: $p_{hERG} > 0.4$
 
 Batch acceptance:
 
-- hERG threshold pass rate \(\ge 0.80\)
-- High-risk fraction \(\le 0.20\)
+- hERG threshold pass rate $\ge 0.80$
+- High-risk fraction $\le 0.20$
 
 Observed:
 
@@ -503,7 +503,7 @@ Observed:
 
 Acceptance:
 
-- Final uplift \(\ge 0.03\)
+- Final uplift $\ge 0.03$
 
 Result: **PASS**
 
@@ -652,13 +652,13 @@ In practice, this means every high-impact transformation (score mutation, promot
 
 ### Thermodynamic notation
 
-- \(\Delta G\): estimated binding free energy (kcal/mol)
-- Lower \(\Delta G\) indicates stronger predicted binding affinity
+- $\Delta G$: estimated binding free energy (kcal/mol)
+- Lower $\Delta G$ indicates stronger predicted binding affinity
 
 ### Kinetic notation
 
-- \(S(t)\): survival probability under force-conditioned dissociation
-- \(\tau_{res}\): residence-time integral over survival curve
+- $S(t)$: survival probability under force-conditioned dissociation
+- $\tau_{res}$: residence-time integral over survival curve
 
 ### Security notation
 
@@ -667,12 +667,12 @@ In practice, this means every high-impact transformation (score mutation, promot
 
 ### Safety notation
 
-- \(p_{hERG}\): predicted probability of hERG blockade
-- CiPA-oriented risk bands derived from thresholded \(p_{hERG}\)
+- $p_{hERG}$: predicted probability of hERG blockade
+- CiPA-oriented risk bands derived from thresholded $p_{hERG}$
 
 ### Active learning notation
 
-- Final uplift: \(f_{active}^{best} - f_{random}^{best}\)
+- Final uplift: $f_{active}^{best} - f_{random}^{best}$
 - Positive uplift indicates higher value acquisition efficiency vs uninformed sampling
 
 ---
