@@ -250,7 +250,7 @@ class TestAnimatedBar:
     def test_animated_bar_animation_frame_0(self):
         """Test animated bar at tick 0 (even)"""
         bar0 = _animated_bar(0.5, 0)
-        bar2 = _animated_bar(0.5, 2)
+        _bar2 = _animated_bar(0.5, 2)
         # Both should have same animation phase
         assert bar0.count("▓") > 0 or bar0.count("░") > 0
 

@@ -238,7 +238,6 @@ class FormulationSimulator:
         # Higher MW and more rotatable bonds -> more degradation at high T
         mw = props.get("mw", 300.0)
         rot = props.get("rot_bonds", 3)
-        logp = props.get("logp", 2.0)
 
         # Activation energy proxy (lower = more susceptible)
         Ea_proxy = 80.0 - rot * 2.0 - (mw - 300) * 0.02
@@ -293,7 +292,6 @@ class FormulationSimulator:
         Extreme pH (< 2 or > 12) accelerates hydrolysis.
         """
         hba = props.get("hba", 3)
-        hbd = props.get("hbd", 1)
 
         # pH sensitivity: U-shaped curve centered at 7
         pH_factor = abs(pH - 7.0) / 7.0

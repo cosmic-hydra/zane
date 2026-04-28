@@ -122,7 +122,7 @@ def _fep_openmm(
     import openmm as mm  # type: ignore[import-untyped]
     import openmm.unit as unit  # type: ignore[import-untyped]
 
-    integrator = mm.LangevinMiddleIntegrator(
+    _integrator = mm.LangevinMiddleIntegrator(
         temperature * unit.kelvin,
         1.0 / unit.picosecond,
         timestep * unit.femtoseconds,

@@ -41,7 +41,7 @@ class TestMolecularGNNBasics:
 
     def test_gnn_output_shape(self):
         """Test GNN output shape"""
-        gnn = MolecularGNN(input_dim=64, hidden_dim=128, output_dim=1)
+        _gnn = MolecularGNN(input_dim=64, hidden_dim=128, output_dim=1)
         # Would need proper graph input format
 
     def test_gnn_number_of_layers(self):
@@ -186,7 +186,7 @@ class TestModelTraining:
             losses.append(loss.item())
 
         # All losses should be positive
-        assert all(l > 0 for l in losses)
+        assert all(loss > 0 for loss in losses)
 
     def test_validation_step(self):
         """Test validation step"""

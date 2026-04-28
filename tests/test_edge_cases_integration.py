@@ -320,7 +320,7 @@ class TestLogging:
         """Test different log levels"""
         import logging
 
-        logger = logging.getLogger("test_logger")
+        _logger = logging.getLogger("test_logger")
 
         # Should handle all log levels
         log_levels = [
@@ -511,7 +511,7 @@ class TestEdgeCaseIntegration:
 
     def test_empty_batch_handling(self):
         """Test handling empty batches"""
-        model = torch.nn.Linear(10, 1)
+        _model = torch.nn.Linear(10, 1)
         # Empty batch would typically fail, but should handle gracefully
 
     def test_single_sample_batch(self):

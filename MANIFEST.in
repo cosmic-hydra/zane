@@ -1,0 +1,11 @@
+include README.md
+include LICENSE
+include requirements.txt
+include requirements-all.txt
+include requirements-ci.txt
+include requirements-dashboard.txt
+include CHANGELOG.md
+include pyproject.toml
+recursive-include drug_discovery *.py
+recursive-include configs *.yaml *.yml *.json
+recursive-include docs *

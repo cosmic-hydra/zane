@@ -6,7 +6,8 @@ import pytest
 class TestScientificValidation:
     def test_metrics_regression(self):
         from drug_discovery.validation.scientific_validation import compute_metrics
-        y_t = np.array([1.0,2.0,3.0,4.0,5.0]); y_p = np.array([1.1,2.1,2.9,4.2,4.8])
+        y_t = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        y_p = np.array([1.1, 2.1, 2.9, 4.2, 4.8])
         m = compute_metrics(y_t, y_p, "regression")
         assert m["rmse"] < 0.3 and m["r2"] > 0.9
 
@@ -33,8 +34,10 @@ class TestScientificValidation:
 
     def test_experiment_report(self):
         from drug_discovery.validation.scientific_validation import ExperimentReport
-        r = ExperimentReport(model_name="egnn"); r.fold_metrics = [{"rmse":0.5},{"rmse":0.4},{"rmse":0.45}]
-        r.compute_aggregates(); assert r.aggregate_metrics["rmse"]["mean"] == pytest.approx(0.45, abs=0.01)
+        r = ExperimentReport(model_name="egnn")
+        r.fold_metrics = [{"rmse": 0.5}, {"rmse": 0.4}, {"rmse": 0.45}]
+        r.compute_aggregates()
+        assert r.aggregate_metrics["rmse"]["mean"] == pytest.approx(0.45, abs=0.01)
 
 class TestDataPipeline:
     def test_smiles_validation(self):
@@ -82,8 +85,10 @@ class TestMultiObjective:
 
     def test_gp(self):
         from drug_discovery.optimization.multi_objective import GaussianProcessSurrogate
-        gp = GaussianProcessSurrogate(); gp.fit(np.random.rand(10,3), np.random.rand(10))
-        m, v = gp.predict(np.random.rand(2,3)); assert m.shape == (2,) and all(v > 0)
+        gp = GaussianProcessSurrogate()
+        gp.fit(np.random.rand(10, 3), np.random.rand(10))
+        m, v = gp.predict(np.random.rand(2, 3))
+        assert m.shape == (2,) and all(v > 0)
 
     def test_mobo(self):
         from drug_discovery.optimization.multi_objective import MOBOConfig, MultiObjectiveBayesianOptimizer

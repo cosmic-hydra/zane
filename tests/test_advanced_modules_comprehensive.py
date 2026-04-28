@@ -35,7 +35,7 @@ class TestProteinStructureBasics:
     def test_residue_distance_calculation(self):
         """Test calculating distances between residues"""
         # Mock distance calculation
-        residues = [
+        _residues = [
             {"pos": [0.0, 0.0, 0.0]},
             {"pos": [1.0, 1.0, 1.0]},
             {"pos": [2.0, 2.0, 2.0]},

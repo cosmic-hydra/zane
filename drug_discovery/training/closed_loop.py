@@ -35,7 +35,6 @@ except ImportError:  # pragma: no cover
     _GPYTORCH_AVAILABLE = False
 
 try:
-    from botorch.acquisition import ExpectedImprovement  # type: ignore[import-untyped]
     from botorch.fit import fit_gpytorch_mll  # type: ignore[import-untyped]
     from botorch.models import SingleTaskGP  # type: ignore[import-untyped]
 

@@ -94,7 +94,6 @@ class ParetoRanker:
             return []
 
         # Extract objective matrix
-        n = len(candidates)
         obj_matrix = self._build_objective_matrix(candidates)
 
         # Normalise to [0, 1] where 0 is best

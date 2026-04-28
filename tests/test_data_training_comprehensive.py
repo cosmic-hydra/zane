@@ -355,7 +355,7 @@ class TestBatchProcessing:
 
         num_batches = 0
         for i in range(0, len(df), batch_size):
-            batch = df[i:i+batch_size]
+            _batch = df[i:i+batch_size]
             num_batches += 1
 
         assert num_batches == 4

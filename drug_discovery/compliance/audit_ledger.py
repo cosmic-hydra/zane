@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from sqlalchemy import Column, DateTime, Integer, String, Text, create_engine
-    from sqlalchemy.orm import Session, declarative_base, sessionmaker
+    from sqlalchemy.orm import declarative_base, sessionmaker
 
     _SQLALCHEMY = True
     Base = declarative_base()

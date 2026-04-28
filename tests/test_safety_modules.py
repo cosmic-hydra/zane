@@ -155,7 +155,7 @@ class TestToxicityGate:
         )
         gate = ToxicityGate(config=strict)
         # Very strict -- most molecules should fail
-        verdict = gate.evaluate("CC(=O)Oc1ccccc1C(=O)O")
+        _verdict = gate.evaluate("CC(=O)Oc1ccccc1C(=O)O")
         # Not asserting passed/failed since it depends on estimators
 
     def test_drug_likeness_score(self):

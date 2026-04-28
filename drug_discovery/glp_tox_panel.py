@@ -311,7 +311,6 @@ class PreClinicalToxPanel:
         # Property-based component
         logp = props.get("logp", 2.0)
         rings = props.get("ring_count", 1)
-        mw = props.get("mw", 300.0)
 
         prop_score = _sigmoid(rings - 3) * 0.3 + _sigmoid(logp - 3.0) * 0.2
         prop_score = min(prop_score, 0.4)
