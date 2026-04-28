@@ -1,0 +1,255 @@
+{
+  "timestamp_utc": "2026-04-28T06:37:22.227121+00:00",
+  "seed": 20260428,
+  "overall_passed": true,
+  "suite_results": [
+    {
+      "suite": "abfe_convergence",
+      "passed": true,
+      "metrics": {
+        "molecule_panel": [
+          {
+            "ligand": "aspirin",
+            "smiles": "CC(=O)Oc1ccccc1C(=O)O",
+            "delta_g_kcal_mol": -7.5148,
+            "tail_drift_l1_kcal_mol": 0.0483,
+            "tail_std_kcal_mol": 0.0021,
+            "converged": true
+          },
+          {
+            "ligand": "ibuprofen",
+            "smiles": "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
+            "delta_g_kcal_mol": -6.8504,
+            "tail_drift_l1_kcal_mol": 0.0084,
+            "tail_std_kcal_mol": 0.0003,
+            "converged": true
+          },
+          {
+            "ligand": "caffeine",
+            "smiles": "Cn1c(=O)c2ncn(C)c2n(C)c1=O",
+            "delta_g_kcal_mol": -11.59,
+            "tail_drift_l1_kcal_mol": 0.0025,
+            "tail_std_kcal_mol": 0.0002,
+            "converged": true
+          },
+          {
+            "ligand": "acetaminophen",
+            "smiles": "CC(=O)NC1=CC=C(C=C1)O",
+            "delta_g_kcal_mol": -5.219,
+            "tail_drift_l1_kcal_mol": 0.0376,
+            "tail_std_kcal_mol": 0.0017,
+            "converged": true
+          },
+          {
+            "ligand": "salicylic_acid",
+            "smiles": "O=C(O)c1ccccc1O",
+            "delta_g_kcal_mol": -5.1211,
+            "tail_drift_l1_kcal_mol": 0.041,
+            "tail_std_kcal_mol": 0.0017,
+            "converged": true
+          }
+        ],
+        "convergence_rate": 1.0,
+        "global_tail_drift_l1_kcal_mol": 0.0276,
+        "global_tail_std_kcal_mol": 0.0012,
+        "blocks_per_run": 140
+      },
+      "acceptance_criteria": {
+        "convergence_rate_min": 0.8,
+        "global_tail_drift_l1_max_kcal_mol": 0.2,
+        "global_tail_std_max_kcal_mol": 0.12
+      }
+    },
+    {
+      "suite": "smd_residence_time",
+      "passed": true,
+      "metrics": {
+        "residence_table": [
+          {
+            "ligand": "aspirin",
+            "delta_g_kcal_mol": -7.5148,
+            "residence_time_ns": 1.2593,
+            "ci95_low_ns": 0.5674,
+            "ci95_high_ns": 1.9381,
+            "ci95_width_ns": 1.3707
+          },
+          {
+            "ligand": "ibuprofen",
+            "delta_g_kcal_mol": -6.8504,
+            "residence_time_ns": 1.1909,
+            "ci95_low_ns": 0.6024,
+            "ci95_high_ns": 1.8484,
+            "ci95_width_ns": 1.246
+          },
+          {
+            "ligand": "caffeine",
+            "delta_g_kcal_mol": -11.59,
+            "residence_time_ns": 1.6968,
+            "ci95_low_ns": 1.0254,
+            "ci95_high_ns": 2.3593,
+            "ci95_width_ns": 1.3339
+          },
+          {
+            "ligand": "acetaminophen",
+            "delta_g_kcal_mol": -5.219,
+            "residence_time_ns": 1.028,
+            "ci95_low_ns": 0.4257,
+            "ci95_high_ns": 1.7428,
+            "ci95_width_ns": 1.3172
+          },
+          {
+            "ligand": "salicylic_acid",
+            "delta_g_kcal_mol": -5.1211,
+            "residence_time_ns": 1.0184,
+            "ci95_low_ns": 0.3004,
+            "ci95_high_ns": 1.6713,
+            "ci95_width_ns": 1.3708
+          }
+        ],
+        "median_residence_time_ns": 1.1909,
+        "max_ci95_width_ns": 1.3708,
+        "force_ramp_pn_per_ns": 35.0,
+        "x_beta_angstrom": 0.15
+      },
+      "acceptance_criteria": {
+        "median_residence_time_min_ns": 1.0,
+        "max_ci95_width_ns": 1.8
+      }
+    },
+    {
+      "suite": "zkp_penetration",
+      "passed": true,
+      "metrics": {
+        "attack_block_rates": {
+          "replay_nonce_attack": 1.0,
+          "payload_tamper_attack": 1.0,
+          "proof_truncation_attack": 1.0,
+          "public_signal_forgery": 1.0
+        },
+        "global_attack_block_rate": 1.0,
+        "false_accept_rate": 0.0,
+        "total_attempts": 800
+      },
+      "acceptance_criteria": {
+        "global_attack_block_rate_min": 0.995,
+        "false_accept_rate_max": 0.001
+      }
+    },
+    {
+      "suite": "cipa_herg",
+      "passed": true,
+      "metrics": {
+        "compound_panel": [
+          {
+            "compound": "ethanol",
+            "smiles": "CCO",
+            "herg_inhibition_probability": 0.3093,
+            "ic50_estimate_uM": 323.325,
+            "cipa_band": "intermediate",
+            "passed_threshold": true
+          },
+          {
+            "compound": "aspirin",
+            "smiles": "CC(=O)Oc1ccccc1C(=O)O",
+            "herg_inhibition_probability": 0.1093,
+            "ic50_estimate_uM": 914.8624,
+            "cipa_band": "low",
+            "passed_threshold": true
+          },
+          {
+            "compound": "acetaminophen",
+            "smiles": "CC(=O)NC1=CC=C(C=C1)O",
+            "herg_inhibition_probability": 0.3895,
+            "ic50_estimate_uM": 256.759,
+            "cipa_band": "intermediate",
+            "passed_threshold": true
+          },
+          {
+            "compound": "salicylic_acid",
+            "smiles": "O=C(O)c1ccccc1O",
+            "herg_inhibition_probability": 0.3571,
+            "ic50_estimate_uM": 280.0232,
+            "cipa_band": "intermediate",
+            "passed_threshold": true
+          },
+          {
+            "compound": "benzene",
+            "smiles": "c1ccccc1",
+            "herg_inhibition_probability": 0.3526,
+            "ic50_estimate_uM": 283.569,
+            "cipa_band": "intermediate",
+            "passed_threshold": true
+          },
+          {
+            "compound": "caffeine",
+            "smiles": "Cn1c(=O)c2ncn(C)c2n(C)c1=O",
+            "herg_inhibition_probability": 0.0597,
+            "ic50_estimate_uM": 1674.2207,
+            "cipa_band": "low",
+            "passed_threshold": true
+          },
+          {
+            "compound": "ibuprofen",
+            "smiles": "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
+            "herg_inhibition_probability": 0.4977,
+            "ic50_estimate_uM": 200.9412,
+            "cipa_band": "high",
+            "passed_threshold": false
+          },
+          {
+            "compound": "phenol",
+            "smiles": "Oc1ccccc1",
+            "herg_inhibition_probability": 0.3571,
+            "ic50_estimate_uM": 280.0344,
+            "cipa_band": "intermediate",
+            "passed_threshold": true
+          },
+          {
+            "compound": "cyclohexane",
+            "smiles": "C1CCCCC1",
+            "herg_inhibition_probability": 0.4042,
+            "ic50_estimate_uM": 247.3838,
+            "cipa_band": "high",
+            "passed_threshold": false
+          },
+          {
+            "compound": "pyridine",
+            "smiles": "c1ccncc1",
+            "herg_inhibition_probability": 0.3191,
+            "ic50_estimate_uM": 313.3848,
+            "cipa_band": "intermediate",
+            "passed_threshold": true
+          }
+        ],
+        "herg_threshold_pass_rate": 0.8,
+        "high_risk_fraction": 0.2
+      },
+      "acceptance_criteria": {
+        "herg_threshold_pass_rate_min": 0.8,
+        "high_risk_fraction_max": 0.2
+      }
+    },
+    {
+      "suite": "active_learning_performance",
+      "passed": true,
+      "metrics": {
+        "active_final_best": 0.8507,
+        "random_final_best": 0.8197,
+        "final_uplift": 0.031,
+        "iterations": 64
+      },
+      "acceptance_criteria": {
+        "final_uplift_min": 0.03
+      }
+    }
+  ],
+  "artifacts": {
+    "abfe_plot": "assets/test_results_abfe.png",
+    "smd_plot": "assets/test_results_smd_residence.png",
+    "zkp_plot": "assets/test_results_zkp_penetration.png",
+    "cipa_plot": "assets/test_results_cipa_herg.png",
+    "active_learning_plot": "assets/active_learning_loop_performance.png",
+    "high_throughput_plot": "assets/high_throughput_test_results.png",
+    "sub_atomic_plot": "assets/sub_atomic_3d_visualization_output.png"
+  }
+}
