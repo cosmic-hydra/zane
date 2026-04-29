@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="zane%20(1).png" alt="ZANE system panorama" width="900" />
+  <img src="assets/banner.png" alt="ZANE system panorama" width="900" />
 </p>
 
 ZANE is an AI-native pharmaceutical operating system designed to unify target intelligence, molecule generation, free-energy physics, preclinical safety triage, compliance telemetry, and laboratory execution interfaces into one continuous computational substrate.

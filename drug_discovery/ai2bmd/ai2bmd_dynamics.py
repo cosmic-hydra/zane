@@ -20,12 +20,12 @@ class DynamicsResult:
     success: bool = False
 
 class AI2BMDDynamics:
-    &quot;&quot;&quot;AI2BMD proxy for fast biomolecular dynamics (2025).
+    """AI2BMD proxy for fast biomolecular dynamics (2025).
     
     Uses diffusion models for long-timescale MD.
-    &quot;&quot;&quot;
+    """
 
-    async def simulate_batch(self, complexes: Sequence[tuple[str, str]]) -&gt; list[DynamicsResult]:
+    async def simulate_batch(self, complexes: Sequence[tuple[str, str]]) -> list[DynamicsResult]:
         results = []
         for smiles, pdb in complexes:
             # Mock diffusion MD

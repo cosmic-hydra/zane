@@ -168,14 +168,14 @@ models/biologics/
 │   └── mrna_designer.py (existing)
 
 Root level:
-└── unicorn_platform_orchestrator.py  # CLI orchestrator &amp; integration
+└── unicorn_platform_orchestrator.py  # CLI orchestrator & integration
 ```
 
-**Install &amp; Run:**
+**Install & Run:**
 ```bash
 pip install -e .[unicorn]
 unicorn-orchestrator run --help
-unicorn-orchestrator run &quot;ATCG...&quot; --fpga-device /dev/fpga0
+unicorn-orchestrator run "ATCG..." --fpga-device /dev/fpga0
 ```
 
 ## 2024 Breakthroughs Integration
@@ -187,7 +187,7 @@ unicorn-orchestrator run &quot;ATCG...&quot; --fpga-device /dev/fpga0
 - `models/delivery/bbb_shuttles.py`: BBB shuttle design
 - `drug_discovery/generation/enhanced_retrosynth.py`: Insilico forward synth
 - Enhanced `glp_tox_panel.py`: ADC/mRNA tox endpoints
-- `validation/breakthrough_metrics.py`: New benchmarks (RMSD&lt;2Å, etc.)
+- `validation/breakthrough_metrics.py`: New benchmarks (RMSD<2Å, etc.)
 - `tests/test_2024_breakthroughs.py`: Unit tests
 - `examples/2024_breakthroughs.py`: Usage examples
 - Integrated with `DrugDiscoveryPipeline`, `PolyglotPipeline`, Ray, Unicorn CLI
@@ -197,4 +197,4 @@ unicorn-orchestrator run &quot;ATCG...&quot; --fpga-device /dev/fpga0
 - `drug_discovery/mrna_therapeutics/mrna_optimizer.py`: saRNA design
 - `models/evolutionary_dynamics/forecast.py`: Resistance forecasting
 - Enhanced tox/GLP: organoid sims, ADC/mRNA panels
-- Benchmarks: long-timescale stability, edit efficiency &gt;90%
+- Benchmarks: long-timescale stability, edit efficiency >90%

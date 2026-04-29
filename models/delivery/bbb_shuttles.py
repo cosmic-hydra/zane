@@ -12,12 +12,12 @@ class BBBShuttleResult:
     success: bool = False
 
 class BBBShuttleDesigner:
-    &quot;&quot;&quot;Designs BBB-penetrating shuttles (2024 delivery breakthrough).
+    """Designs BBB-penetrating shuttles (2024 delivery breakthrough).
     
     Uses transferrin receptor binders + heavy chain engineering.
-    &quot;&quot;&quot;
+    """
 
     def design_shuttle(self, cargo: str) -> BBBShuttleResult:
-        shuttle = &quot;TRR-binding heavy chain&quot;
+        shuttle = "TRR-binding heavy chain"
         score = 0.75 + len(cargo) % 10 * 0.01
         return BBBShuttleResult(cargo, shuttle, score, tm_score=0.8, success=True)
