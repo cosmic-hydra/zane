@@ -14,13 +14,13 @@ class SynthResult:
     success: bool = False
 
 class EnhancedRetrosynth:
-    &quot;&quot;&quot;Enhanced retrosynthesis with forward synthesis planning (2024 generative breakthrough).
+    """Enhanced retrosynthesis with forward synthesis planning (2024 generative breakthrough).
     
     Integrates rxnmapper + yield prediction.
-    &quot;&quot;&quot;
+    """
 
     def plan_synthesis(self, target: str, max_paths: int = 5) -> SynthResult:
-        paths = [[&quot;reactant1.reactant2&quot;, target] for _ in range(max_paths)]  # mock
+        paths = [["reactant1.reactant2", target] for _ in range(max_paths)]  # mock
         yields = [0.85, 0.92, 0.78, 0.88, 0.91]
         score = sum(yields) / max_paths
         return SynthResult(target, paths, yields, score, success=True)

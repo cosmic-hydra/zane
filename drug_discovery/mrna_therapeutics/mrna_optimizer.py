@@ -13,11 +13,11 @@ class mRNAResult:
     success: bool = False
 
 class mRNAOptimizer:
-    &quot;&quot;&quot;mRNA sequence optimizer with saRNA (2026 breakthrough).
-    &quot;&quot;&quot;
+    """mRNA sequence optimizer with saRNA (2026 breakthrough).
+    """
 
-    def optimize(self, antigen: str) -&gt; mRNAResult:
-        utr = &quot;saRNA_UTR&quot;
+    def optimize(self, antigen: str) -> mRNAResult:
+        utr = "saRNA_UTR"
         expr = 95.0
         immuno = 0.15
         hl = 48.0
