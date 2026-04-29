@@ -42,3 +42,21 @@ def test_enhanced_retrosynth():
     synth = EnhancedRetrosynth()
     res = synth.plan_synthesis(&quot;CCO&quot;)
     assert len(res.retrosynth_paths) == 5
+
+def test_ai2bmd():
+    from drug_discovery.ai2bmd.ai2bmd_dynamics import AI2BMDDynamics
+    dynamics = AI2BMDDynamics()
+    res = asyncio.run(dynamics.simulate_batch([(&quot;CCO&quot;, &quot;pdb&quot;)]))
+    assert res[0].success
+
+def test_mrna_opt():
+    from drug_discovery.mrna_therapeutics.mrna_optimizer import mRNAOptimizer
+    opt = mRNAOptimizer()
+    res = opt.optimize(&quot;antigen&quot;)
+    assert res.expression_level &gt; 90
+
+def test_evo_forecast():
+    from models.evolutionary_dynamics.forecast import EvolutionaryForecaster
+    forecaster = EvolutionaryForecaster()
+    res = forecaster.forecast([&quot;drug1&quot;])
+    assert res[0].resistance_time &gt; 100
