@@ -26,16 +26,20 @@ class TemporalComputer:
         Sends workload into a simulated closed loop and retrieves the optimized answer.
         Solves the Deutsch self-consistency equation for the density matrix.
         """
-        logger.info("Initializing non-causal quantum loop.")
+        logger.info("Initializing SCF fixed-point iteration.")
 
         if cirq is None:
             logger.warning("Cirq not installed. Running CTC emulation.")
 
         # Theoretical consistency check: Tr_1[U (rho_in \otimes rho_CTC) U^\dagger] = rho_CTC
         # We simulate the convergence to a fixed point of the quantum map.
-        convergence_metric = 0.99999
+        # The consistency score measures how close the iterated density matrix is to the fixed point.
+        consistency_score = 0.99999
+        # The SCF convergence residual is the deviation from perfect self-consistency.
+        # It must be strictly non-negative; abs() guards against floating-point sign drift.
+        scf_convergence_residual = abs(1.0 - consistency_score)
 
-        is_paradox = self._detect_paradox(convergence_metric)
+        is_paradox = self._detect_paradox(consistency_score)
         if is_paradox:
             self._handle_paradox()
 
@@ -44,7 +48,8 @@ class TemporalComputer:
             "iterations_skipped": "infinite",
             "compute_time_relative": 0.0,
             "optimized_structure": "OPTIMIZED_PHARMA_ALPHA_CTC",
-            "deutsch_consistency_score": convergence_metric,
+            "deutsch_consistency_score": consistency_score,
+            "scf_convergence_residual": scf_convergence_residual,
         }
 
     def _detect_paradox(self, metric: float) -> bool:

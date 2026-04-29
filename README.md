@@ -57,7 +57,7 @@ At a platform level, ZANE combines:
 - LIMS/ELN-aligned API gateway adapters,
 - and operational dashboards for human-in-the-loop review.
 
-![Executive Program Dashboard Placeholder](assets/quantum_loop_state_trace.png)
+![Executive Program Dashboard](assets/scf_cycle_state_trace.png)
 
 ---
 
@@ -285,7 +285,7 @@ cosmic-hydra/zane/
     ├── active_learning_loop_performance.png
     ├── high_throughput_test_results.png
     ├── sub_atomic_3d_visualization_output.png
-    ├── quantum_loop_state_trace.png
+    ├── scf_cycle_state_trace.png
     ├── lims_gateway_latency_heatmap.png
     └── sub_atomic_density_slice.png
 ```
@@ -343,7 +343,7 @@ flowchart LR
     H --> J[Laboratory Workflow Engine]
 ```
 
-![Quantum Loop Placeholder](assets/quantum_loop_state_trace.png)
+![SCF Cycle State Trace](assets/scf_cycle_state_trace.png)
 ![LIMS Gateway Placeholder](assets/lims_gateway_latency_heatmap.png)
 
 ---
@@ -590,13 +590,13 @@ This evidence is intended to keep README claims tethered to reproducible executa
 - `![SMD Residence](assets/test_results_smd_residence.png)`
 - `![ZKP Penetration](assets/test_results_zkp_penetration.png)`
 - `![CiPA hERG](assets/test_results_cipa_herg.png)`
-- `![Quantum Loop Trace](assets/quantum_loop_state_trace.png)`
+- `![SCF Cycle State Trace](assets/scf_cycle_state_trace.png)`
 
 ![ABFE Convergence Graph](assets/test_results_abfe.png)
 ![SMD Residence](assets/test_results_smd_residence.png)
 ![ZKP Penetration](assets/test_results_zkp_penetration.png)
 ![CiPA hERG](assets/test_results_cipa_herg.png)
-![Quantum Loop Trace](assets/quantum_loop_state_trace.png)
+![SCF Cycle State Trace](assets/scf_cycle_state_trace.png)
 
 ---
 

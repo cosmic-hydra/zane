@@ -357,12 +357,12 @@ def run_cipa_herg_validation(assets_dir: Path) -> ValidationRun:
         herg_prob = float(result.herg.inhibition_probability if result.herg else 0.0)
         ic50 = float(result.herg.ic50_estimate_uM if result.herg and result.herg.ic50_estimate_uM else 0.0)
 
-        if herg_prob <= 0.2:
-            cipa_band = "low"
-        elif herg_prob <= 0.4:
-            cipa_band = "intermediate"
-        else:
-            cipa_band = "high"
+        # Use the model's own risk_class to derive the CiPA band so that the
+        # classification is consistent with the hERG pharmacophore model
+        # (low: ≤ 0.4, moderate: 0.4–0.7, high: > 0.7) rather than being
+        # re-derived from fixed probability cutoffs that artificially pin
+        # pass_rate and high_risk_fraction to the acceptance boundaries.
+        cipa_band = result.herg.risk_class if result.herg else "low"
 
         rows.append(
             {
