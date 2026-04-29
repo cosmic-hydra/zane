@@ -1,12 +1,12 @@
 """ZANE — AI-native Drug Discovery Platform."""
 
-__version__ = "2026.4.1"
-__all__ = ["__version__"]
+__version__ = &quot;2026.4.1&quot;
+__all__ = [&quot;__version__&quot;]
 
 try:
     from drug_discovery.pipeline import DrugDiscoveryPipeline as DrugDiscoveryPipeline
 
-    __all__.append("DrugDiscoveryPipeline")
+    __all__.append(&quot;DrugDiscoveryPipeline&quot;)
 except Exception:
     # Keep imports lazy when optional dependencies are unavailable.
     pass
@@ -25,14 +25,14 @@ try:
     from .structure_analysis.xrpd_analysis import analyze_xrpd
 
     __all__.extend([
-        "TorchDrugGenerator",
-        "ADMETScreen",
-        "VinaDocker",
-        "run_diffdock",
-        "parse_cif_to_mol",
-        "analyze_xrpd",
-        "smiles_to_sdf",
-        "filter_admet"
+        &quot;TorchDrugGenerator&quot;,
+        &quot;ADMETScreen&quot;,
+        &quot;VinaDocker&quot;,
+        &quot;run_diffdock&quot;,
+        &quot;parse_cif_to_mol&quot;,
+        &quot;analyze_xrpd&quot;,
+        &quot;smiles_to_sdf&quot;,
+        &quot;filter_admet&quot;
     ])
 except Exception:
     pass

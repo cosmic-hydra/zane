@@ -9,13 +9,13 @@ class CrystalResult:
     binding_pose_rmsd: float = 0.0
     polymorph_score: float = 0.0
     nmr_signal_boost: float = 0.0  # photo-CIDNP
-    quality_grade: str = "high"
+    quality_grade: str = &quot;high&quot;
 
 class CrystalEnhancer:
-    """Crystal quality enhancement with photo-NMR (2025 FBDD breakthrough).
+    &quot;&quot;&quot;Crystal quality enhancement with photo-NMR (2025 FBDD breakthrough).
     
     Simulates hyperpolarization, XRPD/Raman polymorph analysis.
-    """
+    &quot;&quot;&quot;
 
     def enhance_screen(self, fragments: list[str]) -> list[CrystalResult]:
         results = []

@@ -12,16 +12,16 @@ class EvoForecastResult:
     success: bool = False
 
 class EvolutionaryForecaster:
-    """Evolutionary dynamics forecasting (2025).
+    &quot;&quot;&quot;Evolutionary dynamics forecasting (2025).
     
     Predicts resistance trajectories with GFlowNets.
-    """
+    &quot;&quot;&quot;
 
-    def forecast(self, drugs: Sequence[str]) -> list[EvoForecastResult]:
+    def forecast(self, drugs: Sequence[str]) -&gt; list[EvoForecastResult]:
         results = []
         for drug in drugs:
             time = 120 + len(drug) * 2
-            mutants = [drug + f"M{i}" for i in range(3)]
+            mutants = [drug + f&quot;M{i}&quot; for i in range(3)]
             res = EvoForecastResult(drug, time, mutants, 0.85, success=True)
             results.append(res)
         return results

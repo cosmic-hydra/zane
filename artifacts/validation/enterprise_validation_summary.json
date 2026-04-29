@@ -1,5 +1,5 @@
 {
-  "timestamp_utc": "2026-04-29T12:59:36.924921+00:00",
+  "timestamp_utc": "2026-04-28T06:37:22.227121+00:00",
   "seed": 20260428,
   "overall_passed": true,
   "suite_results": [
@@ -27,7 +27,7 @@
           {
             "ligand": "caffeine",
             "smiles": "Cn1c(=O)c2ncn(C)c2n(C)c1=O",
-            "delta_g_kcal_mol": -10.69,
+            "delta_g_kcal_mol": -11.59,
             "tail_drift_l1_kcal_mol": 0.0025,
             "tail_std_kcal_mol": 0.0002,
             "converged": true
@@ -83,10 +83,10 @@
           },
           {
             "ligand": "caffeine",
-            "delta_g_kcal_mol": -10.69,
-            "residence_time_ns": 1.598,
-            "ci95_low_ns": 0.9265,
-            "ci95_high_ns": 2.2604,
+            "delta_g_kcal_mol": -11.59,
+            "residence_time_ns": 1.6968,
+            "ci95_low_ns": 1.0254,
+            "ci95_high_ns": 2.3593,
             "ci95_width_ns": 1.3339
           },
           {
@@ -145,7 +145,7 @@
             "smiles": "CCO",
             "herg_inhibition_probability": 0.3093,
             "ic50_estimate_uM": 323.325,
-            "cipa_band": "low",
+            "cipa_band": "intermediate",
             "passed_threshold": true
           },
           {
@@ -161,7 +161,7 @@
             "smiles": "CC(=O)NC1=CC=C(C=C1)O",
             "herg_inhibition_probability": 0.3895,
             "ic50_estimate_uM": 256.759,
-            "cipa_band": "low",
+            "cipa_band": "intermediate",
             "passed_threshold": true
           },
           {
@@ -169,7 +169,7 @@
             "smiles": "O=C(O)c1ccccc1O",
             "herg_inhibition_probability": 0.3571,
             "ic50_estimate_uM": 280.0232,
-            "cipa_band": "low",
+            "cipa_band": "intermediate",
             "passed_threshold": true
           },
           {
@@ -177,7 +177,7 @@
             "smiles": "c1ccccc1",
             "herg_inhibition_probability": 0.3526,
             "ic50_estimate_uM": 283.569,
-            "cipa_band": "low",
+            "cipa_band": "intermediate",
             "passed_threshold": true
           },
           {
@@ -193,7 +193,7 @@
             "smiles": "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
             "herg_inhibition_probability": 0.4977,
             "ic50_estimate_uM": 200.9412,
-            "cipa_band": "moderate",
+            "cipa_band": "high",
             "passed_threshold": false
           },
           {
@@ -201,7 +201,7 @@
             "smiles": "Oc1ccccc1",
             "herg_inhibition_probability": 0.3571,
             "ic50_estimate_uM": 280.0344,
-            "cipa_band": "low",
+            "cipa_band": "intermediate",
             "passed_threshold": true
           },
           {
@@ -209,7 +209,7 @@
             "smiles": "C1CCCCC1",
             "herg_inhibition_probability": 0.4042,
             "ic50_estimate_uM": 247.3838,
-            "cipa_band": "moderate",
+            "cipa_band": "high",
             "passed_threshold": false
           },
           {
@@ -217,12 +217,12 @@
             "smiles": "c1ccncc1",
             "herg_inhibition_probability": 0.3191,
             "ic50_estimate_uM": 313.3848,
-            "cipa_band": "low",
+            "cipa_band": "intermediate",
             "passed_threshold": true
           }
         ],
         "herg_threshold_pass_rate": 0.8,
-        "high_risk_fraction": 0.0
+        "high_risk_fraction": 0.2
       },
       "acceptance_criteria": {
         "herg_threshold_pass_rate_min": 0.8,

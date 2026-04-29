@@ -12,10 +12,10 @@ class AnalogResult:
     potency_gain: float = 0.0
 
 class DeepGraphAnalogGenerator:
-    """Deep graph networks for low-tox analog generation (2025).
+    &quot;&quot;&quot;Deep graph networks for low-tox analog generation (2025).
     
     Generates analogs optimizing tox/potency.
-    """
+    &quot;&quot;&quot;
 
     def generate_low_tox(self, parent: str, num_analogs: int = 10) -> AnalogResult:
         mol = Chem.MolFromSmiles(parent)

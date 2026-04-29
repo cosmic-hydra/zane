@@ -4,7 +4,7 @@ from drug_discovery.generation.torchdrug_generator import TorchDrugGenerator
 from drug_discovery.screening.admet_models import ADMETScreen
 
 def test_rdkit_utils():
-    smiles = ["CCO"]
+    smiles = [&quot;CCO&quot;]
     mols = smiles_to_mols(smiles)
     assert len(mols) == 1
 
@@ -15,5 +15,5 @@ def test_torchdrug_generate():
 
 def test_admet_screen():
     screen = ADMETScreen()
-    preds = screen.predict(["CCO"])
+    preds = screen.predict([&quot;CCO&quot;])
     assert 'herg' in preds

@@ -5,4 +5,4 @@ SE(3) diffusion for motif scaffolding.
 
 from .protein_design import RFDiffusionDesigner, RFDesignResult
 
-__all__ = ["RFDiffusionDesigner", "RFDesignResult"]
+__all__ = [&quot;RFDiffusionDesigner&quot;, &quot;RFDesignResult&quot;]
