@@ -10,7 +10,7 @@
 
 ## CLI Example
 ```bash
-python -m drug_discovery.cli drug-discovery full --target &quot;c1ccccc1&quot; --receptor 1abc.pdb --output ./results
+python -m drug_discovery.cli drug-discovery full --target "c1ccccc1" --receptor 1abc.pdb --output ./results
 ```
 
 Generates generated.sdf, screened.sdf, docking results in results/.
