@@ -178,3 +178,23 @@ unicorn-orchestrator run --help
 unicorn-orchestrator run &quot;ATCG...&quot; --fpga-device /dev/fpga0
 ```
 
+## 2024 Breakthroughs Integration
+
+- `drug_discovery/alphafold3/alphafold3_docking.py`: AF3 ligand binding proxy (DiffDock+OpenFold)
+- `drug_discovery/rfdiffusion/protein_design.py`: RFdiffusion motif scaffolding
+- `models/biologics/crispr_base_editor.py`: Casgevy base editing
+- `models/nextgen_adcs/adc_optimizer.py`: ADC linker/BBB optimization
+- `models/delivery/bbb_shuttles.py`: BBB shuttle design
+- `drug_discovery/generation/enhanced_retrosynth.py`: Insilico forward synth
+- Enhanced `glp_tox_panel.py`: ADC/mRNA tox endpoints
+- `validation/breakthrough_metrics.py`: New benchmarks (RMSD&lt;2Å, etc.)
+- `tests/test_2024_breakthroughs.py`: Unit tests
+- `examples/2024_breakthroughs.py`: Usage examples
+- Integrated with `DrugDiscoveryPipeline`, `PolyglotPipeline`, Ray, Unicorn CLI
+
+## 2025/2026 Breakthroughs (Latest)
+- `drug_discovery/ai2bmd/ai2bmd_dynamics.py`: AI2BMD equivariant MD
+- `drug_discovery/mrna_therapeutics/mrna_optimizer.py`: saRNA design
+- `models/evolutionary_dynamics/forecast.py`: Resistance forecasting
+- Enhanced tox/GLP: organoid sims, ADC/mRNA panels
+- Benchmarks: long-timescale stability, edit efficiency &gt;90%
