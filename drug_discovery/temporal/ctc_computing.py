@@ -36,7 +36,11 @@ class TemporalComputer:
         # The consistency score measures how close the iterated density matrix is to the fixed point.
         consistency_score = 0.99999
         # The SCF convergence residual is the deviation from perfect self-consistency.
-        # It must be strictly non-negative; abs() guards against floating-point sign drift.
+        # consistency_score is a fidelity-like measure in [0, 1]; the residual is the
+        # complement (1 - score).  abs() is applied as a defensive guard: if the
+        # underlying fixed-point solver ever overshoots (score > 1.0 due to numerical
+        # error), the residual would otherwise be negative and invalid as a convergence
+        # criterion.  The absolute value ensures it stays non-negative in all cases.
         scf_convergence_residual = abs(1.0 - consistency_score)
 
         is_paradox = self._detect_paradox(consistency_score)
