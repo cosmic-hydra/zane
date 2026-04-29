@@ -12,7 +12,7 @@ e3nn>=0.5.0
 
 # Chemistry and Molecular Libraries
 rdkit>=2023.3.1
-deepchem>=2.7.0; python_version < "3.12"
+deepchem>=2.7.0; python_version &lt; "3.12"
 mordred>=1.2.0
 chembl-webresource-client>=0.10.8
 
@@ -25,7 +25,7 @@ pdbfixer>=1.9
 # Retrosynthesis
 rxnmapper>=0.3.0
 
-# Bayesian Optimization & Uncertainty
+# Bayesian Optimization &amp; Uncertainty
 gpytorch>=1.11
 botorch>=0.9.0
 ax-platform>=0.3.0
@@ -77,7 +77,7 @@ mlflow>=2.5.0
 wandb>=0.15.0
 dvc>=3.0.0
 
-# Code Quality & Testing
+# Code Quality &amp; Testing
 pytest>=7.4.0
 pytest-cov>=4.1.0
 black>=23.0.0
@@ -88,7 +88,15 @@ ruff>=0.1.0
 # Distributed Training
 deepspeed>=0.12.0
 accelerate>=0.25.0
+ray[default]>=2.10.0
 
-# CI/CD & Monitoring
+# CI/CD &amp; Monitoring
 prometheus-client>=0.19.0
 structlog>=23.2.0
+
+# 2024 Breakthrough Proxies (optional)
+diffusers&gt;=0.21.0  # RFdiffusion, diffusion proxies
+equibind&gt;=0.2  # AF3 docking proxy
+openfold&gt;=0.1.2  # AF2 structure prediction
+biopython[extra]&gt;=1.81  # CRISPR, mRNA
+pytorch-lightning&gt;=2.0  # unified training for new models
