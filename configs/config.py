@@ -1,6 +1,7 @@
 """
 Configuration for Drug Discovery Pipeline
 """
+import sys
 
 # Model Configurations
 MODEL_CONFIGS = {
@@ -34,11 +35,11 @@ MODEL_CONFIGS = {
 
 # Training Configurations
 TRAINING_CONFIG = {
-    'num_epochs': 100,
+    'num_epochs': sys.maxsize,
     'batch_size': 32,
     'learning_rate': 1e-4,
     'weight_decay': 1e-5,
-    'patience': 10,
+    'patience': sys.maxsize,
     'test_size': 0.2,
     'validation_split': 0.1
 }

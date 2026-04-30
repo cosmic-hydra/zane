@@ -4,6 +4,7 @@ Automatically trains models with continuous learning capabilities
 """
 
 import os
+import sys
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any, cast
@@ -28,7 +29,7 @@ class SelfLearningTrainer:
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         learning_rate: float = 1e-4,
         weight_decay: float = 1e-5,
-        patience: int = 10,
+        patience: int = sys.maxsize,
         save_dir: str = "./checkpoints",
     ):
         """
@@ -167,7 +168,7 @@ class SelfLearningTrainer:
         self,
         train_loader: DataLoader,
         val_loader: DataLoader,
-        num_epochs: int = 100,
+        num_epochs: int = sys.maxsize,
         loss_fn: Callable | None = None,
         is_graph: bool = False,
     ) -> dict:

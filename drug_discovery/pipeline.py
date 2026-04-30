@@ -4,6 +4,7 @@ Orchestrates the entire AI drug discovery process
 """
 
 import os
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, cast
@@ -23,10 +24,14 @@ from .data import (
     train_test_split_molecular,
 )
 from .evaluation import ADMETPredictor, ModelEvaluator, PropertyPredictor, TorchDrugScorer
-from .models import EnsembleModel, MolecularGNN, MolecularTransformer
+from .models import EnsembleModel, MolecularGNN, MolecularTransformer, MolecularGIN, ModernMolecularTransformer
 from .physics import DiffDockAdapter, OpenFoldAdapter, OpenMMAdapter
 from .synthesis import MolecularTransformerAdapter, PistachioDatasets
 from .training import SelfLearningTrainer
+from .biomarker_discovery import BiomarkerMLDiscovery, BiomarkerStatisticalAnalysis
+from .explainability import GraphExplainer, FingerprintExplainer
+from .causal_discovery import CausalGraph, CausalInference
+from .lead_optimization import LeadMCTSOptimizer, LeadRLOptimizer
 
 
 class DrugDiscoveryPipeline:
@@ -67,6 +72,12 @@ class DrugDiscoveryPipeline:
         self.trainer = None
         self.property_predictor = None
         self.learnable_docking = None
+        
+        # Advanced Modules
+        self.explainers = {}
+        self.causal_graph = CausalGraph()
+        self.biomarker_discovery = None
+        self.lead_optimizer = None
 
         print("Drug Discovery Pipeline initialized")
         print(f"Model type: {model_type}")
@@ -159,7 +170,7 @@ class DrugDiscoveryPipeline:
         print("\n=== Data Preparation Phase ===")
 
         # Determine featurization based on model type
-        if self.model_type == "gnn":
+        if self.model_type in ["gnn", "gin"]:
             featurization = "graph"
         else:
             featurization = "fingerprint"
@@ -221,6 +232,14 @@ class DrugDiscoveryPipeline:
             self.model = MolecularTransformer(**model_kwargs)
             print("Built Transformer model")
 
+        elif self.model_type == "gin":
+            self.model = MolecularGIN(**model_kwargs)
+            print("Built Graph Isomorphism Network model")
+
+        elif self.model_type == "modern_transformer":
+            self.model = ModernMolecularTransformer(**model_kwargs)
+            print("Built Modern Transformer model")
+
         elif self.model_type == "ensemble":
             # Create ensemble of GNN and Transformer
             gnn = MolecularGNN()
@@ -237,7 +256,7 @@ class DrugDiscoveryPipeline:
         self,
         train_loader: DataLoader,
         val_loader: DataLoader,
-        num_epochs: int = 100,
+        num_epochs: int = sys.maxsize,
         learning_rate: float = 1e-4,
         **trainer_kwargs,
     ) -> dict[str, Any]:
@@ -300,7 +319,7 @@ class DrugDiscoveryPipeline:
         results: dict[str, Any] = {"smiles": smiles}
 
         # Model predictions
-        if self.model_type == "gnn":
+        if self.model_type in ["gnn", "gin"]:
             graph_data = self.featurizer.smiles_to_graph(smiles)
             if graph_data is not None:
                 graph_data = graph_data.to(self.device)
@@ -398,7 +417,7 @@ class DrugDiscoveryPipeline:
             Evaluation metrics
         """
         if is_graph is None:
-            is_graph = self.model_type == "gnn"
+            is_graph = self.model_type in ["gnn", "gin"]
         is_graph = bool(is_graph)
 
         print("\n=== Evaluation Phase ===")
@@ -806,4 +825,70 @@ class DrugDiscoveryPipeline:
             "singularity_layer": singularity_results,
             "omega_layer": omega_results,
             "final_recommendation": "PROCEED_TO_HOST_REFACTOR",
+        }
+
+    def run_precision_medicine_workflow(self, patient_data: pd.DataFrame, target_col: str) -> dict[str, Any]:
+        """
+        Execute precision medicine workflow:
+        1. Stratify patients into clusters.
+        2. Identify biomarkers for each cluster.
+        3. Match drugs to cluster profiles.
+        """
+        print("\n=== Running Precision Medicine Workflow ===")
+        
+        from .precision_medicine import PatientStratifier
+        from .biomarker_discovery import BiomarkerMLDiscovery
+        
+        # 1. Stratification
+        stratifier = PatientStratifier(patient_data)
+        features = [col for col in patient_data.columns if col != target_col]
+        clusters = stratifier.stratify_patients(features)
+        cluster_info = stratifier.get_cluster_characteristics(clusters)
+        
+        # 2. Biomarker Discovery for each cluster
+        discovery = BiomarkerMLDiscovery(patient_data, target_col)
+        biomarkers = discovery.rank_features_by_importance(features)
+        
+        print(f"Detected {len(cluster_info)} patient clusters.")
+        return {
+            "clusters": clusters.to_dict(),
+            "cluster_characteristics": cluster_info.to_dict(),
+            "top_biomarkers": biomarkers.head(10).to_dict()
+        }
+
+    def refine_lead_candidates(self, candidates_smiles: List[str], target_protein_pdb: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Refine a list of candidates using the Ensemble Refiner.
+        """
+        from .lead_optimization import EnsembleRefiner
+        
+        if self.property_predictor is None:
+            self.property_predictor = PropertyPredictor(self.model, self.device)
+            
+        refiner = EnsembleRefiner(
+            property_predictor=self.property_predictor,
+            admet_predictor=self.admet_predictor,
+            physics_simulator=self # Pipeline itself can act as adapter if it has OpenMM calls
+        )
+        
+        return refiner.rank_candidates(candidates_smiles, target_protein_pdb)
+
+    def perform_causal_reasoning(self, data: pd.DataFrame, treatment: str, outcome: str) -> dict[str, Any]:
+        """
+        Identify causal effects in a dataset.
+        """
+        from .causal_discovery import CausalInference, CausalGraph
+        
+        # 1. Structure discovery
+        graph = CausalGraph()
+        graph.discover_from_data(data)
+        
+        # 2. Inference
+        inference = CausalInference(data)
+        confounders = [c for col in data.columns if col not in [treatment, outcome]]
+        ate = inference.estimate_treatment_effect(treatment, outcome, confounders)
+        
+        return {
+            "average_treatment_effect": ate,
+            "causal_graph_summary": graph.graph.number_of_edges()
         }

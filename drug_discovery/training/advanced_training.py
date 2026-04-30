@@ -12,6 +12,7 @@ Modern training utilities to improve model performance:
 from __future__ import annotations
 
 import logging
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -37,13 +38,13 @@ class AdvancedTrainingConfig:
     cosine_eta_min: float = 1e-6
     plateau_patience: int = 10
     plateau_factor: float = 0.5
-    epochs: int = 100
+    epochs: int = sys.maxsize
     grad_clip_norm: float = 1.0
     use_amp: bool = True
     accumulation_steps: int = 1
     use_ema: bool = True
     ema_decay: float = 0.999
-    early_stopping_patience: int = 20
+    early_stopping_patience: int = sys.maxsize
     early_stopping_min_delta: float = 1e-4
     checkpoint_dir: str = "./checkpoints"
     save_best_only: bool = True
@@ -101,7 +102,7 @@ class EMA:
 
 
 class EarlyStopping:
-    def __init__(self, patience=20, min_delta=1e-4, mode="min"):
+    def __init__(self, patience=sys.maxsize, min_delta=1e-4, mode="min"):
         self.patience = patience
         self.min_delta = min_delta
         self.mode = mode

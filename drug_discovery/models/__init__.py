@@ -80,16 +80,26 @@ except ImportError:
 try:
     from drug_discovery.models.gnn import MolecularGNN as MolecularGNN
     from drug_discovery.models.gnn import MolecularMPNN as MolecularMPNN
+    from drug_discovery.models.gnn import MolecularGIN as MolecularGIN
+    from drug_discovery.models.hetero_gnn import HeteroGNN as HeteroGNN
 
     MODEL_REGISTRY["gnn"] = {"class": MolecularGNN, "config": None, "variant": None}
+    MODEL_REGISTRY["gin"] = {"class": MolecularGIN, "config": None, "variant": None}
+    MODEL_REGISTRY["hetero_gnn"] = {"class": HeteroGNN, "config": None, "variant": None}
 except ImportError:
     pass
 
 try:
     from drug_discovery.models.transformer import MolecularTransformer as MolecularTransformer
+    from drug_discovery.models.transformer import ModernMolecularTransformer as ModernMolecularTransformer
 
     MODEL_REGISTRY["transformer"] = {
         "class": MolecularTransformer,
+        "config": None,
+        "variant": None,
+    }
+    MODEL_REGISTRY["modern_transformer"] = {
+        "class": ModernMolecularTransformer,
         "config": None,
         "variant": None,
     }
@@ -113,6 +123,8 @@ __all__ = [
     "MODEL_REGISTRY",
     "MolecularGNN",
     "MolecularMPNN",
+    "MolecularGIN",
+    "HeteroGNN",
     "MolecularTransformer",
     "EnsembleModel",
     "HybridModel",
