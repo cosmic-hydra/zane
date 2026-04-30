@@ -77,6 +77,12 @@ mlflow>=2.5.0
 wandb>=0.15.0
 dvc>=3.0.0
 
+# Databases
+pymongo>=4.6.0
+motor>=3.3.0
+psycopg2-binary>=2.9.0
+sqlalchemy>=2.0.0
+
 # Code Quality &amp; Testing
 pytest>=7.4.0
 pytest-cov>=4.1.0

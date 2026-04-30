@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zane-api
+  namespace: zane
+  labels:
+    app: zane-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zane-api
+  template:
+    metadata:
+      labels:
+        app: zane-api
+    spec:
+      containers:
+        - name: api
+          image: zane-drug-discovery:latest
+          command: ["uvicorn", "infrastructure.api_gateway:app", "--host", "0.0.0.0", "--port", "8000"]
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://zane:password@postgres-service:5432/zanedb"
+            - name: MONGODB_URI
+              value: "mongodb://mongodb-service:27017"
+            - name: RAY_ADDRESS
+              value: "ray://zane-ray-cluster-head-svc:10001"
+          resources:
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zane-worker
+  namespace: zane
+  labels:
+    app: zane-worker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zane-worker
+  template:
+    metadata:
+      labels:
+        app: zane-worker
+    spec:
+      containers:
+        - name: worker
+          image: zane-drug-discovery:latest
+          command: ["celery", "-A", "infrastructure.api_gateway.celery", "worker", "--loglevel=info"]
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://zane:password@postgres-service:5432/zanedb"
+            - name: MONGODB_URI
+              value: "mongodb://mongodb-service:27017"
+            - name: RAY_ADDRESS
+              value: "ray://zane-ray-cluster-head-svc:10001"
+          resources:
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+            requests:
+              cpu: "1"
+              memory: "2Gi"

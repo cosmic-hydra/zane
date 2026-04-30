@@ -6,6 +6,7 @@ Retrosynthesis Planning and Synthesis Feasibility Scoring
 
 import logging
 import os
+import concurrent.futures
 from collections.abc import Sequence
 
 import numpy as np
@@ -31,6 +32,7 @@ class RetrosynthesisPlanner:
         self,
         backends: Sequence[BaseRetrosynthesisBackend] | None = None,
         aizynth_config: str | None = None,
+        use_ray: bool = False,
     ):
         self.reaction_templates = []
         self.internet_search = InternetSearchClient()
@@ -38,6 +40,11 @@ class RetrosynthesisPlanner:
         self.backends: list[BaseRetrosynthesisBackend] = (
             list(backends) if backends is not None else self._default_backends(aizynth_config=aizynth_config)
         )
+        self.use_ray = use_ray
+        if self.use_ray:
+            import ray
+            if not ray.is_initialized():
+                ray.init(ignore_reinit_error=True, address=os.getenv("RAY_ADDRESS"))
 
     def _default_backends(self, aizynth_config: str | None) -> list[BaseRetrosynthesisBackend]:
         resolved_config = aizynth_config or os.getenv("AIZYNTH_CONFIG")
@@ -50,25 +57,45 @@ class RetrosynthesisPlanner:
         route_choice: RouteCandidate | None = None
         backend_results: list[dict] = []
 
-        for backend in self.backends:
-            try:
-                result: BackendResult = backend.plan(target_smiles, max_depth=max_depth)
-            except Exception as exc:
-                logger.error(f"Backend {backend.name} failed with error: {exc}", exc_info=True)
-                result = BackendResult.failure(backend.name, f"Backend error: {exc}")
+        if not self.backends:
+            return None, []
 
-            backend_results.append(result.as_dict())
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.backends)) as executor:
+            future_to_backend = {
+                executor.submit(backend.plan, target_smiles, max_depth=max_depth): backend 
+                for backend in self.backends
+            }
+            
+            for future in concurrent.futures.as_completed(future_to_backend):
+                backend = future_to_backend[future]
+                try:
+                    result: BackendResult = future.result()
+                except Exception as exc:
+                    logger.error(f"Backend {backend.name} failed with error: {exc}", exc_info=True)
+                    result = BackendResult.failure(backend.name, f"Backend error: {exc}")
 
-            if result.success and result.routes:
-                best = sorted(
-                    result.routes,
-                    key=lambda r: (
-                        r.steps if r.steps is not None else max_depth + 10,
-                        r.score if r.score is not None else float("inf"),
-                    ),
-                )[0]
-                route_choice = best
-                break
+                backend_results.append(result.as_dict())
+
+                if result.success and result.routes:
+                    best = sorted(
+                        result.routes,
+                        key=lambda r: (
+                            r.steps if r.steps is not None else max_depth + 10,
+                            r.score if r.score is not None else float("inf"),
+                        ),
+                    )[0]
+                    
+                    if route_choice is None:
+                        route_choice = best
+                    else:
+                        # Compare with current best
+                        curr_steps = route_choice.steps if route_choice.steps is not None else max_depth + 10
+                        curr_score = route_choice.score if route_choice.score is not None else float("inf")
+                        new_steps = best.steps if best.steps is not None else max_depth + 10
+                        new_score = best.score if best.score is not None else float("inf")
+                        
+                        if (new_steps, new_score) < (curr_steps, curr_score):
+                            route_choice = best
 
         return route_choice, backend_results
 
@@ -120,6 +147,21 @@ class RetrosynthesisPlanner:
         except Exception as e:
             logger.error(f"Retrosynthesis planning error: {e}")
             return {"success": False, "error": str(e)}
+
+    def plan_synthesis_batch(self, smiles_list: list[str], max_depth: int = 5) -> list[dict]:
+        """Plan synthesis for a batch of molecules, optionally using Ray."""
+        if self.use_ray:
+            import ray
+            @ray.remote
+            def remote_plan(planner, smiles, depth):
+                return planner.plan_synthesis(smiles, max_depth=depth)
+            
+            futures = [remote_plan.remote(self, smiles, max_depth) for smiles in smiles_list]
+            return ray.get(futures)
+        else:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [executor.submit(self.plan_synthesis, smiles, max_depth) for smiles in smiles_list]
+                return [f.result() for f in futures]
 
     def plan_synthesis_with_research(
         self,
@@ -231,8 +273,8 @@ class SynthesisFeasibilityScorer:
     Score synthesis feasibility based on multiple criteria
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, use_parallel: bool = True):
+        self.use_parallel = use_parallel
 
     def score_feasibility(self, smiles: str, retro_plan: dict | None = None) -> dict[str, float]:
         """
@@ -305,12 +347,25 @@ class SynthesisFeasibilityScorer:
         """
         feasible = []
 
-        for smiles in smiles_list:
-            scores = self.score_feasibility(smiles)
-            overall_score = scores.get("overall", 0.0)
+        if self.use_parallel:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future_to_smiles = {executor.submit(self.score_feasibility, smiles): smiles for smiles in smiles_list}
+                for future in concurrent.futures.as_completed(future_to_smiles):
+                    smiles = future_to_smiles[future]
+                    try:
+                        scores = future.result()
+                        overall_score = scores.get("overall", 0.0)
+                        if overall_score >= threshold:
+                            feasible.append((smiles, overall_score))
+                    except Exception as e:
+                        logger.error(f"Feasibility scoring error for {smiles}: {e}")
+        else:
+            for smiles in smiles_list:
+                scores = self.score_feasibility(smiles)
+                overall_score = scores.get("overall", 0.0)
 
-            if overall_score >= threshold:
-                feasible.append((smiles, overall_score))
+                if overall_score >= threshold:
+                    feasible.append((smiles, overall_score))
 
         # Sort by score (highest first)
         feasible.sort(key=lambda x: x[1], reverse=True)
