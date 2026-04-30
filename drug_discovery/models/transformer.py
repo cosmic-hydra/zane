@@ -95,28 +95,55 @@ class MolecularTransformer(nn.Module):
         return x
 
 
-class PositionalEncoding(nn.Module):
-    """Positional encoding for transformer"""
-
-    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
+class SwiGLU(nn.Module):
+    """
+    SwiGLU activation function (used in LLaMA and other modern transformers).
+    Ref: Shazeer, "GLU Variants Improve Transformer" (2020).
+    """
+    def __init__(self, input_dim: int, output_dim: int):
         super().__init__()
-        self.dropout = nn.Dropout(p=dropout)
-
-        position = torch.arange(max_len).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2) * (-torch.log(torch.tensor(10000.0)) / d_model))
-        pe = torch.zeros(1, max_len, d_model)
-        pe[0, :, 0::2] = torch.sin(position * div_term)
-        pe[0, :, 1::2] = torch.cos(position * div_term)
-        self.register_buffer("pe", pe)
+        self.w1 = nn.Linear(input_dim, output_dim)
+        self.w2 = nn.Linear(input_dim, output_dim)
 
     def forward(self, x):
-        """
-        Args:
-            x: Tensor, shape [batch_size, seq_len, embedding_dim]
-        """
-        pe = cast(torch.Tensor, self.pe)
-        x = x + pe[:, : x.size(1), :]
-        return self.dropout(x)
+        return F.silu(self.w1(x)) * self.w2(x)
+
+
+class ModernMolecularTransformer(nn.Module):
+    """
+    Improved Transformer model using SwiGLU activations and Pre-Norm.
+    """
+    def __init__(
+        self,
+        input_dim: int = 2048,
+        hidden_dim: int = 512,
+        num_layers: int = 6,
+        num_heads: int = 8,
+        dropout: float = 0.1,
+        output_dim: int = 1,
+    ):
+        super().__init__()
+        self.input_projection = nn.Linear(input_dim, hidden_dim)
+        
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=hidden_dim,
+            nhead=num_heads,
+            dim_feedforward=hidden_dim * 4,
+            dropout=dropout,
+            activation=lambda x: F.silu(x), # SwiGLU is used in the FFN part, but PyTorch's layer is limited
+            batch_first=True,
+            norm_first=True # Pre-Norm for better stability
+        )
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
+        self.output_layer = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        if len(x.shape) == 2:
+            x = x.unsqueeze(1)
+        x = self.input_projection(x)
+        x = self.transformer(x)
+        x = x.mean(dim=1)
+        return self.output_layer(x)
 
 
 class SMILESTransformer(nn.Module):

@@ -24,10 +24,14 @@ from .data import (
     train_test_split_molecular,
 )
 from .evaluation import ADMETPredictor, ModelEvaluator, PropertyPredictor, TorchDrugScorer
-from .models import EnsembleModel, MolecularGNN, MolecularTransformer
+from .models import EnsembleModel, MolecularGNN, MolecularTransformer, MolecularGIN, ModernMolecularTransformer
 from .physics import DiffDockAdapter, OpenFoldAdapter, OpenMMAdapter
 from .synthesis import MolecularTransformerAdapter, PistachioDatasets
 from .training import SelfLearningTrainer
+from .biomarker_discovery import BiomarkerMLDiscovery, BiomarkerStatisticalAnalysis
+from .explainability import GraphExplainer, FingerprintExplainer
+from .causal_discovery import CausalGraph, CausalInference
+from .lead_optimization import LeadMCTSOptimizer, LeadRLOptimizer
 
 
 class DrugDiscoveryPipeline:
@@ -68,6 +72,12 @@ class DrugDiscoveryPipeline:
         self.trainer = None
         self.property_predictor = None
         self.learnable_docking = None
+        
+        # Advanced Modules
+        self.explainers = {}
+        self.causal_graph = CausalGraph()
+        self.biomarker_discovery = None
+        self.lead_optimizer = None
 
         print("Drug Discovery Pipeline initialized")
         print(f"Model type: {model_type}")
@@ -160,7 +170,7 @@ class DrugDiscoveryPipeline:
         print("\n=== Data Preparation Phase ===")
 
         # Determine featurization based on model type
-        if self.model_type == "gnn":
+        if self.model_type in ["gnn", "gin"]:
             featurization = "graph"
         else:
             featurization = "fingerprint"
@@ -221,6 +231,14 @@ class DrugDiscoveryPipeline:
         elif self.model_type == "transformer":
             self.model = MolecularTransformer(**model_kwargs)
             print("Built Transformer model")
+
+        elif self.model_type == "gin":
+            self.model = MolecularGIN(**model_kwargs)
+            print("Built Graph Isomorphism Network model")
+
+        elif self.model_type == "modern_transformer":
+            self.model = ModernMolecularTransformer(**model_kwargs)
+            print("Built Modern Transformer model")
 
         elif self.model_type == "ensemble":
             # Create ensemble of GNN and Transformer
@@ -301,7 +319,7 @@ class DrugDiscoveryPipeline:
         results: dict[str, Any] = {"smiles": smiles}
 
         # Model predictions
-        if self.model_type == "gnn":
+        if self.model_type in ["gnn", "gin"]:
             graph_data = self.featurizer.smiles_to_graph(smiles)
             if graph_data is not None:
                 graph_data = graph_data.to(self.device)
@@ -399,7 +417,7 @@ class DrugDiscoveryPipeline:
             Evaluation metrics
         """
         if is_graph is None:
-            is_graph = self.model_type == "gnn"
+            is_graph = self.model_type in ["gnn", "gin"]
         is_graph = bool(is_graph)
 
         print("\n=== Evaluation Phase ===")

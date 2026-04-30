@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torch_geometric.nn import GATConv, MessagePassing, global_max_pool, global_mean_pool
+from torch_geometric.nn import GATConv, GINConv, MessagePassing, global_max_pool, global_mean_pool
 
 
 class MolecularGNN(nn.Module):
@@ -190,6 +190,59 @@ class MolecularMPNN(nn.Module):
 
         for i, mpnn_layer in enumerate(self.mpnn_layers):
             x = mpnn_layer(x, edge_index, edge_attr)
+            x = self.batch_norms[i](x)
+            x = F.relu(x)
+            x = self.dropout(x)
+
+        x = global_mean_pool(x, batch)
+
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
+
+        return x
+
+
+class MolecularGIN(nn.Module):
+    """
+    Graph Isomorphism Network (GIN) for molecular property prediction.
+    GIN is theoretically more powerful than many other GNN architectures for graph classification.
+    """
+
+    def __init__(
+        self,
+        node_features: int = 8,
+        hidden_dim: int = 128,
+        num_layers: int = 4,
+        dropout: float = 0.2,
+        output_dim: int = 1,
+    ):
+        super().__init__()
+
+        self.node_encoder = nn.Linear(node_features, hidden_dim)
+
+        self.gin_layers = nn.ModuleList()
+        for _ in range(num_layers):
+            mlp = nn.Sequential(
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, hidden_dim),
+            )
+            self.gin_layers.append(GINConv(mlp))
+
+        self.batch_norms = nn.ModuleList([nn.BatchNorm1d(hidden_dim) for _ in range(num_layers)])
+
+        self.fc1 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, output_dim)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        x = self.node_encoder(x)
+
+        for i, gin_layer in enumerate(self.gin_layers):
+            x = gin_layer(x, edge_index)
             x = self.batch_norms[i](x)
             x = F.relu(x)
             x = self.dropout(x)
