@@ -83,6 +83,10 @@ uvicorn>=0.22.0
 pydantic>=2.0.0
 fhir.resources>=7.0.0
 GitPython>=3.1.0
+celery>=5.3.0
+redis>=5.0.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
 
 # Databases
 pymongo>=4.6.0
@@ -90,6 +94,7 @@ motor>=3.3.0
 psycopg2-binary>=2.9.0
 sqlalchemy>=2.0.0
 cryptography>=41.0.0
+fastparquet>=2023.8.0
 
 # Privacy & Compliance
 presidio-analyzer>=2.2.0
