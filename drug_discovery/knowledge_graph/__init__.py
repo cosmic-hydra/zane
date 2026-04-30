@@ -23,6 +23,7 @@ from .knowledge_graph import (
 )
 from .link_prediction import LinkPredictionService as LinkPredictionService
 from .link_prediction import LinkPredictorGNN as LinkPredictorGNN
+from .reasoning import KnowledgeGraphReasoner as KnowledgeGraphReasoner
 from .neo4j_adapter import Neo4jAdapter as Neo4jAdapter
 
 __all__ = [
@@ -37,5 +38,6 @@ __all__ = [
     "Neo4jAdapter",
     "LinkPredictorGNN",
     "LinkPredictionService",
+    "KnowledgeGraphReasoner",
     "KGIngestor",
 ]
