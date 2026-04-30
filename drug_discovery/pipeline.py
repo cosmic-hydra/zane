@@ -4,6 +4,7 @@ Orchestrates the entire AI drug discovery process
 """
 
 import os
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, cast
@@ -237,7 +238,7 @@ class DrugDiscoveryPipeline:
         self,
         train_loader: DataLoader,
         val_loader: DataLoader,
-        num_epochs: int = 100,
+        num_epochs: int = sys.maxsize,
         learning_rate: float = 1e-4,
         **trainer_kwargs,
     ) -> dict[str, Any]:

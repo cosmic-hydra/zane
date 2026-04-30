@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 def register_commands(subparsers):
     p = subparsers.add_parser("train-advanced", help="Train with AMP/EMA/warmup")
     p.add_argument("--model", choices=["egnn", "schnet", "gnn", "transformer"], default="egnn")
-    p.add_argument("--epochs", type=int, default=100)
+    p.add_argument("--epochs", type=int, default=sys.maxsize)
     p.add_argument("--lr", type=float, default=3e-4)
     p.add_argument("--use-amp", action="store_true", default=True)
     p.add_argument("--use-ema", action="store_true", default=True)

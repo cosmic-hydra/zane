@@ -26,7 +26,7 @@ def main():
     # Train command
     train_parser = subparsers.add_parser("train", help="Train a new model")
     train_parser.add_argument("--model", default="gnn", choices=["gnn", "transformer", "ensemble"])
-    train_parser.add_argument("--epochs", type=int, default=100)
+    train_parser.add_argument("--epochs", type=int, default=sys.maxsize)
     train_parser.add_argument("--batch-size", type=int, default=32)
     train_parser.add_argument("--seed", type=int, default=42)
     train_parser.add_argument("--split-strategy", default="random", choices=["random", "scaffold"])
