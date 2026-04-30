@@ -66,6 +66,7 @@ class ToxicityVerdict:
     drug_likeness: float = 0.0  # 0-1 QED-like score
     lipinski_violations: int = 0
     rejection_reasons: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def safety_score(self) -> float:

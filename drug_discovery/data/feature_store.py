@@ -12,7 +12,12 @@ from pathlib import Path
 from typing import Dict, Optional, Any, List
 import numpy as np
 import torch
-from pymongo import MongoClient
+try:
+    from pymongo import MongoClient
+    _PYMONGO = True
+except ImportError:
+    _PYMONGO = False
+    MongoClient = None
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +39,8 @@ class FeatureStore:
         # In-memory cache
         self._cache: Dict[str, Any] = {}
         
-        self.use_mongodb = use_mongodb
-        if self.use_mongodb:
+        self.use_mongodb = use_mongodb and _PYMONGO
+        if self.use_mongodb and MongoClient:
             mongodb_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
             self.mongo_client = MongoClient(mongodb_uri)
             self.db = self.mongo_client["zane_discovery"]

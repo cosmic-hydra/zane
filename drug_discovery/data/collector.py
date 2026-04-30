@@ -9,7 +9,12 @@ from pathlib import Path
 from typing import Any, Callable, TypeVar, cast
 
 import pandas as pd
-from pymongo import MongoClient
+try:
+    from pymongo import MongoClient
+    _PYMONGO = True
+except ImportError:
+    _PYMONGO = False
+    MongoClient = None
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +29,8 @@ class DataCollector:
         self.api_keys = api_keys or {}
         Path(cache_dir).mkdir(parents=True, exist_ok=True)
         
-        self.use_mongodb = use_mongodb
-        if self.use_mongodb:
+        self.use_mongodb = use_mongodb and _PYMONGO
+        if self.use_mongodb and MongoClient:
             mongodb_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
             self.mongo_client = MongoClient(mongodb_uri)
             self.db = self.mongo_client["zane_discovery"]
