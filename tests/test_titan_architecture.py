@@ -62,9 +62,18 @@ def test_qm_mm_execution() -> None:
 # ---------------------------------------------------------------------------
 # 3. ONNX inference latency
 # ---------------------------------------------------------------------------
-def test_onnx_latency() -> None:
+def test_onnx_latency(monkeypatch: pytest.MonkeyPatch) -> None:
     """ONNXInferenceServer processes a mock SMILES request in under 150 ms."""
+    try:
+        import onnxruntime
+    except ImportError:
+        pytest.skip("onnxruntime not installed")
+
+    from dashboard import xai_core
     from dashboard.xai_core import ONNXInferenceServer
+
+    # Mock _ORT to True if we are here
+    monkeypatch.setattr(xai_core, "_ORT", True)
 
     server = ONNXInferenceServer()
     server.load()  # export + load model (one-time cost, excluded from timing)

@@ -4,10 +4,17 @@ from __future__ import annotations
 
 import logging
 import time
+import os
 from pathlib import Path
 from typing import Any, Callable, TypeVar, cast
 
 import pandas as pd
+try:
+    from pymongo import MongoClient
+    _PYMONGO = True
+except ImportError:
+    _PYMONGO = False
+    MongoClient = None
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +24,18 @@ T = TypeVar("T")
 class DataCollector:
     """Collect and merge records from multiple sources with safe fallbacks."""
 
-    def __init__(self, cache_dir: str = "./data/cache", api_keys: dict[str, str] | None = None):
+    def __init__(self, cache_dir: str = "./data/cache", api_keys: dict[str, str] | None = None, use_mongodb: bool = True):
         self.cache_dir = cache_dir
         self.api_keys = api_keys or {}
         Path(cache_dir).mkdir(parents=True, exist_ok=True)
+        
+        self.use_mongodb = use_mongodb and _PYMONGO
+        if self.use_mongodb and MongoClient:
+            mongodb_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+            self.mongo_client = MongoClient(mongodb_uri)
+            self.db = self.mongo_client["zane_discovery"]
+            self.collection = self.db["data_cache"]
+            self.collection.create_index([("source", 1), ("query", 1)], unique=True)
 
     @staticmethod
     def _empty_molecule_frame() -> pd.DataFrame:
@@ -75,8 +90,36 @@ class DataCollector:
             raise last_exc
         raise RuntimeError("Retry helper failed without exception.")
 
+    def _get_cache(self, source: str, query: str) -> pd.DataFrame | None:
+        if not self.use_mongodb:
+            return None
+        try:
+            cached = self.collection.find_one({"source": source, "query": query})
+            if cached:
+                return pd.DataFrame(cached["data"])
+        except Exception as e:
+            logger.warning(f"Failed to read from MongoDB cache: {e}")
+        return None
+
+    def _set_cache(self, source: str, query: str, df: pd.DataFrame) -> None:
+        if not self.use_mongodb or df.empty:
+            return
+        try:
+            data = df.to_dict(orient="records")
+            self.collection.update_one(
+                {"source": source, "query": query},
+                {"$set": {"source": source, "query": query, "data": data, "timestamp": time.time()}},
+                upsert=True
+            )
+        except Exception as e:
+            logger.warning(f"Failed to write to MongoDB cache: {e}")
+
     def collect_from_pubchem(self, query: str = "drug", limit: int = 100, namespace: str = "name") -> pd.DataFrame:
         """Collect compounds from PubChem when available."""
+        cached = self._get_cache("pubchem", f"{query}_{namespace}_{limit}")
+        if cached is not None:
+            return cached
+
         try:
             import pubchempy as pcp
         except Exception:
@@ -108,6 +151,8 @@ class DataCollector:
             return out
         mask = out["smiles"].map(self._is_valid_smiles).astype(bool)
         filtered = cast(pd.DataFrame, out.loc[mask].copy().reset_index(drop=True))
+        
+        self._set_cache("pubchem", f"{query}_{namespace}_{limit}", filtered)
         return filtered
 
     def collect_from_chembl(
@@ -117,6 +162,11 @@ class DataCollector:
         activity_type: str | None = None,
     ) -> pd.DataFrame:
         """Collect compounds from ChEMBL when available."""
+        query_key = f"target:{target}_limit:{limit}_activity:{activity_type}"
+        cached = self._get_cache("chembl", query_key)
+        if cached is not None:
+            return cached
+
         try:
             from chembl_webresource_client.new_client import new_client
         except Exception:
@@ -163,6 +213,8 @@ class DataCollector:
             return out
         mask = out["smiles"].map(self._is_valid_smiles).astype(bool)
         filtered = cast(pd.DataFrame, out.loc[mask].copy().reset_index(drop=True))
+        
+        self._set_cache("chembl", query_key, filtered)
         return filtered
 
     def collect_approved_drugs(self) -> pd.DataFrame:

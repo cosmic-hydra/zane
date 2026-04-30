@@ -373,6 +373,69 @@ class RobustnessTester:
 
         return results
 
+    def test_environmental_robustness(
+        self,
+        smiles: str,
+        conditions: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Test molecular robustness under environmental conditions.
+        
+        Conditions can include pH, temperature, and presence of water.
+        """
+        if conditions is None:
+            conditions = [
+                {"ph": 1.2, "temp": 37.0, "desc": "Gastric"},
+                {"ph": 7.4, "temp": 37.0, "desc": "Blood/Physiological"},
+                {"ph": 5.5, "temp": 37.0, "desc": "Skin/Vaginal"},
+                {"ph": 7.4, "temp": 25.0, "desc": "Storage"},
+            ]
+
+        results = {
+            "smiles": smiles,
+            "condition_results": [],
+            "overall_stability_index": 1.0
+        }
+
+        if Chem is None:
+            return results
+
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return results
+
+        stability_scores = []
+        for cond in conditions:
+            ph = cond.get("ph", 7.4)
+            temp = cond.get("temp", 37.0)
+            
+            # Heuristic stability estimation
+            # 1. pH sensitivity (hydrolysis risk)
+            # Esters, Amides (some), Anhydrides are sensitive
+            hydrolysis_risk = 0.0
+            if mol.HasSubstructMatch(Chem.MolFromSmarts("[C;$(C=O)][O;h0][C,H]")): # Ester
+                hydrolysis_risk += 0.3 if abs(ph - 7.0) > 2.0 else 0.1
+            if mol.HasSubstructMatch(Chem.MolFromSmarts("[C;$(C=O)][N;h0,h1][C,H]")): # Amide
+                hydrolysis_risk += 0.1 if abs(ph - 7.0) > 4.0 else 0.05
+            
+            # 2. Temperature sensitivity (thermal degradation)
+            thermal_risk = 0.0
+            if temp > 40.0:
+                thermal_risk = (temp - 40.0) / 100.0
+            
+            stability = max(0.0, 1.0 - (hydrolysis_risk + thermal_risk))
+            stability_scores.append(stability)
+            
+            results["condition_results"].append({
+                "condition": cond["desc"],
+                "ph": ph,
+                "temp": temp,
+                "estimated_stability": stability
+            })
+
+        results["overall_stability_index"] = np.mean(stability_scores)
+        return results
+
     def test_out_of_distribution_detection(
         self,
         model: Callable,

@@ -15,11 +15,13 @@ References:
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass, field
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +139,7 @@ class SMILESTransformerEncoder(nn.Module):
 
 
 class CrossAttentionFusion(nn.Module):
-    """Cross-attention fusion of graph and sequence representations."""
+    """Cross-attention fusion of graph and representation."""
 
     def __init__(self, gnn_dim, seq_dim, fusion_dim):
         super().__init__()
@@ -160,11 +162,6 @@ class AdvancedADMETPredictor(nn.Module):
 
     Fuses GNN graph features with Transformer SMILES features via
     cross-attention, predicting multiple ADMET endpoints simultaneously.
-
-    Example::
-        config = ADMETConfig(num_heads=10)
-        model = AdvancedADMETPredictor(config)
-        preds = model(z, pos, edge_index, smiles_tokens, batch=batch)
     """
 
     def __init__(self, config: ADMETConfig):
@@ -190,6 +187,19 @@ class AdvancedADMETPredictor(nn.Module):
         fused = self.fusion(gnn_feat, seq_feat)
         return {name: head(fused) for name, head in self.task_heads.items()}
 
+    def predict_batch(self, batch_data: dict) -> dict[str, torch.Tensor]:
+        """Perform batch inference for multiple molecules."""
+        self.eval()
+        with torch.no_grad():
+            return self.forward(
+                z=batch_data["z"],
+                pos=batch_data["pos"],
+                edge_index=batch_data["edge_index"],
+                smiles_tokens=batch_data["smiles_tokens"],
+                batch=batch_data.get("batch"),
+                smiles_mask=batch_data.get("smiles_mask")
+            )
+
 
 def compute_admet_profile(predictions: dict[str, torch.Tensor]) -> dict[str, dict]:
     """Summarize ADMET predictions into a human-readable profile."""
@@ -198,13 +208,48 @@ def compute_admet_profile(predictions: dict[str, torch.Tensor]) -> dict[str, dic
         info = ADMET_ENDPOINTS.get(name, {"type": "regression"})
         if info["type"] == "classification":
             probs = F.softmax(pred, dim=-1)
-            pos_prob = probs[..., 1].item() if probs.dim() > 1 else probs.item()
-            thr = info.get("threshold", 0.5)
-            profile[name] = {
-                "probability": round(pos_prob, 4),
-                "prediction": "positive" if pos_prob >= thr else "negative",
-                "passes_threshold": pos_prob < thr,
-            }
+            # Handle batch vs single
+            if probs.dim() > 1:
+                pos_prob = probs[:, 1].cpu().numpy()
+                profile[name] = {
+                    "probability": pos_prob.tolist(),
+                    "prediction": ["positive" if p >= info.get("threshold", 0.5) else "negative" for p in pos_prob],
+                }
+            else:
+                pos_prob = probs[1].item()
+                profile[name] = {
+                    "probability": round(pos_prob, 4),
+                    "prediction": "positive" if pos_prob >= info.get("threshold", 0.5) else "negative",
+                    "passes_threshold": pos_prob < info.get("threshold", 0.5),
+                }
         else:
-            profile[name] = {"value": round(pred.item(), 4), "unit": info.get("unit", "")}
+            val = pred.cpu().numpy()
+            profile[name] = {"value": val.tolist() if val.ndim > 0 else round(val.item(), 4), "unit": info.get("unit", "")}
     return profile
+
+
+try:
+    import ray
+except ImportError:
+    ray = None
+
+if ray:
+    @ray.remote(num_gpus=1 if torch.cuda.is_available() else 0)
+    class RayADMETPredictor:
+        """Ray-wrapped ADMET predictor for distributed inference."""
+        def __init__(self, config: ADMETConfig):
+            self.model = AdvancedADMETPredictor(config)
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.model.to(self.device)
+            self.model.eval()
+
+        def predict(self, batch_data: dict) -> dict[str, np.ndarray]:
+            # Move to device
+            input_data = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v for k, v in batch_data.items()}
+            with torch.no_grad():
+                preds = self.model.predict_batch(input_data)
+                return {k: v.cpu().numpy() for k, v in preds.items()}
+else:
+    class RayADMETPredictor:
+        def __init__(self, *args, **kwargs):
+            raise ImportError("Ray not installed.")

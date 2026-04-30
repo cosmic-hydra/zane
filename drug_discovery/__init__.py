@@ -3,26 +3,23 @@
 __version__ = "2026.4.1"
 __all__ = ["__version__"]
 
+# Core pipeline
 try:
-    from drug_discovery.pipeline import DrugDiscoveryPipeline as DrugDiscoveryPipeline
-
+    from drug_discovery.pipeline.autonomous_pipeline import StreamingDataPipeline as DrugDiscoveryPipeline
     __all__.append("DrugDiscoveryPipeline")
 except Exception:
-    # Keep imports lazy when optional dependencies are unavailable.
     pass
 
-# ... all existing try blocks ...
-
-# New drug pipeline modules
+# Utility modules
 try:
-    from .data.rdkit_utils import smiles_to_sdf
-    from .generation.torchdrug_generator import TorchDrugGenerator
-    from .screening.admet_models import ADMETScreen
-    from .screening.filtering import filter_admet
-    from .docking.vina_wrapper import VinaDocker
-    from .docking.diffdock_placeholder import run_diffdock
-    from .structure_analysis.cif_parser import parse_cif_to_mol
-    from .structure_analysis.xrpd_analysis import analyze_xrpd
+    from drug_discovery.data.rdkit_utils import smiles_to_sdf
+    from drug_discovery.generation.torchdrug_generator import TorchDrugGenerator
+    from drug_discovery.screening.admet_models import ADMETScreen
+    from drug_discovery.screening.filtering import filter_admet
+    from drug_discovery.docking.vina_wrapper import VinaDocker
+    from drug_discovery.docking.diffdock_placeholder import run_diffdock
+    from drug_discovery.structure_analysis.cif_parser import parse_cif_to_mol
+    from drug_discovery.structure_analysis.xrpd_analysis import analyze_xrpd
 
     __all__.extend([
         "TorchDrugGenerator",

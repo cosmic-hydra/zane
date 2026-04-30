@@ -14,6 +14,7 @@ Edges: treats, binds, inhibits, causes, participates_in, etc.
 
 import logging
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -113,7 +114,7 @@ class VectorDatabase:
         self,
         query_embedding: np.ndarray,
         top_k: int = 10,
-        filter_func: callable | None = None,
+        filter_func: Callable | None = None,
     ) -> list[tuple[str, float]]:
         """
         Search for similar vectors.

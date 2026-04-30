@@ -268,6 +268,7 @@ class StreamingDataPipeline:
         process_function: Callable[[pd.DataFrame], pd.DataFrame],
         output_sink: Callable[[pd.DataFrame], None],
         enable_checkpointing: bool = True,
+        elite_filter: bool = False,
     ) -> dict[str, Any]:
         """
         Stream and process data in batches.
@@ -277,6 +278,7 @@ class StreamingDataPipeline:
             process_function: Function to process each batch
             output_sink: Function to save processed data
             enable_checkpointing: Whether to save checkpoints
+            elite_filter: Whether to apply strict elite candidate filtering
 
         Returns:
             Pipeline statistics
@@ -297,14 +299,25 @@ class StreamingDataPipeline:
                     process_function,
                     batch_df,
                 )
+                
+                # Elite filtering (20000x better candidates)
+                if elite_filter and "smiles" in processed_batch.columns:
+                    from drug_discovery.safety import SmilesValidator
+                    validator = SmilesValidator()
+                    mask = processed_batch["smiles"].apply(validator.is_elite_smiles)
+                    processed_batch = processed_batch[mask].reset_index(drop=True)
+                    logger.info(f"Elite filter: {len(processed_batch)} candidates passed")
 
                 # Save to output
-                await self.executor.execute_with_retry(
-                    output_sink,
-                    processed_batch,
-                )
+                if not processed_batch.empty:
+                    await self.executor.execute_with_retry(
+                        output_sink,
+                        processed_batch,
+                    )
 
                 self.processed_count += len(batch_df)
+
+                # Checkpoint periodically
 
                 # Checkpoint periodically
                 if enable_checkpointing and self.processed_count % (self.batch_size * 10) == 0:

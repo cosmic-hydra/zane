@@ -191,11 +191,15 @@ class SmilesValidator:
             lambda s: re.sub(r"[^\w\[\]()=#@+\-/\\.:]+", "", s),
             # Balance parentheses
             lambda s: self._balance_parens(s),
-            # Remove charge annotations
+            # Balance brackets
+            lambda s: self._balance_brackets(s),
+            # Remove charge annotations if they are problematic
             lambda s: re.sub(r"\[([A-Z][a-z]?)[+-]\d*\]", r"\1", s),
+            # Fix double bonds between lowercase (aromatic) atoms that should be single
+            lambda s: s.replace("=c", "c").replace("c=", "c"),
         ]
 
-        for repair_fn in repairs[: self.repair_attempts]:
+        for repair_fn in repairs[: self.repair_attempts + 2]:
             try:
                 fixed = repair_fn(smiles)
                 if fixed and Chem.MolFromSmiles(fixed) is not None:
@@ -218,6 +222,56 @@ class SmilesValidator:
             result.append(ch)
         result.extend(")" * depth)
         return "".join(result)
+
+    @staticmethod
+    def _balance_brackets(s: str) -> str:
+        depth = 0
+        result = []
+        for ch in s:
+            if ch == "[":
+                depth += 1
+            elif ch == "]":
+                if depth <= 0:
+                    continue
+                depth -= 1
+            result.append(ch)
+        result.extend("]" * depth)
+        return "".join(result)
+
+    def is_elite_smiles(self, smiles: str) -> bool:
+        """Check if SMILES meets 'Elite' quality standards (drug-like, stable, no radicals)."""
+        res = self.validate(smiles)
+        if not res.passed:
+            return False
+        
+        if not _RDKIT:
+            return res.is_valid
+
+        mol = Chem.MolFromSmiles(res.canonical)
+        if mol is None:
+            return False
+
+        # No radicals
+        if any(atom.GetNumRadicalElectrons() > 0 for atom in mol.GetAtoms()):
+            return False
+
+        # Standard valency only
+        for atom in mol.GetAtoms():
+            if atom.GetSymbol() == "C" and atom.GetTotalValence() > 4:
+                return False
+        
+        # Avoid extremely reactive groups
+        reactive_patterns = [
+            "[F,Cl,Br,I][F,Cl,Br,I]", # Halogen-halogen
+            "[O,N]-[O,N]",           # Peroxides/Hydrazines (sometimes okay but often unstable)
+            "C#C-C#C",               # Polyynes
+            "[S,C]=[O,S]=O",         # Ketenes/Sulfines
+        ]
+        for pattern in reactive_patterns:
+            if mol.HasSubstructMatch(Chem.MolFromSmarts(pattern)):
+                return False
+
+        return True
 
     # ------------------------------------------------------------------
     # Heuristic fallback (no RDKit)

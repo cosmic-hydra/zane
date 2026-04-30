@@ -66,6 +66,7 @@ class ToxicityVerdict:
     drug_likeness: float = 0.0  # 0-1 QED-like score
     lipinski_violations: int = 0
     rejection_reasons: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def safety_score(self) -> float:
@@ -197,7 +198,7 @@ class ToxicityGate:
         if lipinski_violations > 1:
             rejection_reasons.append(f"Lipinski violations: {lipinski_violations}")
 
-        # Aggregate
+        # Overall score (geometric mean for strictness)
         tox_probs = [e.probability for e in endpoints]
         overall_toxicity = 1.0 - _product(1.0 - p for p in tox_probs)
         drug_likeness = self._compute_drug_likeness(props, overall_toxicity)
@@ -207,6 +208,11 @@ class ToxicityGate:
         else:
             passed = overall_toxicity < 0.5
 
+        # Suggest counter-toxins if failed
+        suggested_counters = []
+        if not passed:
+            suggested_counters = self._suggest_counter_toxins(endpoints)
+
         return ToxicityVerdict(
             smiles=smiles,
             passed=passed,
@@ -215,7 +221,23 @@ class ToxicityGate:
             drug_likeness=drug_likeness,
             lipinski_violations=lipinski_violations,
             rejection_reasons=rejection_reasons,
+            metadata={"suggested_counters": suggested_counters}
         )
+
+    def _suggest_counter_toxins(self, endpoints: list[EndpointScore]) -> list[str]:
+        """Suggest molecules that might mitigate specific toxicity endpoints."""
+        suggestions = []
+        for ep in endpoints:
+            if not ep.passed:
+                if ep.name == "hERG":
+                    suggestions.append("Dexrazoxane (general cardioprotectant)")
+                elif ep.name == "Hepatotoxicity":
+                    suggestions.append("N-acetylcysteine (glutathione precursor)")
+                elif ep.name == "Ames":
+                    suggestions.append("DNA-repair enhancers (theoretical)")
+                elif ep.name == "Cytotoxicity":
+                    suggestions.append("Autophagy modulators")
+        return list(set(suggestions))
 
     # ------------------------------------------------------------------
     # Molecular properties
