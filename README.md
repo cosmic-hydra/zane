@@ -1,4 +1,4 @@
-# ZANE — Pharmaceutical Operating System for Autonomous Molecular Engineering
+# ZANE — Pharma OS for Autonomous Molecular Engineering
 
 <p align="center">
   <img src="logo.png" alt="ZANE mark" width="220" />
@@ -617,7 +617,19 @@ pip install -e .
 python -m drug_discovery.cli collect --sources pubchem chembl approved_drugs --limit 1000
 python -m drug_discovery.cli train --model gnn --epochs 100
 python -m drug_discovery.cli admet "CC(=O)OC1=CC=CC=C1C(=O)O"
+python scripts/train_nvidia_pubchem.py --sources pubchem chembl approved_drugs --limit-per-source 5000 --epochs 3
 ```
+
+### Local dependency check
+
+The repo targets the full `requirements.txt` stack, but local fine-tuning workflows are easiest to debug if you check the Python environment first.
+
+```bash
+python scripts/check_dependencies.py
+python scripts/train_nvidia_pubchem.py --check-deps --sources pubchem chembl approved_drugs
+```
+
+For the local NVIDIA fine-tuning script, the minimum useful stack is `torch`, `transformers`, `datasets`, `peft`, `accelerate`, `pandas`, `numpy`, `pubchempy`, `chembl_webresource_client`, and `rdkit`. If you only want to run the training helper, install the repo requirements or at least that subset. The `--check-deps` flag on `scripts/train_nvidia_pubchem.py` will report what is missing without starting training.
 
 ### API gateway posture
 

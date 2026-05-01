@@ -57,14 +57,54 @@ class BiothreatScreening:
 
     def _simulate_ache_docking(self, molecule_smiles: str) -> float:
         """
-        Mock simulation of docking to AChE catalytic triad (Ser203, His447, Glu334).
-        In production, uses PyMOL API and DeepTox for evaluation.
+        Simulate binding affinity to AChE catalytic triad (Ser203, His447, Glu334).
+        Uses heuristic scoring based on SMILES properties.
+        In production, uses PyMOL API, Vina, or dedicated docking engine.
         """
-        if cmd is not None:
-            # Placeholder for PyMOL API operations
-            pass
-
-        # DeepTox integration placeholder
-
-        # For demonstration purposes, returning a mock binding affinity
-        return -5.0
+        if not molecule_smiles:
+            return 0.0
+        
+        # Heuristic: estimate binding affinity from molecular properties
+        # More atoms/complexity -> potentially better binding
+        # More hydrophobic -> better binding to hydrophobic pocket
+        
+        mol = Chem.MolFromSmiles(molecule_smiles)
+        if mol is None:
+            return 0.0
+        
+        # Base affinity (ΔG in kcal/mol, more negative = stronger binding)
+        base_affinity = -4.0
+        
+        # Factor 1: Molecular weight (heavier = often better for serine esterase binding)
+        mw_factor = (mol.GetMolWt() - 100) * 0.01  # Scale: ~0 for MW 100, ~3 for MW 400
+        mw_factor = max(-2.0, min(2.0, mw_factor))  # Clamp to [-2, 2]
+        
+        # Factor 2: Hydrophobic atoms (Aromatic + Aliphatic carbons)
+        hydrophobic_atoms = sum(1 for atom in mol.GetAtoms() 
+                               if atom.GetIsAromatic() or atom.GetSymbol() == 'C')
+        hydro_factor = hydrophobic_atoms * 0.05  # ~0.5 per hydrophobic group
+        hydro_factor = max(0, min(3.0, hydro_factor))
+        
+        # Factor 3: Hydrogen bond donors/acceptors (serine catalytic triad has H-bond sites)
+        hbd = sum(1 for atom in mol.GetAtoms() 
+                 if atom.GetTotalNumHs() > 0 and atom.GetSymbol() in ['N', 'O'])
+        hba = sum(1 for atom in mol.GetAtoms() 
+                 if atom.GetTotalValence() > 1 and atom.GetSymbol() in ['N', 'O'])
+        hbond_factor = (hbd + hba) * 0.3
+        hbond_factor = max(0, min(2.0, hbond_factor))
+        
+        # Factor 4: Rotatable bonds (more flexibility = worse, usually)
+        rotatable = sum(1 for bond in mol.GetBonds() 
+                       if bond.GetBondType() == Chem.BondType.SINGLE and
+                       not bond.IsInRing())
+        rot_penalty = rotatable * -0.05
+        rot_penalty = max(-1.0, min(0, rot_penalty))
+        
+        # Combine factors
+        predicted_affinity = base_affinity + mw_factor + hydro_factor + hbond_factor + rot_penalty
+        
+        # Add small stochastic noise to simulate docking uncertainty (~0.5 kcal/mol)
+        noise = Chem.RawMolDescriptors.CalcNumAtoms(mol) % 7 * 0.1 - 0.3
+        predicted_affinity += noise
+        
+        return float(predicted_affinity)

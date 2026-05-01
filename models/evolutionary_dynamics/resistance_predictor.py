@@ -16,8 +16,51 @@ class AlphaFold3Mock:
         return np.random.rand(100, 100)
 
     def calculate_binding_affinity(self, protein_struct: np.ndarray, molecule: str) -> float:
-        # Mock binding affinity calculation (lower is better, maybe negative kcal/mol)
-        return -10.0 + np.random.randn() * 2
+        """
+        Estimate binding affinity based on protein structure and molecule properties.
+        When AlphaFold 3 is unavailable, uses heuristic scoring.
+        Returns ΔG in kcal/mol (negative = favorable binding).
+        """
+        # Heuristic binding affinity estimation
+        # Assume protein_struct is a distance matrix or representation
+        
+        if protein_struct is None or len(protein_struct) == 0:
+            base_affinity = -7.0
+        else:
+            # Structure quality metric: average pairwise distance variance
+            # Well-folded structures have moderate, consistent distances
+            try:
+                if protein_struct.ndim == 2:
+                    dist_var = np.var(protein_struct)
+                    # High variance (poorly folded) = worse binding
+                    structure_penalty = min(3.0, dist_var * 0.01)
+                else:
+                    structure_penalty = 0.0
+            except Exception:
+                structure_penalty = 0.0
+            
+            base_affinity = -9.0 + structure_penalty
+        
+        # Molecule complexity factor
+        if molecule:
+            # Count heavy atoms (approximation from molecule string)
+            mol_len = len(molecule)
+            # More atoms -> potentially better binding (more contact points)
+            mol_factor = mol_len * 0.08 - 1.0
+            mol_factor = max(-2.0, min(2.0, mol_factor))
+        else:
+            mol_factor = 0.0
+        
+        # Total affinity with small noise (docking uncertainty)
+        affinity = base_affinity + mol_factor
+        # Add noise scaled to affinity strength
+        noise = np.random.normal(0, 0.5)
+        affinity += noise
+        
+        # Realistic bounds: [-15, -4] kcal/mol
+        affinity = np.clip(affinity, -15.0, -4.0)
+        
+        return float(affinity)
 
 
 class PathogenMutationEnv:

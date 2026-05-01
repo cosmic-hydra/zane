@@ -177,8 +177,9 @@ class AdvancedTrainer:
             lr = self.scheduler.get_last_lr()[0]
             history["lr"].append(lr)
             history["epoch_time"].append(time.time() - t0)
+            val_text = f"{vl:.6f}" if vl is not None else "N/A"
             logger.info(
-                f"Epoch {epoch}/{self.config.epochs} | train={tl:.6f} | val={vl:.6f if vl else 'N/A'} | lr={lr:.2e}"
+                f"Epoch {epoch}/{self.config.epochs} | train={tl:.6f} | val={val_text} | lr={lr:.2e}"
             )
             if vl is not None and vl < best_val:
                 best_val = vl

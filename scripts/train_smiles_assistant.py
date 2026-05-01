@@ -1,3 +1,5 @@
+import sys
+
 import torch
 from datasets import Dataset
 from transformers import (
@@ -43,7 +45,7 @@ def train_local_smiles_model(smiles_list, output_dir="./artifacts/local_smiles_m
     training_args = TrainingArguments(
         output_dir=output_dir,
         overwrite_output_dir=True,
-        num_train_epochs=3,
+        num_train_epochs=sys.maxsize,
         per_device_train_batch_size=8,
         save_steps=100,
         save_total_limit=2,
