@@ -85,7 +85,7 @@ class DrugDiscoveryPipeline:
 
     def collect_data(
         self,
-        sources: list[str] = ["pubchem", "chembl", "approved_drugs"],
+        sources: Sequence[str] | None = None,
         limit_per_source: int = 1000,
         drugbank_file: str | None = None,
     ) -> pd.DataFrame:
@@ -100,6 +100,9 @@ class DrugDiscoveryPipeline:
             Combined DataFrame
         """
         print("\n=== Data Collection Phase ===")
+
+        if sources is None:
+            sources = ("pubchem", "chembl", "approved_drugs")
 
         datasets = []
 

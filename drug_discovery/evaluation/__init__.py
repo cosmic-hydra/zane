@@ -72,8 +72,25 @@ except ImportError:
     pass
 
 try:
+    from drug_discovery.evaluation.swissadme_proxy import SwissADMEProxy as SwissADMEProxy
+    from drug_discovery.evaluation.swissadme_proxy import SwissADMEResult as SwissADMEResult
+
+    __all__.extend(["SwissADMEProxy", "SwissADMEResult"])
+except ImportError as e:
+    logger.debug(f"SwissADME proxy not available: {e}")
+
+try:
     from drug_discovery.evaluation.torchdrug_scorer import TorchDrugScorer as TorchDrugScorer
 
     __all__.append("TorchDrugScorer")
 except ImportError:
     pass
+
+try:
+    from drug_discovery.evaluation.herg_predictor import HERGPrediction as HERGPrediction
+    from drug_discovery.evaluation.herg_predictor import HERGPredictor as HERGPredictor
+    from drug_discovery.evaluation.herg_predictor import predict_herg as predict_herg
+
+    __all__.extend(["HERGPredictor", "HERGPrediction", "predict_herg"])
+except ImportError as e:
+    logger.debug(f"hERG predictor not available: {e}")

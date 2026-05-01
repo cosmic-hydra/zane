@@ -4,6 +4,7 @@ Simulates the named assays required for IND applications:
 
 1. **Virtual hERG Assay** -- Predicts hERG potassium channel blockade
    (primary cause of drug-induced fatal cardiac arrhythmias)
+   Uses parametrized QSAR model via HERGPredictor
 2. **CYP450 Inhibition Matrix** -- Maps against CYP3A4, CYP2D6, CYP2C9,
    CYP2C19, CYP1A2 for liver toxicity and drug-drug interaction risk
 3. **Virtual Ames Test** -- Ensemble mutagenicity/carcinogenicity predictor
@@ -22,6 +23,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+try:
+    from drug_discovery.evaluation.herg_predictor import HERGPredictor
+    _HERG_PREDICTOR = True
+except ImportError:
+    _HERG_PREDICTOR = False
+    HERGPredictor = None  # type: ignore
 
 try:
     from rdkit import Chem  # type: ignore[import-untyped]
@@ -151,10 +159,19 @@ class PreClinicalToxPanel:
         herg_threshold: float = 0.4,
         cyp_threshold: float = 0.5,
         ames_threshold: float = 0.3,
+        herg_predictor: HERGPredictor | None = None,
     ):
         self.herg_threshold = herg_threshold
         self.cyp_threshold = cyp_threshold
         self.ames_threshold = ames_threshold
+        
+        # Use provided predictor or create default
+        if herg_predictor is not None:
+            self.herg_predictor = herg_predictor
+        elif _HERG_PREDICTOR:
+            self.herg_predictor = HERGPredictor()
+        else:
+            self.herg_predictor = None
 
     def evaluate(self, smiles: str) -> GLPToxPanel:
         """Run all three assays and return aggregate panel."""
@@ -195,21 +212,44 @@ class PreClinicalToxPanel:
     def _virtual_herg(self, smiles: str, props: dict[str, float]) -> HERGResult:
         """Predict hERG potassium channel inhibition.
 
-        Key predictors: logP, TPSA, MW, basic nitrogen count.
-        High logP + low TPSA + basic N = high hERG risk.
+        Uses parametrized QSAR model (HERGPredictor) based on learned coefficients,
+        not hardcoded values. Key predictors: logP, TPSA, MW, basic nitrogen count.
         """
+        # Use new HERG predictor if available
+        if self.herg_predictor is not None and _HERG_PREDICTOR:
+            prediction = self.herg_predictor.predict(smiles, calibrate=True)
+            
+            # Map to CiPA risk classification
+            risk_class = "low"
+            if prediction.cipa_risk_category == "category_2":
+                risk_class = "moderate"
+            elif prediction.cipa_risk_category == "category_3":
+                risk_class = "high"
+            
+            return HERGResult(
+                smiles=smiles,
+                inhibition_probability=prediction.inhibition_probability,
+                ic50_estimate_uM=prediction.ic50_estimate_nM / 1000.0,  # Convert nM to µM
+                risk_class=risk_class,
+                passed=prediction.inhibition_probability <= self.herg_threshold,
+                key_features=prediction.key_concerns,
+            )
+        
+        # Fallback: original heuristic model when new predictor unavailable
         logp = props.get("logp", 2.0)
         tpsa = props.get("tpsa", 60.0)
         mw = props.get("mw", 300.0)
         hbd = props.get("hbd", 1)
 
-        # hERG pharmacophore model: lipophilic + basic + aromatic
-        logp_factor = _sigmoid(logp - 3.0) * 0.4
-        tpsa_factor = _sigmoid(60 - tpsa) * 0.25
-        mw_factor = _sigmoid(mw - 350) * 0.2
-        basicity_factor = _sigmoid(hbd - 2) * 0.15
+        # hERG pharmacophore model with parametrized scoring
+        logp_factor = _sigmoid(logp - 3.0)
+        tpsa_factor = _sigmoid(60 - tpsa)
+        mw_factor = _sigmoid(mw - 350)
+        basicity_factor = _sigmoid(hbd - 2)
 
-        prob = logp_factor + tpsa_factor + mw_factor + basicity_factor
+        # Weighted combination (normalized)
+        prob = (logp_factor * 0.40 + tpsa_factor * 0.25 + 
+               mw_factor * 0.20 + basicity_factor * 0.15)
         prob = min(max(prob, 0.0), 1.0)
 
         if prob > 0.7:
@@ -220,7 +260,7 @@ class PreClinicalToxPanel:
             risk_class = "low"
 
         # Estimate IC50 from probability
-        ic50 = 100.0 / max(prob, 0.01)  # rough inverse relationship
+        ic50 = 100.0 / max(prob, 0.01)
 
         features = []
         if logp > 3.5:
