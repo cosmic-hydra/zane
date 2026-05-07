@@ -5,7 +5,7 @@ __all__ = ["__version__"]
 
 # Core pipeline
 try:
-    from drug_discovery.pipeline.autonomous_pipeline import StreamingDataPipeline as DrugDiscoveryPipeline
+    from drug_discovery.pipeline import DrugDiscoveryPipeline as DrugDiscoveryPipeline
     __all__.append("DrugDiscoveryPipeline")
 except Exception:
     pass

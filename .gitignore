@@ -51,6 +51,8 @@ venv.bak/
 
 # Data and cache
 data/
+!drug_discovery/data/
+!drug_discovery/data/*.py
 cache/
 *.csv
 *.pkl

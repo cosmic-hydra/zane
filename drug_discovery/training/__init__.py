@@ -2,17 +2,19 @@
 
 from .cryptography import EncryptionProvider as EncryptionProvider
 from .cryptography import PrivacyControl as PrivacyControl
-from .federated_learning import FederatedServer as FederatedServer
-from .federated_learning import RobustFedAvg as RobustFedAvg
-from .federated_node import FederatedClient as FederatedClient
-
 __all__ = [
-    "FederatedServer",
-    "RobustFedAvg",
     "EncryptionProvider",
     "PrivacyControl",
-    "FederatedClient",
 ]
+
+try:
+    from .federated_learning import FederatedServer as FederatedServer
+    from .federated_learning import RobustFedAvg as RobustFedAvg
+    from .federated_node import FederatedClient as FederatedClient
+
+    __all__.extend(["FederatedServer", "RobustFedAvg", "FederatedClient"])
+except ImportError:
+    pass
 
 try:
     from drug_discovery.training.advanced_training import (
