@@ -1,15 +1,4 @@
-import importlib.util
-from pathlib import Path
-
-_module_path = (
-    Path(__file__).resolve().parent / ".." / "drug_discovery" / "precision_medicine" / "genomic_matcher.py"
-).resolve()
-_spec = importlib.util.spec_from_file_location("genomic_matcher", str(_module_path))
-_mod = importlib.util.module_from_spec(_spec)
-assert _spec is not None
-assert _spec.loader is not None
-_spec.loader.exec_module(_mod)
-GenomicDrugMatcher = _mod.GenomicDrugMatcher
+from drug_discovery.precision_medicine.genomic_matcher import GenomicDrugMatcher
 
 
 def test_match_drugs_to_patient_variants():

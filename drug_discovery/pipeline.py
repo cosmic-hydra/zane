@@ -834,9 +834,9 @@ class DrugDiscoveryPipeline:
         self,
         patient_data: pd.DataFrame,
         target_col: str,
-        variant_drug_database: Optional[Dict[str, List[str]]] = None,
-        clinical_profile_drug_database: Optional[Dict[str, List[str]]] = None,
-        virus_drug_database: Optional[Dict[str, List[str]]] = None,
+        variant_drug_database: dict[str, list[str]] | None = None,
+        clinical_profile_drug_database: dict[str, list[str]] | None = None,
+        virus_drug_database: dict[str, list[str]] | None = None,
     ) -> dict[str, Any]:
         """
         Execute precision medicine workflow:

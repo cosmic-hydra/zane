@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
+
 class GenomicDrugMatcher:
     """
     Match drugs to specific genomic variants.
     """
-    
+
     def __init__(
         self,
         variant_drug_database: dict[str, list[str]],
@@ -34,7 +35,7 @@ class GenomicDrugMatcher:
         if isinstance(value, (list, tuple, set)):
             return [str(item).strip() for item in value if str(item).strip()]
         return [str(value).strip()] if str(value).strip() else []
-        
+
     def match_drugs_to_patient(self, patient_variants: list[str]) -> list[str]:
         """
         Find drugs that match the patient's genetic profile.
