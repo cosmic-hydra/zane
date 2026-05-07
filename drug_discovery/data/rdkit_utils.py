@@ -14,6 +14,9 @@ if Chem is not None:
 else:  # pragma: no cover - fallback mode
     QED = None
 
+HAS_FULL_RDKIT = all(mod is not None for mod in (Chem, Descriptors, Crippen, QED))
+DEFAULT_QED_FALLBACK = 0.5
+
 
 def smiles_to_mols(smiles_list: list[str]) -> list[object]:
     """Convert SMILES strings to molecule objects, dropping invalid entries."""
@@ -34,7 +37,7 @@ def compute_descriptors(mols: list[object]) -> pd.DataFrame:
     """Compute a compact descriptor set used by the screening modules."""
     rows: list[dict[str, float]] = []
     for mol in mols:
-        if Chem is not None and Descriptors is not None and Crippen is not None and QED is not None and hasattr(mol, "GetNumAtoms"):
+        if HAS_FULL_RDKIT and hasattr(mol, "GetNumAtoms"):
             rows.append(
                 {
                     "mol_wt": float(Descriptors.MolWt(mol)),
@@ -54,7 +57,7 @@ def compute_descriptors(mols: list[object]) -> pd.DataFrame:
                     "h_donors": float(props.h_donors),
                     "h_acceptors": float(props.h_acceptors),
                     "tpsa": float(props.tpsa),
-                    "qed": 0.5,
+                    "qed": DEFAULT_QED_FALLBACK,
                 }
             )
 
