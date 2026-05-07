@@ -9,7 +9,7 @@ import pandas as pd
 
 from drug_discovery.utils.rdkit_fallback import get_props_with_rdkit, rdkit_or_none
 
-Chem, Descriptors, Crippen, _ = rdkit_or_none()
+Chem, Descriptors, Crippen, rd_mol_descriptors = rdkit_or_none()
 if Chem is not None:
     from rdkit.Chem import QED  # type: ignore
 else:  # pragma: no cover - fallback mode
@@ -50,7 +50,8 @@ def compute_descriptors(mols: list[Any]) -> pd.DataFrame:
                 }
             )
         else:
-            props = get_props_with_rdkit(str(mol))
+            smiles = mol if isinstance(mol, str) else str(mol)
+            props = get_props_with_rdkit(smiles)
             rows.append(
                 {
                     "mol_wt": float(props.molecular_weight),

@@ -42,8 +42,10 @@ class TorchDrugGenerator:
         if self._fallback_mode or self.task is None:
             logger.warning("TorchDrug unavailable; returning placeholder molecules in fallback mode.")
             if scaffold and scaffold.strip():
-                return [scaffold] * num
-            return ["CCO"] * num
+                seeds = [scaffold, "CCO", "CCN", "CCC"]
+            else:
+                seeds = ["CCO", "CCN", "CCC", "c1ccccc1"]
+            return [seeds[i % len(seeds)] for i in range(num)]
         torch.manual_seed(42)
         generated = self.task.generate(num_samples=num)
         smiles_list = [mol.smiles() for mol in generated]
