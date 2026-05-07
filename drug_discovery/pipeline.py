@@ -830,16 +830,23 @@ class DrugDiscoveryPipeline:
             "final_recommendation": "PROCEED_TO_HOST_REFACTOR",
         }
 
-    def run_precision_medicine_workflow(self, patient_data: pd.DataFrame, target_col: str) -> dict[str, Any]:
+    def run_precision_medicine_workflow(
+        self,
+        patient_data: pd.DataFrame,
+        target_col: str,
+        variant_drug_database: Optional[Dict[str, List[str]]] = None,
+        clinical_profile_drug_database: Optional[Dict[str, List[str]]] = None,
+        virus_drug_database: Optional[Dict[str, List[str]]] = None,
+    ) -> dict[str, Any]:
         """
         Execute precision medicine workflow:
         1. Stratify patients into clusters.
         2. Identify biomarkers for each cluster.
-        3. Match drugs to cluster profiles.
+        3. Match drugs to full clinical profiles (including virus-targeted support).
         """
         print("\n=== Running Precision Medicine Workflow ===")
         
-        from .precision_medicine import PatientStratifier
+        from .precision_medicine import GenomicDrugMatcher, PatientStratifier
         from .biomarker_discovery import BiomarkerMLDiscovery
         
         # 1. Stratification
@@ -851,12 +858,31 @@ class DrugDiscoveryPipeline:
         # 2. Biomarker Discovery for each cluster
         discovery = BiomarkerMLDiscovery(patient_data, target_col)
         biomarkers = discovery.rank_features_by_importance(features)
+
+        # 3. Personalized matching from complete client profiles
+        matcher = GenomicDrugMatcher(
+            variant_drug_database=variant_drug_database or {},
+            clinical_profile_drug_database=clinical_profile_drug_database or {},
+            virus_drug_database=virus_drug_database or {},
+        )
+        personalized_recommendations: dict[str, dict[str, list[str]]] = {}
+        for patient_id, row in patient_data.iterrows():
+            profile = {
+                "variants": row.get("variants", []),
+                "clinical_profiles": row.get("clinical_profiles", []),
+                "conditions": row.get("conditions", []),
+                "diagnoses": row.get("diagnoses", []),
+                "viral_infections": row.get("viral_infections", []),
+                "viruses": row.get("viruses", []),
+            }
+            personalized_recommendations[str(patient_id)] = matcher.match_drugs_to_clinical_profile(profile)
         
         print(f"Detected {len(cluster_info)} patient clusters.")
         return {
             "clusters": clusters.to_dict(),
             "cluster_characteristics": cluster_info.to_dict(),
-            "top_biomarkers": biomarkers.head(10).to_dict()
+            "top_biomarkers": biomarkers.head(10).to_dict(),
+            "personalized_recommendations": personalized_recommendations,
         }
 
     def refine_lead_candidates(self, candidates_smiles: List[str], target_protein_pdb: Optional[str] = None) -> List[Dict[str, Any]]:
