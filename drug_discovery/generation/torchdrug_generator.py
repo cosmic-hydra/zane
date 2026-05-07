@@ -41,7 +41,7 @@ class TorchDrugGenerator:
     def generate(self, num: int = 1000, scaffold: Optional[str] = None) -> List[str]:
         if self._fallback_mode or self.task is None:
             logger.warning("TorchDrug unavailable; returning placeholder molecules in fallback mode.")
-            if scaffold and isinstance(scaffold, str) and scaffold.strip():
+            if scaffold and scaffold.strip():
                 return [scaffold] * num
             return ["CCO"] * num
         torch.manual_seed(42)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -18,7 +19,7 @@ HAS_FULL_RDKIT = all(mod is not None for mod in (Chem, Descriptors, Crippen, QED
 DEFAULT_QED_FALLBACK = 0.5
 
 
-def smiles_to_mols(smiles_list: list[str]) -> list[object]:
+def smiles_to_mols(smiles_list: list[str]) -> list[Any]:
     """Convert SMILES strings to molecule objects, dropping invalid entries."""
     if Chem is None:
         return [s for s in smiles_list if isinstance(s, str) and s.strip()]
@@ -33,7 +34,7 @@ def smiles_to_mols(smiles_list: list[str]) -> list[object]:
     return mols
 
 
-def compute_descriptors(mols: list[object]) -> pd.DataFrame:
+def compute_descriptors(mols: list[Any]) -> pd.DataFrame:
     """Compute a compact descriptor set used by the screening modules."""
     rows: list[dict[str, float]] = []
     for mol in mols:
