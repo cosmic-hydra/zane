@@ -26,11 +26,13 @@ async def dispatch_to_cloud_lab(smiles: str):
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("ZANE-APEX")
 
-async def execute_zane_pipeline(patient_profile_path: str, target_disease: str):
+async def execute_zane_pipeline(patient_profile_path: str, target_disease: str, metadata: Dict[str, Any] = None):
     """
     The master chronological execution flow for the Apex N=1 pipeline.
     """
     logger.info("=== INITIALIZING ZANE APEX ORCHESTRATION ===")
+    if metadata:
+        logger.info(f"Metabolic Metadata Ingested: {metadata.get('name')} | Purpose: {target_disease}")
 
     # 1. Learn the disease boundaries from scratch (Live RAG)
     rag_engine = DynamicTargetContext()

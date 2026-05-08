@@ -1,7 +1,7 @@
 import pandas as pd
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -46,11 +46,11 @@ class CommercialDrugMapper:
         and all FDA-approved drugs.
         """
         if self.fda_db is None or not self.fingerprints:
-            return {"closest_drug": "Unknown", "similarity": 0.0, "commercial_dose": "N/A"}
+            return {"closest_drug": "Unknown", "similarity": 0.0, "commercial_dose": "N/A", "smiles": ""}
 
         query_mol = Chem.MolFromSmiles(generated_smiles)
         if not query_mol:
-            return {"closest_drug": "Invalid SMILES", "similarity": 0.0, "commercial_dose": "N/A"}
+            return {"closest_drug": "Invalid SMILES", "similarity": 0.0, "commercial_dose": "N/A", "smiles": ""}
 
         query_fp = AllChem.GetMorganFingerprintAsBitVect(query_mol, 2, nBits=2048)
         
@@ -69,7 +69,26 @@ class CommercialDrugMapper:
             return {
                 "closest_drug": match['drug_name'],
                 "similarity": round(max_sim, 4),
-                "commercial_dose": match['commercial_dose']
+                "commercial_dose": match['commercial_dose'],
+                "smiles": match['smiles']
             }
         
-        return {"closest_drug": "No Match", "similarity": 0.0, "commercial_dose": "N/A"}
+        return {"closest_drug": "No Match", "similarity": 0.0, "commercial_dose": "N/A", "smiles": ""}
+
+    def compare_compounds(self, zane_compounds: List[dict], commercial_match: dict) -> dict:
+        """
+        Compares ZANE's multi-compound drug with the commercial equivalent.
+        """
+        zane_smiles_set = {c['smiles'] for c in zane_compounds}
+        comm_smiles = commercial_match.get('smiles', '')
+        
+        # Extra: In ZANE but not the main commercial ingredient
+        extra = [c['smiles'] for c in zane_compounds if c['smiles'] != comm_smiles]
+        
+        # Missing: In commercial but not in ZANE (Mocked for demonstration)
+        missing = ["Magnesium Stearate (Excipient)", "Hypromellose (Coating)"] if comm_smiles else []
+        
+        return {
+            "extra_compounds": extra[:5], # Limit display
+            "missing_compounds": missing
+        }
