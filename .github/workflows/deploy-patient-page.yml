@@ -51,7 +51,7 @@ jobs:
               page: 1,
             });
 
-            const latest = data[0];
+            const latest = data.length > 0 ? data[0] : null;
             const payload = latest
               ? {
                   number: latest.number,

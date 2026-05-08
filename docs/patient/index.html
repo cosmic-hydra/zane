@@ -42,6 +42,12 @@
 
     <script>
       (async () => {
+        const asSafeString = (value, fallback = 'n/a', maxLen = 140) => {
+          if (typeof value !== 'string') return fallback;
+          const normalized = value.replace(/\s+/g, ' ').trim();
+          if (!normalized) return fallback;
+          return normalized.length > maxLen ? `${normalized.slice(0, maxLen - 1)}…` : normalized;
+        };
         const container = document.getElementById('latest-pr');
         try {
           const response = await fetch('./latest-pr.json');
@@ -52,28 +58,28 @@
 
           const linkWrapper = document.createElement('p');
           const link = document.createElement('a');
-          link.href = pr.url || '#';
+          link.href = asSafeString(pr.url, '#', 500);
           link.target = '_blank';
           link.rel = 'noreferrer';
-          link.textContent = `#${pr.number}: ${pr.title}`;
+          link.textContent = `#${pr.number}: ${asSafeString(pr.title, 'Untitled PR', 200)}`;
           linkWrapper.appendChild(link);
 
           const pills = document.createElement('div');
           pills.className = 'row';
           const state = document.createElement('span');
           state.className = 'pill';
-          state.textContent = `State: ${pr.state}`;
+          state.textContent = `State: ${asSafeString(pr.state, 'unknown', 20)}`;
           const merged = document.createElement('span');
           merged.className = 'pill';
           merged.textContent = `Merged: ${pr.merged_at ? 'yes' : 'no'}`;
           const author = document.createElement('span');
           author.className = 'pill';
-          author.textContent = `Author: ${pr.author || 'unknown'}`;
+          author.textContent = `Author: ${asSafeString(pr.author, 'unknown', 50)}`;
           pills.append(state, merged, author);
 
           const details = document.createElement('p');
           details.className = 'muted';
-          details.textContent = `Updated: ${pr.updated_at || 'n/a'} · Base: ${pr.base || 'n/a'} · Head: ${pr.head || 'n/a'}`;
+          details.textContent = `Updated: ${asSafeString(pr.updated_at, 'n/a', 40)} · Base: ${asSafeString(pr.base, 'n/a', 80)} · Head: ${asSafeString(pr.head, 'n/a', 80)}`;
 
           container.append(linkWrapper, pills, details);
         } catch (error) {
