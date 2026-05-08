@@ -79,6 +79,7 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+temp_uploads/
 *.tmp
 
 # Test cache
