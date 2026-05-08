@@ -43,11 +43,15 @@
     <script>
       (async () => {
         const asSafeString = (value, fallback = 'n/a', maxLen = 140) => {
+          if (!Number.isInteger(maxLen) || maxLen <= 1) return fallback;
           if (typeof value !== 'string') return fallback;
           const normalized = value.replace(/\s+/g, ' ').trim();
           if (!normalized) return fallback;
           return normalized.length > maxLen ? `${normalized.slice(0, Math.max(maxLen - 1, 1))}…` : normalized;
         };
+        const asSafeNumber = (value, fallback = 'n/a') => (
+          Number.isInteger(value) && value > 0 ? String(value) : fallback
+        );
         const container = document.getElementById('latest-pr');
         try {
           const response = await fetch('./latest-pr.json');
@@ -61,7 +65,7 @@
           link.href = asSafeString(pr.url, '#', 500);
           link.target = '_blank';
           link.rel = 'noreferrer';
-          link.textContent = `#${pr.number}: ${asSafeString(pr.title, 'Untitled PR', 200)}`;
+          link.textContent = `#${asSafeNumber(pr.number)}: ${asSafeString(pr.title, 'Untitled PR', 200)}`;
           linkWrapper.appendChild(link);
 
           const pills = document.createElement('div');
