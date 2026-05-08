@@ -46,7 +46,7 @@
           if (typeof value !== 'string') return fallback;
           const normalized = value.replace(/\s+/g, ' ').trim();
           if (!normalized) return fallback;
-          return normalized.length > maxLen ? `${normalized.slice(0, Math.max(maxLen - 2, 1))}…` : normalized;
+          return normalized.length > maxLen ? `${normalized.slice(0, Math.max(maxLen - 1, 1))}…` : normalized;
         };
         const container = document.getElementById('latest-pr');
         try {
