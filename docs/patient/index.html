@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ZANE Patient Portal</title>
+    <title>ZANE N=1 Patient Portal</title>
     <style>
       :root { color-scheme: dark; }
       body { font-family: Arial, sans-serif; margin: 0; background: #000; color: #fff; }
@@ -44,20 +44,38 @@
       (async () => {
         const container = document.getElementById('latest-pr');
         try {
-          const response = await fetch('./latest-pr.json', { cache: 'no-store' });
+          const response = await fetch('./latest-pr.json');
           if (!response.ok) throw new Error('Unable to load PR metadata');
           const pr = await response.json();
           if (!pr || !pr.number) throw new Error('No pull request metadata found');
-          container.innerHTML = `
-            <h2>Latest Pull Request</h2>
-            <p><a href="${pr.url}" target="_blank" rel="noreferrer">#${pr.number}: ${pr.title}</a></p>
-            <div class="row">
-              <span class="pill">State: ${pr.state}</span>
-              <span class="pill">Merged: ${pr.merged_at ? 'yes' : 'no'}</span>
-              <span class="pill">Author: ${pr.author || 'unknown'}</span>
-            </div>
-            <p class="muted">Updated: ${pr.updated_at || 'n/a'} · Base: ${pr.base || 'n/a'} · Head: ${pr.head || 'n/a'}</p>
-          `;
+          container.innerHTML = '<h2>Latest Pull Request</h2>';
+
+          const linkWrapper = document.createElement('p');
+          const link = document.createElement('a');
+          link.href = pr.url || '#';
+          link.target = '_blank';
+          link.rel = 'noreferrer';
+          link.textContent = `#${pr.number}: ${pr.title}`;
+          linkWrapper.appendChild(link);
+
+          const pills = document.createElement('div');
+          pills.className = 'row';
+          const state = document.createElement('span');
+          state.className = 'pill';
+          state.textContent = `State: ${pr.state}`;
+          const merged = document.createElement('span');
+          merged.className = 'pill';
+          merged.textContent = `Merged: ${pr.merged_at ? 'yes' : 'no'}`;
+          const author = document.createElement('span');
+          author.className = 'pill';
+          author.textContent = `Author: ${pr.author || 'unknown'}`;
+          pills.append(state, merged, author);
+
+          const details = document.createElement('p');
+          details.className = 'muted';
+          details.textContent = `Updated: ${pr.updated_at || 'n/a'} · Base: ${pr.base || 'n/a'} · Head: ${pr.head || 'n/a'}`;
+
+          container.append(linkWrapper, pills, details);
         } catch (error) {
           container.innerHTML = '<h2>Latest Pull Request</h2><p class="muted">Unable to load metadata.</p>';
         }
