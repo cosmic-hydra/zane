@@ -1,0 +1,5 @@
+Approved Drugs:
+                          smiles       name   source
+0       CC(=O)OC1=CC=CC=C1C(=O)O    Aspirin  builtin
+1  CC(C)CC1=CC=C(C=C1)C(C)C(=O)O  Ibuprofen  builtin
+2   CN1C=NC2=C1C(=O)N(C(=O)N2C)C   Caffeine  builtin
