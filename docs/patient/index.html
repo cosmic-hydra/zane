@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZANE N=1 Patient Portal</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { font-family: Arial, sans-serif; margin: 0; background: #000; color: #fff; }
+      .container { max-width: 960px; margin: 0 auto; padding: 2rem 1rem; }
+      .card { background: #111; border: 1px solid #222; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+      h1 { margin-top: 0; font-size: 2rem; }
+      h2 { margin: 0 0 0.75rem; font-size: 1.25rem; }
+      .muted { color: #aaa; }
+      ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+      .pill { display: inline-block; border: 1px solid #2a2a2a; border-radius: 999px; padding: 0.25rem 0.65rem; font-size: 0.8rem; }
+      a { color: #64b5ff; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>ZANE N=1 Patient Portal</h1>
+      <p class="muted">Static deployment for GitHub Pages.</p>
+
+      <section class="card">
+        <h2>Patient Intake Summary</h2>
+        <ul>
+          <li>Personal details: name, date of birth, phone, email, and location</li>
+          <li>Health report upload support for PDF, Word, and image files</li>
+          <li>Bio-clinical context capture for purpose, treatments, lifestyle, and hereditary history</li>
+          <li>Therapeutic blueprint output for compounds, dosage, timing, and toxicity details</li>
+        </ul>
+      </section>
+
+      <section class="card" id="latest-pr">
+        <h2>Latest Pull Request</h2>
+        <p class="muted">Loading latest PR metadata…</p>
+      </section>
+    </main>
+
+    <script>
+      (async () => {
+        const asSafeString = (value, fallback = 'n/a', maxLen = 140) => {
+          if (!Number.isInteger(maxLen) || maxLen <= 2) return fallback;
+          if (typeof value !== 'string') return fallback;
+          const normalized = value.replace(/\s+/g, ' ').trim();
+          if (!normalized) return fallback;
+          return normalized.length > maxLen ? `${normalized.slice(0, maxLen - 1)}…` : normalized;
+        };
+        const asSafeNumber = (value, fallback = 'n/a') => (
+          Number.isInteger(value) && value > 0 ? String(value) : fallback
+        );
+        const asSafeUrl = (value, fallback = '#') => {
+          if (typeof value !== 'string') return fallback;
+          try {
+            const parsed = new URL(value);
+            return parsed.protocol === 'https:' ? parsed.toString() : fallback;
+          } catch {
+            return fallback;
+          }
+        };
+        const container = document.getElementById('latest-pr');
+        try {
+          const response = await fetch('./latest-pr.json');
+          if (!response.ok) throw new Error('Unable to load PR metadata');
+          const pr = await response.json();
+          if (!pr || !pr.number) throw new Error('No pull request metadata found');
+          container.innerHTML = '<h2>Latest Pull Request</h2>';
+
+          const linkWrapper = document.createElement('p');
+          const link = document.createElement('a');
+          link.href = asSafeUrl(pr.url);
+          link.target = '_blank';
+          link.rel = 'noreferrer';
+          link.textContent = `#${asSafeNumber(pr.number)}: ${asSafeString(pr.title, 'Untitled PR', 200)}`;
+          linkWrapper.appendChild(link);
+
+          const pills = document.createElement('div');
+          pills.className = 'row';
+          const state = document.createElement('span');
+          state.className = 'pill';
+          state.textContent = `State: ${asSafeString(pr.state, 'unknown', 20)}`;
+          const merged = document.createElement('span');
+          merged.className = 'pill';
+          merged.textContent = `Merged: ${pr.merged_at ? 'yes' : 'no'}`;
+          const author = document.createElement('span');
+          author.className = 'pill';
+          author.textContent = `Author: ${asSafeString(pr.author, 'unknown', 50)}`;
+          pills.append(state, merged, author);
+
+          const details = document.createElement('p');
+          details.className = 'muted';
+          details.textContent = `Updated: ${asSafeString(pr.updated_at, 'n/a', 40)} · Base: ${asSafeString(pr.base, 'n/a', 80)} · Head: ${asSafeString(pr.head, 'n/a', 80)}`;
+
+          container.append(linkWrapper, pills, details);
+        } catch (error) {
+          container.innerHTML = '<h2>Latest Pull Request</h2><p class="muted">Unable to load metadata.</p>';
+        }
+      })();
+    </script>
+  </body>
+</html>
