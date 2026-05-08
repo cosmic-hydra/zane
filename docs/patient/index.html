@@ -43,7 +43,7 @@
     <script>
       (async () => {
         const asSafeString = (value, fallback = 'n/a', maxLen = 140) => {
-          if (!Number.isInteger(maxLen) || maxLen <= 1) return fallback;
+          if (!Number.isInteger(maxLen) || maxLen <= 2) return fallback;
           if (typeof value !== 'string') return fallback;
           const normalized = value.replace(/\s+/g, ' ').trim();
           if (!normalized) return fallback;
@@ -52,6 +52,15 @@
         const asSafeNumber = (value, fallback = 'n/a') => (
           Number.isInteger(value) && value > 0 ? String(value) : fallback
         );
+        const asSafeUrl = (value, fallback = '#') => {
+          if (typeof value !== 'string') return fallback;
+          try {
+            const parsed = new URL(value);
+            return parsed.protocol === 'https:' ? parsed.toString() : fallback;
+          } catch {
+            return fallback;
+          }
+        };
         const container = document.getElementById('latest-pr');
         try {
           const response = await fetch('./latest-pr.json');
@@ -62,7 +71,7 @@
 
           const linkWrapper = document.createElement('p');
           const link = document.createElement('a');
-          link.href = asSafeString(pr.url, '#', 500);
+          link.href = asSafeUrl(pr.url);
           link.target = '_blank';
           link.rel = 'noreferrer';
           link.textContent = `#${asSafeNumber(pr.number)}: ${asSafeString(pr.title, 'Untitled PR', 200)}`;
