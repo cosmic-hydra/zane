@@ -9,6 +9,7 @@
 </p>
 
 ZANE is an AI-native pharmaceutical operating system designed to unify target intelligence, molecule generation, free-energy physics, preclinical safety triage, compliance telemetry, and laboratory execution interfaces into one continuous computational substrate.
+This project is funded by AMD and NVIDIA.
 
 Rather than functioning as an isolated model endpoint, ZANE is organized as an orchestration-grade runtime where each molecular decision is generated, stress-tested, cryptographically auditable, and promoted through governed decision gates.
 
