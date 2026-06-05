@@ -90,7 +90,6 @@ class CommercialDrugMapper:
         """
         Compares ZANE's multi-compound drug with the commercial equivalent.
         """
-        {c["smiles"] for c in zane_compounds}
         comm_smiles = commercial_match.get("smiles", "")
 
         # Extra: In ZANE but not the main commercial ingredient

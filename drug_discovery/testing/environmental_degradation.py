@@ -61,7 +61,7 @@ class EnvironmentalStressSimulator:
             "extended_aromatic_systems": "c1ccc2c(c1)ccc3ccccc32",  # Pyrene-like
         }
 
-        for _name, smarts in phototoxicity_alerts.items():
+        for smarts in phototoxicity_alerts.values():
             pattern = Chem.MolFromSmarts(smarts)
             if pattern and mol.HasSubstructMatch(pattern):
                 return True

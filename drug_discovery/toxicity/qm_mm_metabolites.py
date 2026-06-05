@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 try:
     from rdkit import Chem  # type: ignore[import-untyped]
-    from rdkit.Chem import AllChem, Crippen, Descriptors, rdMolDescriptors  # type: ignore[import-untyped]
+    from rdkit.Chem import AllChem, Descriptors, rdMolDescriptors  # type: ignore[import-untyped]
 
     _RDKIT = True
 except ImportError:  # pragma: no cover
@@ -117,7 +117,6 @@ def _heuristic_gap_ev(smiles: str) -> float:
     aromatic_rings = int(rdMolDescriptors.CalcNumAromaticRings(mol))
     ring_count = int(rdMolDescriptors.CalcNumRings(mol))
     tpsa = float(rdMolDescriptors.CalcTPSA(mol))
-    float(Crippen.MolLogP(mol))
     heavy = int(mol.GetNumHeavyAtoms())
     dbl_bonds = sum(1 for b in mol.GetBonds() if str(b.GetBondTypeAsDouble()) == "2.0")
 
