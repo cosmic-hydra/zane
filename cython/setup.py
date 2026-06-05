@@ -5,9 +5,9 @@ Compile high-performance fingerprint operations into C extensions.
 Run: python setup.py build_ext --inplace
 """
 
-from setuptools import setup, Extension
-from Cython.Build import cythonize
 import numpy
+from Cython.Build import cythonize
+from setuptools import Extension, setup
 
 ext_modules = [
     Extension(

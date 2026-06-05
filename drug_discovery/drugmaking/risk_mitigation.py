@@ -363,9 +363,8 @@ class CounterSubstanceFinder:
             return NEUTRALIZATION_RULES[target_toxicity]["chemistry"]
         if "carboxylic_acid" in groups or "sulfonate" in groups:
             return "acid-base neutralization"
-        if "amine" in groups:
-            if target_toxicity in ["acid_toxicity", "metal_toxicity"]:
-                return "acid-base neutralization" if "acid" in target_toxicity else "chelation"
+        if "amine" in groups and target_toxicity in ["acid_toxicity", "metal_toxicity"]:
+            return "acid-base neutralization" if "acid" in target_toxicity else "chelation"
         if len(groups) >= 2 and "amine" in groups and "carboxylic_acid" in groups:
             return "chelation"
         return "unknown"

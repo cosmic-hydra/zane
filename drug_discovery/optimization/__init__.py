@@ -23,8 +23,8 @@ try:
             "GaussianProcessSurrogate",
             "MOBOConfig",
             "MultiObjectiveBayesianOptimizer",
-            "is_pareto_efficient",
             "hypervolume_indicator",
+            "is_pareto_efficient",
         ]
     )
 except ImportError:

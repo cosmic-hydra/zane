@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+
 
 @dataclass
 class BBBShuttleResult:
@@ -11,9 +11,10 @@ class BBBShuttleResult:
     tm_score: float = 0.0  # Transcytosis Model score
     success: bool = False
 
+
 class BBBShuttleDesigner:
     """Designs BBB-penetrating shuttles (2024 delivery breakthrough).
-    
+
     Uses transferrin receptor binders + heavy chain engineering.
     """
 

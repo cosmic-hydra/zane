@@ -62,7 +62,7 @@ class WarmupScheduler:
         self.current_epoch = epoch if epoch is not None else self.current_epoch + 1
         if self.current_epoch <= self.warmup_epochs:
             factor = self.current_epoch / max(1, self.warmup_epochs)
-            for pg, blr in zip(self.optimizer.param_groups, self.base_lrs):
+            for pg, blr in zip(self.optimizer.param_groups, self.base_lrs, strict=False):
                 pg["lr"] = blr * factor
         else:
             if isinstance(self.base_scheduler, ReduceLROnPlateau) and metrics is not None:
@@ -178,9 +178,7 @@ class AdvancedTrainer:
             history["lr"].append(lr)
             history["epoch_time"].append(time.time() - t0)
             val_text = f"{vl:.6f}" if vl is not None else "N/A"
-            logger.info(
-                f"Epoch {epoch}/{self.config.epochs} | train={tl:.6f} | val={val_text} | lr={lr:.2e}"
-            )
+            logger.info(f"Epoch {epoch}/{self.config.epochs} | train={tl:.6f} | val={val_text} | lr={lr:.2e}")
             if vl is not None and vl < best_val:
                 best_val = vl
                 self._save(epoch, vl, "best_model.pt")

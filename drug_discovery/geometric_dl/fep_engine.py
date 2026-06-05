@@ -155,10 +155,7 @@ class OpenMMDriver:
         try:
             self.platform = Platform.getPlatformByName(self.platform_name)
 
-            if self.platform_name == "CUDA":
-                props = {"DeviceIndex": str(self.device_index), "Precision": self.precision}
-                self.platform.setPropertyDefaultValues(props)
-            elif self.platform_name == "OpenCL":
+            if self.platform_name == "CUDA" or self.platform_name == "OpenCL":
                 props = {"DeviceIndex": str(self.device_index), "Precision": self.precision}
                 self.platform.setPropertyDefaultValues(props)
 

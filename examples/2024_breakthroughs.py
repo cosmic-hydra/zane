@@ -3,9 +3,12 @@ Examples for 2024 drug discovery breakthroughs integration.
 """
 
 import asyncio
+
 from drug_discovery.alphafold3.alphafold3_docking import AlphaFold3Docking
 from drug_discovery.rfdiffusion.protein_design import RFDiffusionDesigner
+
 # etc.
+
 
 async def main():
     # AF3 proxy
@@ -20,15 +23,18 @@ async def main():
 
     # CRISPR base edit
     from models.biologics.crispr_base_editor import CRISPRBaseEditor
+
     editor = CRISPRBaseEditor()
     edit = editor.base_edit("ATCG", 1, "A", "G")
     print(edit)
 
     # ADC
     from models.nextgen_adcs.adc_optimizer import ADCOptimizer
+
     adc = ADCOptimizer()
     res = adc.optimize("DM1", "Her2-shuttle")
     print(res)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

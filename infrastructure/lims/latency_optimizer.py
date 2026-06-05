@@ -3,12 +3,15 @@
 Provides simple instrumentation, adaptive warmup, and lightweight caching
 to reduce perceived latency for remote LIMS calls.
 """
+
 from __future__ import annotations
 
+import contextlib
 import functools
-import time
 import threading
-from typing import Any, Callable, Dict, Optional
+import time
+from collections.abc import Callable
+from typing import Any
 
 
 class LimsLatencyOptimizer:
@@ -25,7 +28,7 @@ class LimsLatencyOptimizer:
         self.lock = threading.Lock()
         self.ema_latency = None  # seconds
         self.alpha = 0.2
-        self.cache: Dict[str, tuple[float, Any]] = {}
+        self.cache: dict[str, tuple[float, Any]] = {}
         self.cache_ttl = cache_ttl
         self.warmup_threshold = warmup_threshold
 
@@ -36,19 +39,17 @@ class LimsLatencyOptimizer:
             else:
                 self.ema_latency = self.alpha * latency + (1 - self.alpha) * self.ema_latency
 
-    def get_ema(self) -> Optional[float]:
+    def get_ema(self) -> float | None:
         return self.ema_latency
 
-    def cache_get(self, key: str) -> Optional[Any]:
+    def cache_get(self, key: str) -> Any | None:
         v = self.cache.get(key)
         if not v:
             return None
         ts, val = v
         if time.time() - ts > self.cache_ttl:
-            try:
+            with contextlib.suppress(KeyError):
                 del self.cache[key]
-            except KeyError:
-                pass
             return None
         return val
 
@@ -57,19 +58,20 @@ class LimsLatencyOptimizer:
 
     def pre_warm(self, fn: Callable[..., Any], *args, **kwargs) -> None:
         """Run a background pre-warm call (fire-and-forget)."""
+
         def runner():
-            try:
+            with contextlib.suppress(Exception):
                 fn(*args, **kwargs)
-            except Exception:
-                pass
+
         t = threading.Thread(target=runner, daemon=True)
         t.start()
 
-    def instrument(self, key_func: Optional[Callable[..., str]] = None):
+    def instrument(self, key_func: Callable[..., str] | None = None):
         """Decorator to instrument LIMS callables.
 
         key_func: optional callable to produce cache key from args/kwargs
         """
+
         def decorator(fn: Callable[..., Any]):
             @functools.wraps(fn)
             def wrapper(*args, **kwargs):
@@ -89,22 +91,21 @@ class LimsLatencyOptimizer:
                 self._update_ema(latency)
                 # if latency is high, schedule a background warmup
                 if self.ema_latency and self.ema_latency > self.warmup_threshold:
-                    try:
+                    with contextlib.suppress(Exception):
                         self.pre_warm(fn, *args, **kwargs)
-                    except Exception:
-                        pass
                 if key:
-                    try:
+                    with contextlib.suppress(Exception):
                         self.cache_set(key, result)
-                    except Exception:
-                        pass
                 return result
+
             return wrapper
+
         return decorator
 
 
 # convenience factory
-_default_optimizer: Optional[LimsLatencyOptimizer] = None
+_default_optimizer: LimsLatencyOptimizer | None = None
+
 
 def get_default_optimizer() -> LimsLatencyOptimizer:
     global _default_optimizer

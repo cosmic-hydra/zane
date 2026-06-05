@@ -2,11 +2,30 @@
 Transformer-based Models for Molecular Property Prediction
 """
 
-from typing import cast
+import math
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+
+class PositionalEncoding(nn.Module):
+    """Standard sinusoidal positional encoding for transformer models."""
+
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 512):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term[: d_model // 2])
+        pe = pe.unsqueeze(0)
+        self.register_buffer("pe", pe)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = x + self.pe[:, : x.size(1)]
+        return self.dropout(x)
 
 
 class MolecularTransformer(nn.Module):
@@ -100,6 +119,7 @@ class SwiGLU(nn.Module):
     SwiGLU activation function (used in LLaMA and other modern transformers).
     Ref: Shazeer, "GLU Variants Improve Transformer" (2020).
     """
+
     def __init__(self, input_dim: int, output_dim: int):
         super().__init__()
         self.w1 = nn.Linear(input_dim, output_dim)
@@ -113,6 +133,7 @@ class ModernMolecularTransformer(nn.Module):
     """
     Improved Transformer model using SwiGLU activations and Pre-Norm.
     """
+
     def __init__(
         self,
         input_dim: int = 2048,
@@ -124,15 +145,15 @@ class ModernMolecularTransformer(nn.Module):
     ):
         super().__init__()
         self.input_projection = nn.Linear(input_dim, hidden_dim)
-        
+
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=hidden_dim,
             nhead=num_heads,
             dim_feedforward=hidden_dim * 4,
             dropout=dropout,
-            activation=lambda x: F.silu(x), # SwiGLU is used in the FFN part, but PyTorch's layer is limited
+            activation=lambda x: F.silu(x),  # SwiGLU is used in the FFN part, but PyTorch's layer is limited
             batch_first=True,
-            norm_first=True # Pre-Norm for better stability
+            norm_first=True,  # Pre-Norm for better stability
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
         self.output_layer = nn.Linear(hidden_dim, output_dim)

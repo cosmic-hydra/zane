@@ -154,10 +154,7 @@ class FaultTolerantExecutor:
 
                 if attempt < self.max_retries - 1:
                     # Calculate delay
-                    if self.exponential_backoff:
-                        delay = self.retry_delay * (2**attempt)
-                    else:
-                        delay = self.retry_delay
+                    delay = self.retry_delay * 2**attempt if self.exponential_backoff else self.retry_delay
 
                     logger.info(f"Retrying in {delay} seconds...")
                     await asyncio.sleep(delay)
@@ -299,10 +296,11 @@ class StreamingDataPipeline:
                     process_function,
                     batch_df,
                 )
-                
+
                 # Elite filtering (20000x better candidates)
                 if elite_filter and "smiles" in processed_batch.columns:
                     from drug_discovery.safety import SmilesValidator
+
                     validator = SmilesValidator()
                     mask = processed_batch["smiles"].apply(validator.is_elite_smiles)
                     processed_batch = processed_batch[mask].reset_index(drop=True)
@@ -489,7 +487,7 @@ class PipelineOrchestrator:
         # Run all pipelines concurrently
         stats_list = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for pipeline_id, stats in zip(self.pipelines.keys(), stats_list):
+        for pipeline_id, stats in zip(self.pipelines.keys(), stats_list, strict=False):
             if isinstance(stats, Exception):
                 logger.error(f"Pipeline {pipeline_id} failed: {stats}")
             else:

@@ -104,7 +104,7 @@ class SurrogateModel:
             self._best_y = delta_g
 
     def observe_batch(self, fingerprints: Sequence[np.ndarray], delta_gs: Sequence[float]) -> None:
-        for fp, dg in zip(fingerprints, delta_gs):
+        for fp, dg in zip(fingerprints, delta_gs, strict=False):
             self.observe(fp, dg)
 
     @property
@@ -244,7 +244,7 @@ class SurrogateModel:
         fps = np.array([smiles_to_fingerprint(s, nbits=self.fp_dim) for s in smiles_list])
         ei_values = self.expected_improvement(fps, xi=xi)
 
-        k = max(min_candidates, int(math.ceil(len(smiles_list) * top_fraction)))
+        k = max(min_candidates, math.ceil(len(smiles_list) * top_fraction))
         k = min(k, len(smiles_list))
         top_indices = np.argsort(ei_values)[-k:][::-1]
         return [smiles_list[i] for i in top_indices]
@@ -391,9 +391,7 @@ class ClosedLoopLearner:
             smiles_pool = [c["smiles"] for c in candidates]
             if self.surrogate.n_observations >= 2:
                 self.surrogate.fit()
-                selected_smiles = self.surrogate.select_top_candidates(
-                    smiles_pool, top_fraction=surrogate_top_fraction
-                )
+                selected_smiles = self.surrogate.select_top_candidates(smiles_pool, top_fraction=surrogate_top_fraction)
             else:
                 # Not enough data yet -- send all candidates
                 selected_smiles = smiles_pool
@@ -451,16 +449,11 @@ class ClosedLoopLearner:
     # ------------------------------------------------------------------
     # Oracle evaluation
     # ------------------------------------------------------------------
-    def _evaluate_candidates_with_oracle(
-        self, smiles_list: list[str], target_protein: str
-    ) -> list[dict[str, Any]]:
+    def _evaluate_candidates_with_oracle(self, smiles_list: list[str], target_protein: str) -> list[dict[str, Any]]:
         """Run the Physics Oracle on a short-list of SMILES."""
         if self.physics_oracle is None:
             # No oracle configured -- return mock evaluations
-            return [
-                {"smiles": s, "delta_g": -7.0 + hash(s) % 100 / 50.0, "success": True}
-                for s in smiles_list
-            ]
+            return [{"smiles": s, "delta_g": -7.0 + hash(s) % 100 / 50.0, "success": True} for s in smiles_list]
 
         results = self.physics_oracle.score_batch_sync(smiles_list)
         return [r.as_dict() for r in results]
@@ -499,9 +492,7 @@ class ClosedLoopLearner:
         pool = self._SEED_SMILES
         for i in range(num_candidates):
             smiles = pool[i % len(pool)]
-            candidates.append(
-                {"id": f"iter_candidate_{i}", "smiles": smiles, "generation_method": "active_learning"}
-            )
+            candidates.append({"id": f"iter_candidate_{i}", "smiles": smiles, "generation_method": "active_learning"})
         return candidates
 
     def _evaluate_candidates(self, candidates: list[dict], target_protein: str) -> list[dict]:

@@ -135,11 +135,14 @@ def _fep_openmm(
     energies: list[float] = []
 
     for lam in lambda_values:
-        ctx = mm.Context(system, mm.LangevinMiddleIntegrator(
-            temperature * unit.kelvin,
-            1.0 / unit.picosecond,
-            timestep * unit.femtoseconds,
-        ))
+        ctx = mm.Context(
+            system,
+            mm.LangevinMiddleIntegrator(
+                temperature * unit.kelvin,
+                1.0 / unit.picosecond,
+                timestep * unit.femtoseconds,
+            ),
+        )
         ctx.setPositions([mm.Vec3(0.0, 0.0, 0.0)] * unit.nanometers)
         ctx.getIntegrator().step(min(steps_per_window, 100))
         state = ctx.getState(getEnergy=True)
@@ -321,7 +324,7 @@ class PhysicsOracle:
         if to_compute:
             uncached_smiles = [smi for _, smi in to_compute]
             computed = await self._compute_with_retry(uncached_smiles)
-            for (idx, smi), result in zip(to_compute, computed):
+            for (idx, smi), result in zip(to_compute, computed, strict=False):
                 results[idx] = result
                 if self._cache is not None and result.success:
                     self._cache[self._cache_key(smi)] = result
@@ -359,7 +362,7 @@ class PhysicsOracle:
             )
             retry_smiles = [smiles_list[i] for i in failed_indices]
             retry_results = await self._dispatch(retry_smiles)
-            for fi, rr in zip(failed_indices, retry_results):
+            for fi, rr in zip(failed_indices, retry_results, strict=False):
                 if rr.success:
                     results[fi] = rr
 
@@ -391,9 +394,7 @@ class PhysicsOracle:
             for smi in smiles_list
         ]
 
-        raw_results = await asyncio.gather(
-            *[asyncio.wrap_future(f.future()) for f in futures]
-        )
+        raw_results = await asyncio.gather(*[asyncio.wrap_future(f.future()) for f in futures])
         return [self._dict_to_result(d) for d in raw_results]
 
     # ------------------------------------------------------------------

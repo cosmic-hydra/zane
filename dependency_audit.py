@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
-from importlib.util import find_spec
 from collections.abc import Iterable, Sequence
+from importlib.util import find_spec
 
 DEFAULT_MODULES = (
     "numpy",

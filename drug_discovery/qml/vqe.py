@@ -144,7 +144,7 @@ class HardwareEfficientAnsatz:
 
             # Entangling layer + subsequent rotations
             param_idx = self.n_qubits
-            for layer in range(self.n_layers):
+            for _layer in range(self.n_layers):
                 # Entangling gates
                 if self.entanglement == "linear":
                     for i in range(self.n_qubits - 1):
@@ -179,7 +179,7 @@ class HardwareEfficientAnsatz:
             total += np.cos(theta)  # Simplified RY effect
             param_idx += 1
 
-        for layer in range(self.n_layers):
+        for _layer in range(self.n_layers):
             # Simplified entanglement effect
             for i in range(self.n_qubits - 1):
                 total += 0.1 * np.sin(parameters[param_idx + i])
@@ -302,7 +302,7 @@ class VQECircuit:
             self._apply_ansatz(params)
             # Measure expectation
             results = []
-            for term in hamiltonian.keys():
+            for _term in hamiltonian:
                 # Simplified measurement
                 results.append(qml.expval(qml.PauliZ(0)))
             return sum(results) / len(results) if results else 0.0
@@ -319,7 +319,7 @@ class VQECircuit:
             qml.RY(params[param_idx], wires=i)
             param_idx += 1
 
-        for layer in range(self.n_layers):
+        for _layer in range(self.n_layers):
             # Entangling gates
             for i in range(self.n_qubits - 1):
                 qml.CNOT(wires=[i, i + 1])

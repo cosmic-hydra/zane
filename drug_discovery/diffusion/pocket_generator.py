@@ -172,10 +172,7 @@ class PocketAwareGenerator:
         # Extract pocket information
         pocket_coords = pocket_context.pocket_coords
 
-        if pocket_coords is not None:
-            center = pocket_coords.mean(axis=0)
-        else:
-            center = np.zeros(3)
+        center = pocket_coords.mean(axis=0) if pocket_coords is not None else np.zeros(3)
 
         # Generate candidates
         candidates = []
@@ -183,7 +180,7 @@ class PocketAwareGenerator:
         # Drug-like scaffolds for generation
         scaffolds = self._get_scaffolds_for_pocket(pocket_context)
 
-        for i in range(n_molecules):
+        for _i in range(n_molecules):
             # Select scaffold
             scaffold = scaffolds[np.random.randint(0, len(scaffolds))]
 

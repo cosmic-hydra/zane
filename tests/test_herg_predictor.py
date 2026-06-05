@@ -41,7 +41,7 @@ class TestHERGPredictor(unittest.TestCase):
     def test_prediction_output_structure(self):
         """Test that prediction returns complete HERGPrediction object."""
         result = self.predictor.predict("CCO")
-        
+
         self.assertIsInstance(result, HERGPrediction)
         self.assertEqual(result.smiles, "CCO")
         self.assertIsInstance(result.inhibition_probability, float)
@@ -64,11 +64,11 @@ class TestHERGPredictor(unittest.TestCase):
     def test_ic50_estimation(self):
         """Test that IC50 is estimated in realistic nanomolar range."""
         result = self.predictor.predict("c1ccc(Nc2nccc(Oc3ccccc3)n2)cc1")  # Example ARB-like
-        
+
         # IC50 should be in plausible range (100 nM to 100 µM)
         self.assertGreaterEqual(result.ic50_estimate_nM, 100.0)
         self.assertLess(result.ic50_estimate_nM, 100000.0)
-        
+
         # Range should be plausible
         self.assertLess(result.ic50_range_nM[0], result.ic50_range_nM[1])
 
@@ -77,7 +77,7 @@ class TestHERGPredictor(unittest.TestCase):
         # Very lipophilic aromatic compound with basic N (should be high risk)
         high_risk = self.predictor.predict("CN1CCC[C@H]1c2ccccc2Cl")  # Piperidine-phenyl
         self.assertIn(high_risk.cipa_risk_category, ["category_2", "category_3"])
-        
+
         # Simple polar compound should be lower risk
         low_risk = self.predictor.predict("CCO")  # Ethanol
         # Ethanol should be low or category_2 (not high)
@@ -87,11 +87,11 @@ class TestHERGPredictor(unittest.TestCase):
         """Test QTc prolongation risk is derived from hERG and potency."""
         result = self.predictor.predict("CCO")
         self.assertIn(result.qtichan_risk, ["very_low", "low", "moderate", "high"])
-        
+
         # Risk should increase with inhibition probability
         high_inhibit = self.predictor.predict("CN1CCN(c2ccc(cc2)Cl)CC1")  # More aromatic/basic
         low_inhibit = self.predictor.predict("CO")
-        
+
         # This is not strictly guaranteed due to heuristics, but generally true
         # Just verify that risk categories are valid
         self.assertIn(high_inhibit.qtichan_risk, ["very_low", "low", "moderate", "high"])
@@ -108,7 +108,7 @@ class TestHERGPredictor(unittest.TestCase):
         # Molecule with high logP and low TPSA should have concerns
         result = self.predictor.predict("c1ccc(cc1)C(c2ccccc2)C(c3ccccc3)c4ccccc4")  # Very lipophilic
         self.assertGreater(len(result.key_concerns), 0)
-        
+
         # Simple molecule might have fewer or no concerns
         result_simple = self.predictor.predict("C")
         # Should be a list (may be empty)
@@ -135,7 +135,7 @@ class TestHERGIntegrationWithGLP(unittest.TestCase):
         """Test that GLPToxPanel still produces HERGResult with correct interface."""
         panel = PreClinicalToxPanel()
         result = panel.evaluate("CCO")
-        
+
         # HERGResult should have expected attributes
         self.assertIsNotNone(result.herg)
         self.assertGreaterEqual(result.herg.inhibition_probability, 0.0)
@@ -150,7 +150,7 @@ class TestHERGIntegrationWithGLP(unittest.TestCase):
         # Very strict threshold
         strict_panel = PreClinicalToxPanel(herg_threshold=0.1)
         result = strict_panel.evaluate("c1ccccc1")  # Benzene (somewhat aromatic)
-        
+
         # Should fail if inhibition > 0.1
         if result.herg.inhibition_probability > 0.1:
             self.assertFalse(result.herg.passed)
@@ -161,7 +161,7 @@ class TestHERGIntegrationWithGLP(unittest.TestCase):
         """Test that custom HERGPredictor can be passed to PreClinicalToxPanel."""
         custom_predictor = HERGPredictor(logp_coeff=0.3, tpsa_coeff=-0.2)
         panel = PreClinicalToxPanel(herg_predictor=custom_predictor)
-        
+
         self.assertIs(panel.herg_predictor, custom_predictor)
         self.assertEqual(panel.herg_predictor.logp_coeff, 0.3)
 
@@ -170,7 +170,7 @@ class TestHERGIntegrationWithGLP(unittest.TestCase):
         panel = PreClinicalToxPanel()
         smiles_list = ["CCO", "c1ccccc1", "CC(=O)O"]
         results = panel.evaluate_batch(smiles_list)
-        
+
         self.assertEqual(len(results), 3)
         for result in results:
             self.assertIsNotNone(result.herg)

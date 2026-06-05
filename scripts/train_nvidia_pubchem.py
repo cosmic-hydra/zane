@@ -269,5 +269,6 @@ def main(argv: Sequence[str] | None = None) -> None:
         trust_remote_code=args.trust_remote_code,
     )
 
+
 if __name__ == "__main__":
     main()

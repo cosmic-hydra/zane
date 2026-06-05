@@ -220,7 +220,7 @@ class UncertaintyEstimator:
             # In practice, model would have dropout enabled during inference
             pred = model(input_data)
             if isinstance(pred, dict):
-                pred = list(pred.values())[0]
+                pred = next(iter(pred.values()))
             predictions.append(float(pred))
 
         predictions = np.array(predictions)
@@ -390,7 +390,7 @@ class UncertaintyEstimator:
                 try:
                     pred = model(smiles)
                     if isinstance(pred, dict):
-                        pred = list(pred.values())[0]
+                        pred = next(iter(pred.values()))
                     predictions.append(float(pred))
                 except Exception as e:
                     logger.warning(f"Model prediction failed for {smiles}: {e}")

@@ -15,10 +15,11 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional, Sequence
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -72,9 +73,9 @@ class ComplianceCheckResult:
     compliance_level: ComplianceLevel
     severity: str  # "critical", "major", "minor", "info"
     message: str
-    value: Optional[float] = None
-    threshold: Optional[float] = None
-    remediation: Optional[str] = None
+    value: float | None = None
+    threshold: float | None = None
+    remediation: str | None = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
 
@@ -96,7 +97,7 @@ class DataIntegrityReport:
             self.integrity_verified = True
             return True
         self.tampering_detected = True
-        logger.warning(f"Data integrity check FAILED: hash mismatch")
+        logger.warning("Data integrity check FAILED: hash mismatch")
         return False
 
 
@@ -160,44 +161,54 @@ class StrictComplianceGate:
         self,
         compliance_level: ComplianceLevel = ComplianceLevel.STRICT,
         # Stricter thresholds for regulatory compliance (optional overrides)
-        strict_herg_threshold: Optional[float] = None,
-        strict_ames_threshold: Optional[float] = None,
-        strict_hepatotox_threshold: Optional[float] = None,
-        strict_logp_max: Optional[float] = None,
-        strict_logp_min: Optional[float] = None,
-        strict_tpsa_range: Optional[tuple[float, float]] = None,
-        strict_mw_max: Optional[float] = None,
-        strict_rotatable_bonds_max: Optional[int] = None,
+        strict_herg_threshold: float | None = None,
+        strict_ames_threshold: float | None = None,
+        strict_hepatotox_threshold: float | None = None,
+        strict_logp_max: float | None = None,
+        strict_logp_min: float | None = None,
+        strict_tpsa_range: tuple[float, float] | None = None,
+        strict_mw_max: float | None = None,
+        strict_rotatable_bonds_max: int | None = None,
         # Risk tier adjustment factors
         aromatic_ring_penalty: float = 0.15,  # Per aromatic ring
         basic_amine_penalty: float = 0.20,  # Per basic nitrogen
         halogenation_penalty: float = 0.10,  # Per halogen atom
     ):
         """Initialize strict compliance gate with parametrized thresholds.
-        
+
         Thresholds are adjusted based on compliance_level if not explicitly provided.
         """
         self.compliance_level = compliance_level
-        
+
         # Set thresholds based on compliance level if not explicitly provided
         level_config = self._get_thresholds_for_level(compliance_level)
-        
-        self.strict_herg_threshold = strict_herg_threshold if strict_herg_threshold is not None else level_config["herg"]
-        self.strict_ames_threshold = strict_ames_threshold if strict_ames_threshold is not None else level_config["ames"]
-        self.strict_hepatotox_threshold = strict_hepatotox_threshold if strict_hepatotox_threshold is not None else level_config["hepatotox"]
+
+        self.strict_herg_threshold = (
+            strict_herg_threshold if strict_herg_threshold is not None else level_config["herg"]
+        )
+        self.strict_ames_threshold = (
+            strict_ames_threshold if strict_ames_threshold is not None else level_config["ames"]
+        )
+        self.strict_hepatotox_threshold = (
+            strict_hepatotox_threshold if strict_hepatotox_threshold is not None else level_config["hepatotox"]
+        )
         self.strict_logp_max = strict_logp_max if strict_logp_max is not None else level_config["logp_max"]
         self.strict_logp_min = strict_logp_min if strict_logp_min is not None else level_config["logp_min"]
-        
+
         tpsa_range = strict_tpsa_range if strict_tpsa_range is not None else level_config["tpsa_range"]
         self.strict_tpsa_min, self.strict_tpsa_max = tpsa_range
-        
+
         self.strict_mw_max = strict_mw_max if strict_mw_max is not None else level_config["mw_max"]
-        self.strict_rotatable_bonds_max = strict_rotatable_bonds_max if strict_rotatable_bonds_max is not None else level_config["rotatable_bonds_max"]
-        
+        self.strict_rotatable_bonds_max = (
+            strict_rotatable_bonds_max
+            if strict_rotatable_bonds_max is not None
+            else level_config["rotatable_bonds_max"]
+        )
+
         self.aromatic_ring_penalty = aromatic_ring_penalty
         self.basic_amine_penalty = basic_amine_penalty
         self.halogenation_penalty = halogenation_penalty
-    
+
     def _get_thresholds_for_level(self, level: ComplianceLevel) -> dict[str, Any]:
         """Get default thresholds for compliance level."""
         if level == ComplianceLevel.RELAXED:
@@ -248,54 +259,47 @@ class StrictComplianceGate:
     def evaluate(
         self,
         smiles: str,
-        toxicity_probs: Optional[dict[str, float]] = None,
+        toxicity_probs: dict[str, float] | None = None,
         user_id: str = "system",
     ) -> QualityAssessment:
         """Evaluate molecule against strict compliance criteria.
-        
+
         Args:
             smiles: SMILES string
             toxicity_probs: Pre-computed toxicity probabilities (optional)
             user_id: User performing evaluation (for audit trail)
-            
+
         Returns:
             QualityAssessment with comprehensive compliance evaluation
         """
         # Generate audit ID for traceability
         audit_id = self._generate_audit_id(smiles, user_id)
-        
+
         # Validate SMILES
         if not self._validate_smiles(smiles):
             return self._create_rejection_assessment(
-                smiles,
-                audit_id,
-                "Invalid SMILES structure",
-                "Failed basic SMILES validation"
+                smiles, audit_id, "Invalid SMILES structure", "Failed basic SMILES validation"
             )
-        
+
         # Calculate molecular properties
         props = self._calculate_properties(smiles)
-        
+
         # Identify risk factors
         risk_factors = self._identify_risk_factors(props)
-        
+
         # Run compliance checks
         checks = self._run_compliance_checks(props, toxicity_probs or {})
-        
+
         # Calculate quality tier
-        quality_tier, tier_confidence = self._classify_quality_tier(
-            checks, risk_factors, props
-        )
-        
+        quality_tier, tier_confidence = self._classify_quality_tier(checks, risk_factors, props)
+
         # Verify data integrity
         integrity = self._verify_data_integrity(smiles, props)
-        
+
         # Generate assessment
         overall_passed = all(c.passed for c in checks)
-        recommendation = self._generate_recommendation(
-            quality_tier, checks, risk_factors
-        )
-        
+        recommendation = self._generate_recommendation(quality_tier, checks, risk_factors)
+
         return QualityAssessment(
             smiles=smiles,
             quality_tier=quality_tier,
@@ -316,13 +320,13 @@ class StrictComplianceGate:
         """Validate SMILES string structure."""
         if not isinstance(smiles, str) or not smiles.strip():
             return False
-        
+
         # Check for obviously invalid characters or patterns
         invalid_chars = set("!@#$%&*()[]{}\\/<>|~`")
         if any(c in smiles for c in invalid_chars if c not in "[]()"):
             # Note: [] and () are valid in SMILES
             return False
-        
+
         # If RDKit is available, use it for proper validation
         if _RDKIT:
             mol = Chem.MolFromSmiles(smiles)
@@ -336,18 +340,15 @@ class StrictComplianceGate:
             except Exception:
                 return False
             return True
-        
+
         # Fallback: at least check basic SMILES character set
         # Valid SMILES characters (simplified)
         valid_chars = set("CNOPSFClBrIF=][()\\@+#-0123456789%")
         if not all(c in valid_chars for c in smiles if c not in "clno"):
             return False
-        
+
         # Must contain at least one element symbol or number
-        if not any(c in smiles for c in "CNOPSFClBr0123456789"):
-            return False
-        
-        return True
+        return any(c in smiles for c in "CNOPSFClBr0123456789")
 
     def _calculate_properties(self, smiles: str) -> dict[str, float]:
         """Calculate molecular properties."""
@@ -366,7 +367,7 @@ class StrictComplianceGate:
                     "halogen_count": self._count_halogens(mol),
                     "heavy_atoms": int(mol.GetNumHeavyAtoms()),
                 }
-        
+
         # Fallback heuristic
         return self._estimate_properties_heuristic(smiles)
 
@@ -374,10 +375,7 @@ class StrictComplianceGate:
         """Count aromatic rings."""
         try:
             ri = mol.GetRingInfo()
-            return sum(
-                1 for ring in ri.AtomRings()
-                if all(mol.GetAtomWithIdx(i).GetIsAromatic() for i in ring)
-            )
+            return sum(1 for ring in ri.AtomRings() if all(mol.GetAtomWithIdx(i).GetIsAromatic() for i in ring))
         except Exception:
             return 0
 
@@ -386,9 +384,8 @@ class StrictComplianceGate:
         count = 0
         try:
             for atom in mol.GetAtoms():
-                if atom.GetSymbol() == "N":
-                    if atom.GetTotalDegree() < 3:  # Free lone pair
-                        count += 1
+                if atom.GetSymbol() == "N" and atom.GetTotalDegree() < 3:  # Free lone pair
+                    count += 1
         except Exception:
             pass
         return count
@@ -424,25 +421,25 @@ class StrictComplianceGate:
     def _identify_risk_factors(self, props: dict[str, float]) -> list[RiskFactor]:
         """Identify known risk factors."""
         risk_factors = []
-        
+
         if props.get("logp", 0) > 3.5:
             risk_factors.append(RiskFactor.HIGH_LOGP)
-        
+
         if props.get("mw", 0) > 450:
             risk_factors.append(RiskFactor.HIGH_MW)
-        
+
         if props.get("aromatic_rings", 0) >= 3:
             risk_factors.append(RiskFactor.AROMATIC_TOXICOPHORE)
-        
+
         if props.get("basic_nitrogens", 0) >= 2:
             risk_factors.append(RiskFactor.BASIC_AMINE)
-        
+
         if props.get("halogen_count", 0) > 0:
             risk_factors.append(RiskFactor.HALOGENATION)
-        
+
         if props.get("tpsa", 0) < 20:
             risk_factors.append(RiskFactor.POOR_SOLUBILITY)
-        
+
         return risk_factors
 
     def _run_compliance_checks(
@@ -452,7 +449,7 @@ class StrictComplianceGate:
     ) -> list[ComplianceCheckResult]:
         """Run all compliance checks."""
         checks = []
-        
+
         # LogP check
         logp = props.get("logp", 0)
         checks.append(
@@ -464,10 +461,12 @@ class StrictComplianceGate:
                 message=f"LogP = {logp:.2f}, allowed range [{self.strict_logp_min}, {self.strict_logp_max}]",
                 value=logp,
                 threshold=self.strict_logp_max,
-                remediation="Reduce lipophilicity by removing hydrophobic groups" if logp > self.strict_logp_max else None,
+                remediation=(
+                    "Reduce lipophilicity by removing hydrophobic groups" if logp > self.strict_logp_max else None
+                ),
             )
         )
-        
+
         # Molecular weight check
         mw = props.get("mw", 0)
         checks.append(
@@ -481,7 +480,7 @@ class StrictComplianceGate:
                 threshold=self.strict_mw_max,
             )
         )
-        
+
         # TPSA check
         tpsa = props.get("tpsa", 0)
         checks.append(
@@ -495,7 +494,7 @@ class StrictComplianceGate:
                 threshold=self.strict_tpsa_max,
             )
         )
-        
+
         # Rotatable bonds check
         rot_bonds = props.get("rot_bonds", 0)
         checks.append(
@@ -509,7 +508,7 @@ class StrictComplianceGate:
                 threshold=float(self.strict_rotatable_bonds_max),
             )
         )
-        
+
         # Toxicity endpoint checks
         if "herg" in toxicity_probs:
             herg_prob = toxicity_probs["herg"]
@@ -524,7 +523,7 @@ class StrictComplianceGate:
                     threshold=self.strict_herg_threshold,
                 )
             )
-        
+
         if "ames" in toxicity_probs:
             ames_prob = toxicity_probs["ames"]
             checks.append(
@@ -538,7 +537,7 @@ class StrictComplianceGate:
                     threshold=self.strict_ames_threshold,
                 )
             )
-        
+
         if "hepatotox" in toxicity_probs:
             hep_prob = toxicity_probs["hepatotox"]
             checks.append(
@@ -552,7 +551,7 @@ class StrictComplianceGate:
                     threshold=self.strict_hepatotox_threshold,
                 )
             )
-        
+
         return checks
 
     def _classify_quality_tier(
@@ -564,15 +563,15 @@ class StrictComplianceGate:
         """Classify quality tier based on compliance and risk."""
         failed_critical = sum(1 for c in checks if not c.passed and c.severity == "critical")
         failed_major = sum(1 for c in checks if not c.passed and c.severity == "major")
-        
+
         # Risk factor penalty
         risk_penalty = 0.0
         risk_penalty += len([r for r in risk_factors if r == RiskFactor.HIGH_LOGP]) * self.aromatic_ring_penalty
         risk_penalty += len([r for r in risk_factors if r == RiskFactor.BASIC_AMINE]) * self.basic_amine_penalty
         risk_penalty += len([r for r in risk_factors if r == RiskFactor.HALOGENATION]) * self.halogenation_penalty
-        
+
         confidence = max(0.5, 1.0 - risk_penalty - failed_critical * 0.3 - failed_major * 0.1)
-        
+
         if failed_critical > 0:
             return QualityTier.REJECTED, confidence
         elif failed_major > 0:
@@ -598,16 +597,16 @@ class StrictComplianceGate:
         }
         data_json = json.dumps(data, sort_keys=True, separators=(",", ":"))
         checksum = hashlib.sha256(data_json.encode()).hexdigest()
-        
+
         report = DataIntegrityReport(
             checksum=checksum,
             timestamp=datetime.utcnow(),
             data_hash=hashlib.sha256(smiles.encode()).hexdigest(),
         )
-        
+
         # Integrity is automatically verified by checksum calculation
         report.integrity_verified = True
-        
+
         return report
 
     def _generate_recommendation(
@@ -621,17 +620,17 @@ class StrictComplianceGate:
             failed = [c for c in checks if not c.passed]
             reasons = ", ".join(c.check_name for c in failed[:2])
             return f"REJECTED - Failed critical checks: {reasons}"
-        
+
         elif quality_tier == QualityTier.TIER_1:
             return "APPROVED - Tier 1 (excellent safety profile, ready for IND submission)"
-        
+
         elif quality_tier == QualityTier.TIER_2:
             rf_str = ", ".join(r.value for r in risk_factors[:2])
             return f"APPROVED - Tier 2 (acceptable with standard monitoring; risk factors: {rf_str})"
-        
+
         elif quality_tier == QualityTier.TIER_3:
             return "CONDITIONAL - Tier 3 (requires enhanced preclinical evaluation)"
-        
+
         else:  # TIER_4
             return "MARGINAL - Tier 4 (additional studies required; not recommended for IND at this time)"
 
@@ -655,13 +654,13 @@ class StrictComplianceGate:
             severity="critical",
             message=message,
         )
-        
+
         integrity = DataIntegrityReport(
             checksum="",
             timestamp=datetime.utcnow(),
             data_hash="",
         )
-        
+
         return QualityAssessment(
             smiles=smiles,
             quality_tier=QualityTier.REJECTED,
@@ -680,36 +679,38 @@ def evaluate_batch_with_strict_compliance(
     compliance_level: ComplianceLevel = ComplianceLevel.STRICT,
 ) -> dict[str, Any]:
     """Batch evaluation with strict compliance.
-    
+
     Args:
         smiles_list: List of SMILES strings
         compliance_level: Regulatory compliance level
-        
+
     Returns:
         Dictionary with batch results and compliance summary
     """
     gate = StrictComplianceGate(compliance_level=compliance_level)
-    
+
     assessments = {}
     passed_count = 0
     rejected_count = 0
     critical_issues = []
-    
+
     for smiles in smiles_list:
         assessment = gate.evaluate(smiles)
         assessments[smiles] = assessment
-        
+
         if assessment.overall_passed:
             passed_count += 1
         else:
             rejected_count += 1
-            critical_issues.append({
-                "smiles": smiles,
-                "audit_id": assessment.audit_id,
-                "tier": assessment.quality_tier.value,
-                "recommendation": assessment.recommendation,
-            })
-    
+            critical_issues.append(
+                {
+                    "smiles": smiles,
+                    "audit_id": assessment.audit_id,
+                    "tier": assessment.quality_tier.value,
+                    "recommendation": assessment.recommendation,
+                }
+            )
+
     return {
         "compliance_level": compliance_level.value,
         "total_evaluated": len(smiles_list),
@@ -717,8 +718,5 @@ def evaluate_batch_with_strict_compliance(
         "rejected": rejected_count,
         "pass_rate": passed_count / max(1, len(smiles_list)),
         "critical_issues": critical_issues,
-        "assessments": {
-            smiles: assessment.as_dict()
-            for smiles, assessment in assessments.items()
-        },
+        "assessments": {smiles: assessment.as_dict() for smiles, assessment in assessments.items()},
     }

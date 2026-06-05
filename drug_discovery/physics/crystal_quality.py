@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+
 
 @dataclass
 class CrystalResult:
@@ -11,9 +11,10 @@ class CrystalResult:
     nmr_signal_boost: float = 0.0  # photo-CIDNP
     quality_grade: str = "high"
 
+
 class CrystalEnhancer:
     """Crystal quality enhancement with photo-NMR (2025 FBDD breakthrough).
-    
+
     Simulates hyperpolarization, XRPD/Raman polymorph analysis.
     """
 

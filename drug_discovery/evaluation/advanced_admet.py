@@ -15,13 +15,12 @@ References:
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass, field
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -197,7 +196,7 @@ class AdvancedADMETPredictor(nn.Module):
                 edge_index=batch_data["edge_index"],
                 smiles_tokens=batch_data["smiles_tokens"],
                 batch=batch_data.get("batch"),
-                smiles_mask=batch_data.get("smiles_mask")
+                smiles_mask=batch_data.get("smiles_mask"),
             )
 
 
@@ -224,7 +223,10 @@ def compute_admet_profile(predictions: dict[str, torch.Tensor]) -> dict[str, dic
                 }
         else:
             val = pred.cpu().numpy()
-            profile[name] = {"value": val.tolist() if val.ndim > 0 else round(val.item(), 4), "unit": info.get("unit", "")}
+            profile[name] = {
+                "value": val.tolist() if val.ndim > 0 else round(val.item(), 4),
+                "unit": info.get("unit", ""),
+            }
     return profile
 
 
@@ -234,9 +236,11 @@ except ImportError:
     ray = None
 
 if ray:
+
     @ray.remote(num_gpus=1 if torch.cuda.is_available() else 0)
     class RayADMETPredictor:
         """Ray-wrapped ADMET predictor for distributed inference."""
+
         def __init__(self, config: ADMETConfig):
             self.model = AdvancedADMETPredictor(config)
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -249,7 +253,9 @@ if ray:
             with torch.no_grad():
                 preds = self.model.predict_batch(input_data)
                 return {k: v.cpu().numpy() for k, v in preds.items()}
+
 else:
+
     class RayADMETPredictor:
         def __init__(self, *args, **kwargs):
             raise ImportError("Ray not installed.")

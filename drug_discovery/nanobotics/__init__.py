@@ -2,4 +2,4 @@
 
 from .swarm_logic import DNAGateSimulator, NanobotMARL
 
-__all__ = ["NanobotMARL", "DNAGateSimulator"]
+__all__ = ["DNAGateSimulator", "NanobotMARL"]

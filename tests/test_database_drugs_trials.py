@@ -7,15 +7,12 @@ All external-network calls are mocked so the suite runs offline.
 
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 
 from drug_discovery.data.collector import DataCollector
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -127,9 +124,7 @@ class TestDrugBankDatabase:
         """CSV may carry condition/indication column that should survive."""
         csv = tmp_path / "db_cond.csv"
         csv.write_text(
-            f"smiles,name,condition\n"
-            f"{ASPIRIN_SMILES},Aspirin,pain\n"
-            f"{IBUPROFEN_SMILES},Ibuprofen,inflammation\n"
+            f"smiles,name,condition\n" f"{ASPIRIN_SMILES},Aspirin,pain\n" f"{IBUPROFEN_SMILES},Ibuprofen,inflammation\n"
         )
         df = collector.collect_from_drugbank(file_path=str(csv))
         assert not df.empty
@@ -153,11 +148,9 @@ class TestPubChemDatabase:
         return compound
 
     def test_returns_dataframe_on_success(self, collector):
-        compound = self._make_pubchem_compound(ASPIRIN_SMILES, "aspirin")
+        self._make_pubchem_compound(ASPIRIN_SMILES, "aspirin")
         with patch("drug_discovery.data.collector.DataCollector.collect_from_pubchem") as mock:
-            mock.return_value = pd.DataFrame(
-                [{"smiles": ASPIRIN_SMILES, "name": "aspirin", "source": "pubchem"}]
-            )
+            mock.return_value = pd.DataFrame([{"smiles": ASPIRIN_SMILES, "name": "aspirin", "source": "pubchem"}])
             df = collector.collect_from_pubchem(query="aspirin", limit=1)
         assert isinstance(df, pd.DataFrame)
 
@@ -176,9 +169,7 @@ class TestPubChemDatabase:
 
     def test_schema_when_populated(self, collector):
         with patch("drug_discovery.data.collector.DataCollector.collect_from_pubchem") as mock:
-            mock.return_value = pd.DataFrame(
-                [{"smiles": CAFFEINE_SMILES, "name": "caffeine", "source": "pubchem"}]
-            )
+            mock.return_value = pd.DataFrame([{"smiles": CAFFEINE_SMILES, "name": "caffeine", "source": "pubchem"}])
             df = collector.collect_from_pubchem(query="caffeine", limit=5)
         if not df.empty:
             for col in ("smiles", "name", "source"):
@@ -198,9 +189,7 @@ class TestChEMBLDatabase:
         mock_client = MagicMock()
         mock_client.activity.filter.return_value.only.return_value.__getitem__.return_value = records
         mock_client.molecule.filter.return_value.only.return_value.__getitem__.return_value = records
-        mock_client.target.filter.return_value.__getitem__ = lambda self, key: [
-            {"target_chembl_id": "CHEMBL202"}
-        ]
+        mock_client.target.filter.return_value.__getitem__ = lambda self, key: [{"target_chembl_id": "CHEMBL202"}]
         return mock_client
 
     def test_returns_dataframe_on_success(self, collector):
@@ -211,16 +200,16 @@ class TestChEMBLDatabase:
                 "pref_name": "aspirin",
             }
         ]
-        mock_new_client = self._mock_chembl(records)
+        self._mock_chembl(records)
         with patch("drug_discovery.data.collector.DataCollector.collect_from_chembl") as mock:
-            mock.return_value = pd.DataFrame(
-                [{"smiles": ASPIRIN_SMILES, "name": "aspirin", "source": "chembl"}]
-            )
+            mock.return_value = pd.DataFrame([{"smiles": ASPIRIN_SMILES, "name": "aspirin", "source": "chembl"}])
             df = collector.collect_from_chembl(target="kinase", limit=5)
         assert isinstance(df, pd.DataFrame)
 
     def test_empty_on_chembl_missing(self, collector):
-        with patch.dict("sys.modules", {"chembl_webresource_client": None, "chembl_webresource_client.new_client": None}):
+        with patch.dict(
+            "sys.modules", {"chembl_webresource_client": None, "chembl_webresource_client.new_client": None}
+        ):
             df = collector.collect_from_chembl(limit=5)
         assert isinstance(df, pd.DataFrame)
 
@@ -233,9 +222,7 @@ class TestChEMBLDatabase:
 
     def test_schema_when_populated(self, collector):
         with patch("drug_discovery.data.collector.DataCollector.collect_from_chembl") as mock:
-            mock.return_value = pd.DataFrame(
-                [{"smiles": IBUPROFEN_SMILES, "name": "ibuprofen", "source": "chembl"}]
-            )
+            mock.return_value = pd.DataFrame([{"smiles": IBUPROFEN_SMILES, "name": "ibuprofen", "source": "chembl"}])
             df = collector.collect_from_chembl(limit=5)
         if not df.empty:
             for col in ("smiles", "name", "source"):
@@ -274,9 +261,8 @@ class TestPDBDatabase:
         entry_resp = MagicMock()
         entry_resp.json.return_value = self._pdb_entry("2XYZ")
         entry_resp.raise_for_status = MagicMock()
-        with patch("requests.get", return_value=entry_resp):
-            with patch("requests.post", return_value=search_resp):
-                df = collector.collect_from_pdb(query="drug", limit=1)
+        with patch("requests.get", return_value=entry_resp), patch("requests.post", return_value=search_resp):
+            df = collector.collect_from_pdb(query="drug", limit=1)
         assert isinstance(df, pd.DataFrame)
 
     def test_empty_on_network_failure(self, collector):
@@ -482,10 +468,12 @@ class TestCrossDatabaseMerge:
         return pd.DataFrame([{"smiles": ASPIRIN_SMILES, "name": "aspirin", "source": "pubchem"}])
 
     def _chembl_frame(self):
-        return pd.DataFrame([
-            {"smiles": ASPIRIN_SMILES, "name": "acetylsalicylic acid", "source": "chembl"},
-            {"smiles": IBUPROFEN_SMILES, "name": "ibuprofen", "source": "chembl"},
-        ])
+        return pd.DataFrame(
+            [
+                {"smiles": ASPIRIN_SMILES, "name": "acetylsalicylic acid", "source": "chembl"},
+                {"smiles": IBUPROFEN_SMILES, "name": "ibuprofen", "source": "chembl"},
+            ]
+        )
 
     def _drugbank_frame(self):
         return pd.DataFrame([{"smiles": CAFFEINE_SMILES, "name": "caffeine", "source": "drugbank"}])
@@ -496,11 +484,13 @@ class TestCrossDatabaseMerge:
         assert merged["smiles"].duplicated().sum() == 0
 
     def test_merge_preserves_all_sources(self, collector):
-        merged = collector.merge_datasets([
-            self._pubchem_frame(),
-            self._chembl_frame(),
-            self._drugbank_frame(),
-        ])
+        merged = collector.merge_datasets(
+            [
+                self._pubchem_frame(),
+                self._chembl_frame(),
+                self._drugbank_frame(),
+            ]
+        )
         assert not merged.empty
         # SMILES from all three frames should be present
         smiles_set = set(merged["smiles"])

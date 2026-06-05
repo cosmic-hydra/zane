@@ -5,7 +5,6 @@ Graph Neural Network Models for Molecular Property Prediction
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from torch_geometric.nn import GATConv, GINConv, MessagePassing, global_max_pool, global_mean_pool
 
 
@@ -100,10 +99,7 @@ class MolecularGNN(nn.Module):
             x_new = self.dropout(x_new)
 
             # Residual connection
-            if i > 0:
-                x = x + x_new
-            else:
-                x = x_new
+            x = x + x_new if i > 0 else x_new
 
         # Graph pooling
         if self.pooling == "mean":

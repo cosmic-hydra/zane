@@ -113,7 +113,7 @@ class DockingPipeline:
 
     def dock_batch(self, receptor, ligands, smiles_list=None):
         sl = smiles_list or [""] * len(ligands)
-        return [self.dock_single(receptor, lig, s) for lig, s in zip(ligands, sl)]
+        return [self.dock_single(receptor, lig, s) for lig, s in zip(ligands, sl, strict=False)]
 
     @staticmethod
     def rank_results(results, top_k=10):

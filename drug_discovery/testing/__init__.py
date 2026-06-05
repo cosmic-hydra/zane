@@ -16,8 +16,8 @@ from drug_discovery.testing.toxicity import ToxicityPredictor
 from drug_discovery.testing.uncertainty import UncertaintyEstimator
 
 __all__ = [
-    "ToxicityPredictor",
     "DrugCombinationTester",
     "RobustnessTester",
+    "ToxicityPredictor",
     "UncertaintyEstimator",
 ]

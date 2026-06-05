@@ -15,6 +15,7 @@ from drug_discovery.evaluation.predictor import ADMETPredictor, PropertyPredicto
 
 class MockPyTorchModel(torch.nn.Module):
     """Mock PyTorch model for testing"""
+
     def __init__(self, input_dim=10, output_dim=1):
         super().__init__()
         self.linear = torch.nn.Linear(input_dim, output_dim)
@@ -221,7 +222,7 @@ class TestADMETPredictorBasics:
 
         props = predictor.calculate_lipinski_properties(smiles)
 
-        for key, value in props.items():
+        for _key, value in props.items():
             assert isinstance(value, (int, float))
 
     def test_calculate_lipinski_properties_non_negative(self):
@@ -486,6 +487,6 @@ class TestADMETIntegration:
         batch = [predictor.calculate_qed(s) for s in smiles_list]
 
         # Should be identical
-        for ind, bat in zip(individual, batch):
+        for ind, bat in zip(individual, batch, strict=False):
             if ind is not None and bat is not None:
                 assert abs(ind - bat) < 1e-6

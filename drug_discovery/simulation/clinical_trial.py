@@ -96,14 +96,14 @@ class ClinicalTrialSimulator:
         # Calculate p-value using two-sample z-test
         n_treatment = len(treatment_results)
         n_control = len(control_results)
-        
+
         # Pooled standard error for proportion difference
         p_pooled = (treatment_results.sum() + control_results.sum()) / (n_treatment + n_control)
-        se = np.sqrt(p_pooled * (1 - p_pooled) * (1/n_treatment + 1/n_control))
-        
+        se = np.sqrt(p_pooled * (1 - p_pooled) * (1 / n_treatment + 1 / n_control))
+
         # Z-statistic
         z_stat = (treatment_rate - control_rate) / (se + 1e-10)  # Add small epsilon to avoid division by zero
-        
+
         # Two-tailed p-value from standard normal distribution
         # P(|Z| > |z_stat|) = 2 * P(Z > |z_stat|)
         p_value = 2 * (1 - self._standard_normal_cdf(abs(z_stat)))

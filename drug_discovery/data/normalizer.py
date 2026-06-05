@@ -5,7 +5,6 @@ Ensures consistent molecular representations across all data sources.
 """
 
 import logging
-from typing import List, Set, Optional, Tuple
 
 import pandas as pd
 
@@ -13,7 +12,7 @@ from drug_discovery.utils.rdkit_fallback import heuristic_props, is_smiles_plaus
 
 try:  # pragma: no cover - optional dependency
     from rdkit import Chem  # type: ignore
-    from rdkit.Chem import Descriptors, AllChem  # type: ignore
+    from rdkit.Chem import AllChem, Descriptors  # type: ignore
 except Exception:  # pragma: no cover - default path in slim environments
     Chem = None  # type: ignore
     Descriptors = None  # type: ignore
@@ -35,9 +34,9 @@ class DataNormalizer:
         """
         self.remove_salts = remove_salts
         self.remove_duplicates = remove_duplicates
-        self._seen_inchikeys: Set[str] = set()
+        self._seen_inchikeys: set[str] = set()
 
-    def canonicalize_smiles(self, smiles: str) -> Optional[str]:
+    def canonicalize_smiles(self, smiles: str) -> str | None:
         """
         Convert SMILES to canonical form.
 
@@ -74,7 +73,7 @@ class DataNormalizer:
             logger.warning(f"Failed to canonicalize SMILES '{smiles}': {e}")
             return None
 
-    def compute_inchikey(self, smiles: str) -> Optional[str]:
+    def compute_inchikey(self, smiles: str) -> str | None:
         """
         Compute InChIKey for molecular uniqueness.
 
@@ -154,7 +153,7 @@ class DataNormalizer:
 
         normalized_data = []
 
-        for idx, row in df.iterrows():
+        for _idx, row in df.iterrows():
             smiles = row[smiles_column]
 
             if pd.isna(smiles):
@@ -209,16 +208,13 @@ class DataNormalizer:
             normalized_data.append(new_row)
 
         result_df = pd.DataFrame(normalized_data)
-        logger.info(
-            f"Normalized {len(df)} -> {len(result_df)} molecules "
-            f"(removed {len(df) - len(result_df)})"
-        )
+        logger.info(f"Normalized {len(df)} -> {len(result_df)} molecules " f"(removed {len(df) - len(result_df)})")
 
         return result_df
 
     def merge_datasets(
         self,
-        datasets: List[pd.DataFrame],
+        datasets: list[pd.DataFrame],
         smiles_column: str = "smiles",
     ) -> pd.DataFrame:
         """
@@ -246,7 +242,7 @@ class DataNormalizer:
         df: pd.DataFrame,
         smiles_column: str = "smiles",
         lipinski_filter: bool = True,
-        molecular_weight_range: Optional[Tuple[float, float]] = None,
+        molecular_weight_range: tuple[float, float] | None = None,
     ) -> pd.DataFrame:
         """
         Apply drug-likeness filters to dataset.
@@ -280,13 +276,8 @@ class DataNormalizer:
 
         if molecular_weight_range:
             min_mw, max_mw = molecular_weight_range
-            filtered = filtered[
-                (filtered["mol_weight"] >= min_mw) & (filtered["mol_weight"] <= max_mw)
-            ]
+            filtered = filtered[(filtered["mol_weight"] >= min_mw) & (filtered["mol_weight"] <= max_mw)]
 
-        logger.info(
-            f"Applied filters: {len(df)} -> {len(filtered)} molecules "
-            f"(removed {len(df) - len(filtered)})"
-        )
+        logger.info(f"Applied filters: {len(df)} -> {len(filtered)} molecules " f"(removed {len(df) - len(filtered)})")
 
         return filtered

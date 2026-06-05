@@ -2,4 +2,4 @@
 
 from .synthesizer import OrthogonalTranslationSimulator, XenoProteinGenerator
 
-__all__ = ["XenoProteinGenerator", "OrthogonalTranslationSimulator"]
+__all__ = ["OrthogonalTranslationSimulator", "XenoProteinGenerator"]

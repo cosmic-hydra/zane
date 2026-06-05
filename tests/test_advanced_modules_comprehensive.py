@@ -24,7 +24,7 @@ class TestProteinStructureBasics:
             "large": {"atoms": 10000, "chains": 5},
         }
 
-        for name, struct in structures.items():
+        for _name, struct in structures.items():
             assert isinstance(struct, dict)
 
     def test_protein_to_graph_conversion(self):
@@ -157,9 +157,7 @@ class TestKnowledgeGraphBasics:
         """Test querying KG"""
         with patch("drug_discovery.knowledge_graph.knowledge_graph.KnowledgeGraph") as mock_kg_class:
             mock_kg = MagicMock()
-            mock_kg.query.return_value = [
-                {"subject": "drug", "predicate": "treats", "object": "disease"}
-            ]
+            mock_kg.query.return_value = [{"subject": "drug", "predicate": "treats", "object": "disease"}]
             mock_kg_class.return_value = mock_kg
 
 

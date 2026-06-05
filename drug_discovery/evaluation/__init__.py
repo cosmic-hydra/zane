@@ -27,9 +27,9 @@ try:
 
     __all__.extend(
         [
-            "MCDropoutPredictor",
-            "DeepEnsemble",
             "ConformalPredictor",
+            "DeepEnsemble",
+            "MCDropoutPredictor",
             "UncertaintyConfig",
             "expected_calibration_error",
             "regression_calibration_error",
@@ -52,7 +52,7 @@ try:
         compute_admet_profile as compute_admet_profile,
     )
 
-    __all__.extend(["AdvancedADMETPredictor", "ADMETConfig", "ADMET_ENDPOINTS", "compute_admet_profile"])
+    __all__.extend(["ADMET_ENDPOINTS", "ADMETConfig", "AdvancedADMETPredictor", "compute_admet_profile"])
 except ImportError as e:
     logger.debug(f"Advanced ADMET not available: {e}")
 
@@ -91,6 +91,6 @@ try:
     from drug_discovery.evaluation.herg_predictor import HERGPredictor as HERGPredictor
     from drug_discovery.evaluation.herg_predictor import predict_herg as predict_herg
 
-    __all__.extend(["HERGPredictor", "HERGPrediction", "predict_herg"])
+    __all__.extend(["HERGPrediction", "HERGPredictor", "predict_herg"])
 except ImportError as e:
     logger.debug(f"hERG predictor not available: {e}")

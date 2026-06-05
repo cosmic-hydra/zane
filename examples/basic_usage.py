@@ -4,19 +4,18 @@ Example: Basic Usage of Drug Discovery Pipeline
 
 from drug_discovery import DrugDiscoveryPipeline
 
+
 def main():
     # Initialize pipeline
     print("Initializing Drug Discovery Pipeline...")
     pipeline = DrugDiscoveryPipeline(
-        model_type='gnn',  # Options: 'gnn', 'transformer', 'ensemble'
-        device='cuda'  # or 'cpu'
+        model_type="gnn", device="cuda"  # Options: 'gnn', 'transformer', 'ensemble'  # or 'cpu'
     )
 
     # Step 1: Collect data from public sources
     print("\nStep 1: Collecting molecular data...")
     data = pipeline.collect_data(
-        sources=['pubchem', 'chembl', 'approved_drugs'],
-        limit_per_source=500  # Start small for demo
+        sources=["pubchem", "chembl", "approved_drugs"], limit_per_source=500  # Start small for demo
     )
 
     print(f"Collected {len(data)} molecules")
@@ -25,20 +24,16 @@ def main():
     # Step 2: Prepare datasets
     print("\nStep 2: Preparing datasets...")
     train_loader, test_loader = pipeline.prepare_datasets(
-        data=data,
-        smiles_col='smiles',
-        target_col=None,  # Unsupervised for now
-        test_size=0.2,
-        batch_size=32
+        data=data, smiles_col="smiles", target_col=None, test_size=0.2, batch_size=32  # Unsupervised for now
     )
 
     # Step 3: Build and train model
     print("\nStep 3: Training model...")
-    history = pipeline.train(
+    pipeline.train(
         train_loader=train_loader,
         val_loader=test_loader,
         num_epochs=10,  # Use more epochs in production
-        learning_rate=1e-4
+        learning_rate=1e-4,
     )
 
     # Step 4: Predict properties for a molecule
@@ -52,21 +47,18 @@ def main():
 
     # Step 5: Generate drug candidates
     print("\nStep 5: Generating drug candidates...")
-    candidates = pipeline.generate_candidates(
-        target_protein="EGFR",
-        num_candidates=10
-    )
+    candidates = pipeline.generate_candidates(target_protein="EGFR", num_candidates=10)
 
     print("\nTop drug candidates:")
-    print(candidates[['smiles', 'qed_score', 'lipinski_pass']].head())
+    print(candidates[["smiles", "qed_score", "lipinski_pass"]].head())
 
     # Step 6: Evaluate model
     print("\nStep 6: Evaluating model...")
-    metrics = pipeline.evaluate(test_loader)
+    pipeline.evaluate(test_loader)
 
     # Save pipeline
     print("\nSaving pipeline...")
-    pipeline.save('./checkpoints/pipeline.pt')
+    pipeline.save("./checkpoints/pipeline.pt")
 
     print("\n✓ Pipeline demonstration complete!")
 

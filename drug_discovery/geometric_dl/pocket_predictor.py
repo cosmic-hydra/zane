@@ -173,7 +173,7 @@ class TransientPocketPredictor:
         surface_points = []
 
         # Simple approximation: points at van der Waals radius from atoms
-        for i, (pos, atype) in enumerate(zip(coords, atom_types)):
+        for _i, (pos, atype) in enumerate(zip(coords, atom_types, strict=False)):
             # Approximate radius based on atom type
             radius = self._vdw_radius(atype)
 
@@ -182,7 +182,7 @@ class TransientPocketPredictor:
             theta = np.random.uniform(0, 2 * np.pi, n_samples)
             phi = np.random.uniform(0, np.pi, n_samples)
 
-            for th, ph in zip(theta, phi):
+            for th, ph in zip(theta, phi, strict=False):
                 point = pos + radius * np.array(
                     [
                         np.sin(ph) * np.cos(th),
@@ -219,7 +219,7 @@ class TransientPocketPredictor:
         atom_types: np.ndarray,
     ) -> bool:
         """Check if point is on surface (not buried)."""
-        for i, (pos, atype) in enumerate(zip(coords, atom_types)):
+        for _i, (pos, atype) in enumerate(zip(coords, atom_types, strict=False)):
             dist = np.linalg.norm(point - pos)
             radius = self._vdw_radius(atype)
 
@@ -308,10 +308,9 @@ class TransientPocketPredictor:
     ) -> list[int]:
         """Find residues within cutoff of pocket center."""
         nearby = []
-        for i, (pos, res_idx) in enumerate(zip(protein_coords, residue_indices)):
-            if np.linalg.norm(pos - center) < cutoff:
-                if res_idx not in nearby:
-                    nearby.append(int(res_idx))
+        for _i, (pos, res_idx) in enumerate(zip(protein_coords, residue_indices, strict=False)):
+            if np.linalg.norm(pos - center) < cutoff and res_idx not in nearby:
+                nearby.append(int(res_idx))
         return nearby
 
     def _score_pockets(

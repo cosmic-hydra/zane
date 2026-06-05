@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 try:
     import torch
     import torch.nn as nn
-
     from torch_geometric.data import HeteroData
 
     TORCH_GEOMETRIC_AVAILABLE = True

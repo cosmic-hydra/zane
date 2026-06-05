@@ -123,7 +123,8 @@ structlog>=23.2.0
 
 # 2024 Breakthrough Proxies (optional)
 diffusers>=0.21.0
-equibind>=0.2
-openfold>=0.1.2
+# equibind and openfold are not on PyPI; install from source if needed
+# equibind>=0.2
+# openfold>=0.1.2
 biopython>=1.81
 pytorch-lightning>=2.0

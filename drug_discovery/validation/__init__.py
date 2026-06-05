@@ -41,18 +41,18 @@ try:
 
     __all__.extend(
         [
-            "set_global_seed",
-            "config_hash",
-            "compute_metrics",
-            "scaffold_split",
-            "scaffold_kfold",
-            "paired_ttest",
-            "wilcoxon_test",
-            "bootstrap_ci",
-            "ExperimentReport",
-            "REGRESSION_METRICS",
             "CLASSIFICATION_METRICS",
+            "REGRESSION_METRICS",
             "EliteValidationSuite",
+            "ExperimentReport",
+            "bootstrap_ci",
+            "compute_metrics",
+            "config_hash",
+            "paired_ttest",
+            "scaffold_kfold",
+            "scaffold_split",
+            "set_global_seed",
+            "wilcoxon_test",
         ]
     )
 except ImportError:

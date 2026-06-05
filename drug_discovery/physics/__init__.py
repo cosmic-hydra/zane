@@ -15,7 +15,7 @@ try:
         VinaBackend as VinaBackend,
     )
 
-    __all__.extend(["DockingPipeline", "DockingConfig", "DockingResult", "VinaBackend"])
+    __all__.extend(["DockingConfig", "DockingPipeline", "DockingResult", "VinaBackend"])
 except ImportError:
     pass
 
@@ -37,7 +37,7 @@ try:
     from drug_discovery.polyglot_integration import FEPResult as FEPResult
     from drug_discovery.polyglot_integration import PhysicsOracle as PhysicsOracle
 
-    __all__.extend(["PhysicsOracle", "FEPResult"])
+    __all__.extend(["FEPResult", "PhysicsOracle"])
 except ImportError:
     pass
 

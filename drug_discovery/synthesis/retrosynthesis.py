@@ -4,9 +4,9 @@ Retrosynthesis Planning and Synthesis Feasibility Scoring
 
 # pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 
+import concurrent.futures
 import logging
 import os
-import concurrent.futures
 from collections.abc import Sequence
 
 import numpy as np
@@ -43,6 +43,7 @@ class RetrosynthesisPlanner:
         self.use_ray = use_ray
         if self.use_ray:
             import ray
+
             if not ray.is_initialized():
                 ray.init(ignore_reinit_error=True, address=os.getenv("RAY_ADDRESS"))
 
@@ -62,10 +63,9 @@ class RetrosynthesisPlanner:
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.backends)) as executor:
             future_to_backend = {
-                executor.submit(backend.plan, target_smiles, max_depth=max_depth): backend 
-                for backend in self.backends
+                executor.submit(backend.plan, target_smiles, max_depth=max_depth): backend for backend in self.backends
             }
-            
+
             for future in concurrent.futures.as_completed(future_to_backend):
                 backend = future_to_backend[future]
                 try:
@@ -84,7 +84,7 @@ class RetrosynthesisPlanner:
                             r.score if r.score is not None else float("inf"),
                         ),
                     )[0]
-                    
+
                     if route_choice is None:
                         route_choice = best
                     else:
@@ -93,7 +93,7 @@ class RetrosynthesisPlanner:
                         curr_score = route_choice.score if route_choice.score is not None else float("inf")
                         new_steps = best.steps if best.steps is not None else max_depth + 10
                         new_score = best.score if best.score is not None else float("inf")
-                        
+
                         if (new_steps, new_score) < (curr_steps, curr_score):
                             route_choice = best
 
@@ -152,10 +152,11 @@ class RetrosynthesisPlanner:
         """Plan synthesis for a batch of molecules, optionally using Ray."""
         if self.use_ray:
             import ray
+
             @ray.remote
             def remote_plan(planner, smiles, depth):
                 return planner.plan_synthesis(smiles, max_depth=depth)
-            
+
             futures = [remote_plan.remote(self, smiles, max_depth) for smiles in smiles_list]
             return ray.get(futures)
         else:
@@ -245,9 +246,9 @@ class RetrosynthesisPlanner:
 
             # Use RDKit's built-in SA score if available
             # Otherwise, use simple heuristics
-            ring_count = getattr(Descriptors, "RingCount")
-            num_rotatable_bonds = getattr(Descriptors, "NumRotatableBonds")
-            mol_wt_func = getattr(Descriptors, "MolWt")
+            ring_count = Descriptors.RingCount
+            num_rotatable_bonds = Descriptors.NumRotatableBonds
+            mol_wt_func = Descriptors.MolWt
 
             num_rings = ring_count(mol)
             num_stereo = len(Chem.FindMolChiralCenters(mol, includeUnassigned=True))
@@ -303,16 +304,16 @@ class SynthesisFeasibilityScorer:
             scores["sa_score"] = 11 - sa_score  # Convert to 1-10, higher better
 
             # Molecular complexity
-            ring_count = getattr(Descriptors, "RingCount")
-            num_heteroatoms_func = getattr(Lipinski, "NumHeteroatoms")
+            ring_count = Descriptors.RingCount
+            num_heteroatoms_func = Lipinski.NumHeteroatoms
             num_rings = ring_count(mol)
             num_heteroatoms = num_heteroatoms_func(mol)
             complexity = (num_rings + num_heteroatoms) / 10.0
             scores["complexity"] = max(0, 10 - complexity * 10)
 
             # Functional group diversity (penalize exotic groups)
-            num_aliphatic_rings = getattr(Descriptors, "NumAliphaticRings")
-            num_aromatic_rings = getattr(Descriptors, "NumAromaticRings")
+            num_aliphatic_rings = Descriptors.NumAliphaticRings
+            num_aromatic_rings = Descriptors.NumAromaticRings
             num_functional_groups = num_aliphatic_rings(mol) + num_aromatic_rings(mol)
             scores["fg_score"] = min(10, num_functional_groups)
 

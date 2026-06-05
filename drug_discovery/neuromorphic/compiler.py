@@ -48,7 +48,7 @@ class SNNCompiler:
         # activations with LIF layers.
 
         spiking_layers = []
-        for name, module in ann_model.named_children():
+        for _name, module in ann_model.named_children():
             if isinstance(module, nn.Linear):
                 spiking_layers.append(module)
                 spiking_layers.append(snn.Leaky(beta=beta, spike_grad=surrogate.fast_sigmoid()))

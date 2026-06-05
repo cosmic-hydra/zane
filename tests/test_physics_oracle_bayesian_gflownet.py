@@ -280,9 +280,7 @@ class TestPhysicsRewardFunction:
         assert fn({"atoms": torch.tensor([0]), "num_atoms": 1}) >= cfg.min_reward
 
     def test_default_atoms_to_smiles(self):
-        s = PhysicsRewardFunction._default_atoms_to_smiles(
-            {"atoms": torch.tensor([0, 1, 2]), "num_atoms": 3}
-        )
+        s = PhysicsRewardFunction._default_atoms_to_smiles({"atoms": torch.tensor([0, 1, 2]), "num_atoms": 3})
         assert isinstance(s, str)
         assert len(s) > 0
 

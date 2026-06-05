@@ -96,7 +96,7 @@ class RobustnessTester:
         self,
         model: Callable,
         smiles_list: list[str],
-        perturbation_types: list[str] = ["tautomer"],
+        perturbation_types: list[str] | None = None,
         tolerance: float = 0.1,
     ) -> dict[str, Any]:
         """
@@ -111,6 +111,8 @@ class RobustnessTester:
         Returns:
             Dictionary with robustness metrics
         """
+        if perturbation_types is None:
+            perturbation_types = ["tautomer"]
         results = {
             "total_tested": 0,
             "robust_predictions": 0,
@@ -128,7 +130,7 @@ class RobustnessTester:
 
                 if isinstance(original_pred, dict):
                     # Extract main prediction value
-                    original_pred = list(original_pred.values())[0]
+                    original_pred = next(iter(original_pred.values()))
 
                 # Test perturbations
                 for perturb_type in perturbation_types:
@@ -139,7 +141,7 @@ class RobustnessTester:
 
                     perturbed_pred = model(perturbed_smiles)
                     if isinstance(perturbed_pred, dict):
-                        perturbed_pred = list(perturbed_pred.values())[0]
+                        perturbed_pred = next(iter(perturbed_pred.values()))
 
                     # Compute deviation
                     deviation = abs(float(original_pred) - float(perturbed_pred))
@@ -199,8 +201,8 @@ class RobustnessTester:
 
             # Extract prediction values
             if isinstance(train_preds[0], dict):
-                train_preds = [list(p.values())[0] for p in train_preds]
-                test_preds = [list(p.values())[0] for p in test_preds]
+                train_preds = [next(iter(p.values())) for p in train_preds]
+                test_preds = [next(iter(p.values())) for p in test_preds]
 
             # Compute distributional statistics
             results["train_pred_mean"] = np.mean(train_preds)
@@ -269,7 +271,7 @@ class RobustnessTester:
                 for _, row in val_data.iterrows():
                     pred = model(row)
                     if isinstance(pred, dict):
-                        pred = list(pred.values())[0]
+                        pred = next(iter(pred.values()))
                     val_preds.append(pred)
 
                 fold_predictions.append(val_preds)
@@ -331,7 +333,7 @@ class RobustnessTester:
         try:
             original_pred = model(smiles)
             if isinstance(original_pred, dict):
-                original_pred = list(original_pred.values())[0]
+                original_pred = next(iter(original_pred.values()))
 
             results["original_prediction"] = float(original_pred)
 
@@ -350,7 +352,7 @@ class RobustnessTester:
 
                 perturbed_pred = model(perturbed_smiles)
                 if isinstance(perturbed_pred, dict):
-                    perturbed_pred = list(perturbed_pred.values())[0]
+                    perturbed_pred = next(iter(perturbed_pred.values()))
 
                 # Check if adversarial (prediction flipped)
                 original_class = 1 if original_pred > 0.5 else 0
@@ -380,7 +382,7 @@ class RobustnessTester:
     ) -> dict[str, Any]:
         """
         Test molecular robustness under environmental conditions.
-        
+
         Conditions can include pH, temperature, and presence of water.
         """
         if conditions is None:
@@ -391,11 +393,7 @@ class RobustnessTester:
                 {"ph": 7.4, "temp": 25.0, "desc": "Storage"},
             ]
 
-        results = {
-            "smiles": smiles,
-            "condition_results": [],
-            "overall_stability_index": 1.0
-        }
+        results = {"smiles": smiles, "condition_results": [], "overall_stability_index": 1.0}
 
         if Chem is None:
             return results
@@ -408,30 +406,27 @@ class RobustnessTester:
         for cond in conditions:
             ph = cond.get("ph", 7.4)
             temp = cond.get("temp", 37.0)
-            
+
             # Heuristic stability estimation
             # 1. pH sensitivity (hydrolysis risk)
             # Esters, Amides (some), Anhydrides are sensitive
             hydrolysis_risk = 0.0
-            if mol.HasSubstructMatch(Chem.MolFromSmarts("[C;$(C=O)][O;h0][C,H]")): # Ester
+            if mol.HasSubstructMatch(Chem.MolFromSmarts("[C;$(C=O)][O;h0][C,H]")):  # Ester
                 hydrolysis_risk += 0.3 if abs(ph - 7.0) > 2.0 else 0.1
-            if mol.HasSubstructMatch(Chem.MolFromSmarts("[C;$(C=O)][N;h0,h1][C,H]")): # Amide
+            if mol.HasSubstructMatch(Chem.MolFromSmarts("[C;$(C=O)][N;h0,h1][C,H]")):  # Amide
                 hydrolysis_risk += 0.1 if abs(ph - 7.0) > 4.0 else 0.05
-            
+
             # 2. Temperature sensitivity (thermal degradation)
             thermal_risk = 0.0
             if temp > 40.0:
                 thermal_risk = (temp - 40.0) / 100.0
-            
+
             stability = max(0.0, 1.0 - (hydrolysis_risk + thermal_risk))
             stability_scores.append(stability)
-            
-            results["condition_results"].append({
-                "condition": cond["desc"],
-                "ph": ph,
-                "temp": temp,
-                "estimated_stability": stability
-            })
+
+            results["condition_results"].append(
+                {"condition": cond["desc"], "ph": ph, "temp": temp, "estimated_stability": stability}
+            )
 
         results["overall_stability_index"] = np.mean(stability_scores)
         return results
@@ -472,7 +467,7 @@ class RobustnessTester:
                 else:
                     # Use prediction certainty as confidence
                     if isinstance(pred, dict):
-                        pred = list(pred.values())[0]
+                        pred = next(iter(pred.values()))
                     confidence = abs(float(pred) - 0.5) * 2
                     in_dist_confs.append(confidence)
 
@@ -482,7 +477,7 @@ class RobustnessTester:
                     out_dist_confs.append(pred["confidence"])
                 else:
                     if isinstance(pred, dict):
-                        pred = list(pred.values())[0]
+                        pred = next(iter(pred.values()))
                     confidence = abs(float(pred) - 0.5) * 2
                     out_dist_confs.append(confidence)
 

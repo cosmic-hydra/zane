@@ -18,6 +18,7 @@ class TestDrugmakingImports:
             CustomDrugmakingModule,
             OptimizationConfig,
         )
+
         assert CustomDrugmakingModule is not None
         assert CompoundTestResult is not None
         assert CandidateResult is not None
@@ -76,7 +77,7 @@ class TestRDKitMolecularProperties:
 
         props = RDKitMolecularProperties()
         assert props is not None
-        assert hasattr(props, 'available')
+        assert hasattr(props, "available")
 
     def test_calculate_properties(self):
         """Test molecular property calculation."""
@@ -112,7 +113,7 @@ class TestPhysicsBasedProperties:
 
         physics = PhysicsBasedProperties()
         assert physics is not None
-        assert hasattr(physics, 'rdkit_props')
+        assert hasattr(physics, "rdkit_props")
 
     def test_predict_binding_affinity(self):
         """Test binding affinity prediction."""
@@ -168,8 +169,12 @@ class TestOptimizationConfig:
 
         config = OptimizationConfig()
         assert config.objective_names == [
-            "potency", "selectivity", "solubility", "safety",
-            "synthetic_accessibility", "lipophilicity"
+            "potency",
+            "selectivity",
+            "solubility",
+            "safety",
+            "synthetic_accessibility",
+            "lipophilicity",
         ]
         assert config.num_iterations == 30
         assert config.batch_size == 10
@@ -412,11 +417,11 @@ class TestCustomDrugmakingModule:
         result = module.test_toxicity("CCO")
 
         assert result is not None
-        assert hasattr(result, 'smiles')
-        assert hasattr(result, 'effectiveness')
-        assert hasattr(result, 'safety')
-        assert hasattr(result, 'molecular_properties')
-        assert hasattr(result, 'physics_properties')
+        assert hasattr(result, "smiles")
+        assert hasattr(result, "effectiveness")
+        assert hasattr(result, "safety")
+        assert hasattr(result, "molecular_properties")
+        assert hasattr(result, "physics_properties")
 
     def test_featurize_smiles(self):
         """Test SMILES featurization."""
@@ -497,6 +502,7 @@ class TestCounterSubstanceFinder:
 
         # Try adding a unique antidote (use timestamp to ensure uniqueness)
         import time
+
         unique_antidote = f"TEST_ANTIDOTE_{int(time.time() * 1000)}"
         finder.add_known_antidote(unique_antidote)
         assert len(finder._known_antidotes) == initial_count + 1

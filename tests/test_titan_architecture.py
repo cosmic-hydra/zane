@@ -34,9 +34,9 @@ def test_off_target_veto() -> None:
         scorer.score_off_targets(verapamil)
 
     veto = exc_info.value
-    assert veto.score > veto.threshold, (
-        f"Expected veto.score ({veto.score:.3f}) > veto.threshold ({veto.threshold:.3f})"
-    )
+    assert (
+        veto.score > veto.threshold
+    ), f"Expected veto.score ({veto.score:.3f}) > veto.threshold ({veto.threshold:.3f})"
     assert veto.smiles == verapamil
 
 
@@ -84,9 +84,7 @@ def test_onnx_latency(monkeypatch: pytest.MonkeyPatch) -> None:
     result = server.predict(smiles)
     elapsed_s = time.perf_counter() - t_start
 
-    assert elapsed_s < 0.15, (
-        f"Inference took {elapsed_s * 1000:.1f} ms, expected < 150 ms"
-    )
+    assert elapsed_s < 0.15, f"Inference took {elapsed_s * 1000:.1f} ms, expected < 150 ms"
     assert "mean_score" in result
     assert "variance" in result
     assert "confidence_warning" in result

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Sequence
+
 
 @dataclass
 class RFDesignResult:
@@ -13,9 +14,10 @@ class RFDesignResult:
     success: bool = False
     error: str | None = None
 
+
 class RFDiffusionDesigner:
     """Proxy for RFdiffusion protein design using diffusion models.
-    
+
     Falls back to simple helix insertion if deps unavailable.
     Supports Ray batch design.
     """
@@ -29,7 +31,7 @@ class RFDiffusionDesigner:
         for motif in motifs:
             try:
                 # Mock design: append helix
-                design = motif + "HELI" * (len(motif)//3 + 1)
+                design = motif + "HELI" * (len(motif) // 3 + 1)
                 rmsd = 1.5 + len(motif) % 5 * 0.5  # mock
                 results.append(RFDesignResult(motif, design, rmsd_recovery=rmsd, confidence=0.85, success=True))
             except Exception as e:

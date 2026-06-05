@@ -36,21 +36,21 @@ from drug_discovery.qml.vqe import (
 )
 
 __all__ = [
+    "AWSBraketDriver",
     # Active Space
     "ActiveSpaceApproximator",
     "ActiveSpaceResult",
-    "MolecularOrbitals",
-    # VQE
-    "VQECircuit",
-    "VQEResult",
-    "HardwareEfficientAnsatz",
-    # Error Mitigation
-    "ZeroNoiseExtrapolation",
-    "ZNEResult",
     "ErrorMitigationConfig",
+    "HardwareEfficientAnsatz",
+    "LocalSimulator",
+    "MolecularOrbitals",
     # Drivers
     "QuantumDriver",
     "QuantumSimulator",
-    "AWSBraketDriver",
-    "LocalSimulator",
+    # VQE
+    "VQECircuit",
+    "VQEResult",
+    "ZNEResult",
+    # Error Mitigation
+    "ZeroNoiseExtrapolation",
 ]

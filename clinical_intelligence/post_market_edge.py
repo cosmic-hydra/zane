@@ -20,7 +20,7 @@ class PostMarketEdge:
         Hidden Markov Models (HMM):
         Deploys continuous-time HMMs to classify the patient's baseline physiological state
         (e.g., sleep, active, resting).
-        
+
         When tslearn is unavailable, uses heuristic classifier based on signal statistics.
         State 0: Resting, 1: Active, 2: Sleep
         """
@@ -36,17 +36,17 @@ class PostMarketEdge:
         # Compute local statistics for windowed classification
         states = []
         window_size = max(10, len(sensor_time_series) // 20)
-        
+
         for i in range(0, len(sensor_time_series), max(1, window_size // 2)):
-            window = sensor_time_series[i:min(i + window_size, len(sensor_time_series))]
+            window = sensor_time_series[i : min(i + window_size, len(sensor_time_series))]
             if len(window) == 0:
                 states.append(1)  # Default to Active if window empty
                 continue
-                
+
             # Signal mean and variance indicate state
             mean_val = np.mean(window)
             std_val = np.std(window)
-            
+
             # Classify based on energy (variance) and mean level
             if std_val < 0.1:  # Low variability -> Resting or Sleep
                 state = 0 if mean_val > 0 else 2  # Resting vs Sleep based on mean
@@ -54,17 +54,17 @@ class PostMarketEdge:
                 state = 0
             else:  # High variability -> Active
                 state = 1
-            
+
             # Replicate state for each sample in window
             for _ in range(min(window_size // 2, len(sensor_time_series) - i)):
                 if len(states) < len(sensor_time_series):
                     states.append(state)
-        
+
         # Pad or trim to match input length
-        states = states[:len(sensor_time_series)]
+        states = states[: len(sensor_time_series)]
         if len(states) < len(sensor_time_series):
             states.extend([1] * (len(sensor_time_series) - len(states)))
-        
+
         return np.array(states)
 
     def calculate_rmssd(self, r_peaks_ms: np.ndarray) -> float:
@@ -118,7 +118,7 @@ class PostMarketEdge:
         Uses an LSTM Autoencoder to detect sub-clinical autonomic nervous system stress,
         flagging potential hepatotoxicity or cardiotoxicity months before the patient
         physically feels symptoms.
-        
+
         When the model is unavailable, uses heuristic anomaly scoring based on HRV statistics.
         """
         # Reshape data for LSTM (samples, timesteps, features)
@@ -133,19 +133,16 @@ class PostMarketEdge:
         else:
             mean_val = np.mean(hrv_data)
             std_val = np.std(hrv_data)
-            
+
             # Normalize to avoid division by zero
-            if mean_val == 0:
-                cv = std_val
-            else:
-                cv = std_val / np.abs(mean_val)
-            
+            cv = std_val if mean_val == 0 else std_val / np.abs(mean_val)
+
             # Reconstruction error based on regularity
             # Low CV = regular (good reconstruction) -> low error
             # High CV = irregular (poor reconstruction) -> high error
             # Scale to [0, 1] range
             reconstruction_error = min(1.0, cv / 2.0)
-            
+
             # Add small noise to simulate imperfect reconstruction
             reconstruction_error += np.random.normal(0, 0.05)
             reconstruction_error = np.clip(reconstruction_error, 0, 1)

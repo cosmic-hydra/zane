@@ -1,10 +1,10 @@
+import os
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from typing import List, Optional
-import os
 
 # Security Config
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "SUPER_SECRET_PHARMA_KEY")
@@ -14,13 +14,16 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 480
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+
 class User(BaseModel):
     username: str
-    role: str # Junior_Chemist, Senior_Scientist, Lab_Director
+    role: str  # Junior_Chemist, Senior_Scientist, Lab_Director
+
 
 class TokenData(BaseModel):
-    username: Optional[str] = None
-    role: Optional[str] = None
+    username: str | None = None
+    role: str | None = None
+
 
 class EnterpriseSSO:
     """
@@ -29,8 +32,9 @@ class EnterpriseSSO:
     """
 
     @staticmethod
-    def verify_role(required_roles: List[str]):
+    def verify_role(required_roles: list[str]):
         """RBAC Dependency: Ensures the user has the required seniority."""
+
         async def role_checker(token: str = Depends(oauth2_scheme)):
             credentials_exception = HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -50,10 +54,10 @@ class EnterpriseSSO:
             if token_data.role not in required_roles:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Access denied. Required roles: {required_roles}. Current role: {token_data.role}"
+                    detail=f"Access denied. Required roles: {required_roles}. Current role: {token_data.role}",
                 )
             return token_data
-        
+
         return role_checker
 
     @staticmethod
@@ -64,6 +68,7 @@ class EnterpriseSSO:
             return User(username=payload.get("sub"), role=payload.get("role"))
         except JWTError:
             raise HTTPException(status_code=401, detail="Invalid token")
+
 
 # Usage Examples for Endpoints:
 # @app.post("/export/dataset", dependencies=[Depends(EnterpriseSSO.verify_role(["Lab_Director"]))])

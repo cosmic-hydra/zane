@@ -36,7 +36,9 @@ class XenoProteinGenerator:
         if pyrosetta is None:
             logger.warning("PyRosetta not installed. Xenoprotein design will use fallback modeling.")
 
-    def design_xenoprotein(self, scaffold: Pose | None = None, residues_to_mutate: list[int] = None) -> dict[str, Any]:
+    def design_xenoprotein(
+        self, scaffold: Pose | None = None, residues_to_mutate: list[int] | None = None
+    ) -> dict[str, Any]:
         """
         Design a protein incorporating synthetic amino acids.
         """

@@ -270,10 +270,7 @@ class KnowledgeGraph:
                     continue
 
                 # Get neighbor node
-                if edge.source_id == node_id:
-                    neighbor_id = edge.target_id
-                else:
-                    neighbor_id = edge.source_id
+                neighbor_id = edge.target_id if edge.source_id == node_id else edge.source_id
 
                 if neighbor_id in self.nodes:
                     neighbors.append(self.nodes[neighbor_id])
@@ -320,7 +317,7 @@ class KnowledgeGraph:
 
                 if neighbor_id not in visited:
                     visited.add(neighbor_id)
-                    new_path = path + [(neighbor_id, edge_id)]
+                    new_path = [*path, (neighbor_id, edge_id)]
                     queue.append((neighbor_id, new_path))
 
         return None
@@ -469,7 +466,7 @@ class KnowledgeGraph:
         edges = []
         if include_edges:
             node_id_set = set(node_ids)
-            for edge_id, edge in self.edges.items():
+            for _edge_id, edge in self.edges.items():
                 if edge.source_id in node_id_set and edge.target_id in node_id_set:
                     edges.append(edge)
 

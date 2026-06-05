@@ -6,6 +6,7 @@ __all__ = ["__version__"]
 # Core pipeline
 try:
     from drug_discovery.pipeline import DrugDiscoveryPipeline as DrugDiscoveryPipeline
+
     __all__.append("DrugDiscoveryPipeline")
 except Exception:
     pass
@@ -13,23 +14,25 @@ except Exception:
 # Utility modules
 try:
     from drug_discovery.data.rdkit_utils import smiles_to_sdf
+    from drug_discovery.docking.diffdock_placeholder import run_diffdock
+    from drug_discovery.docking.vina_wrapper import VinaDocker
     from drug_discovery.generation.torchdrug_generator import TorchDrugGenerator
     from drug_discovery.screening.admet_models import ADMETScreen
     from drug_discovery.screening.filtering import filter_admet
-    from drug_discovery.docking.vina_wrapper import VinaDocker
-    from drug_discovery.docking.diffdock_placeholder import run_diffdock
     from drug_discovery.structure_analysis.cif_parser import parse_cif_to_mol
     from drug_discovery.structure_analysis.xrpd_analysis import analyze_xrpd
 
-    __all__.extend([
-        "TorchDrugGenerator",
-        "ADMETScreen",
-        "VinaDocker",
-        "run_diffdock",
-        "parse_cif_to_mol",
-        "analyze_xrpd",
-        "smiles_to_sdf",
-        "filter_admet"
-    ])
+    __all__.extend(
+        [
+            "ADMETScreen",
+            "TorchDrugGenerator",
+            "VinaDocker",
+            "analyze_xrpd",
+            "filter_admet",
+            "parse_cif_to_mol",
+            "run_diffdock",
+            "smiles_to_sdf",
+        ]
+    )
 except Exception:
     pass

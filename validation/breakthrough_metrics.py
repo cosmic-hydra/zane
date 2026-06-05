@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 BREAKTHROUGH_BENCHMARKS = {
     "af3_rmsd": 1.8,  # <2Å target
@@ -12,7 +12,8 @@ BREAKTHROUGH_BENCHMARKS = {
     "bbb_penetration": 0.70,
 }
 
-def validate_breakthroughs(results_dir: str = "outputs/validation/2024") -> Dict[str, Any]:
+
+def validate_breakthroughs(results_dir: str = "outputs/validation/2024") -> dict[str, Any]:
     """Validate 2024 breakthrough metrics against benchmarks."""
     report = {}
     path = Path(results_dir)

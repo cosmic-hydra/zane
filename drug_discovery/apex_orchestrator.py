@@ -77,9 +77,7 @@ class ApexOrchestrator:
         try:
             results = await self.physics_oracle.score_batch(smiles_list)
             scores = [
-                {"smiles": r.smiles, "delta_g": r.delta_g, "converged": r.converged}
-                for r in results
-                if r.success
+                {"smiles": r.smiles, "delta_g": r.delta_g, "converged": r.converged} for r in results if r.success
             ]
             logger.info("FEP scoring complete: %d/%d successful", len(scores), len(smiles_list))
             return {"fep_scores": scores, "skipped": False}

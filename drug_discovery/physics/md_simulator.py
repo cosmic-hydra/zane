@@ -244,19 +244,19 @@ class EnergyCalculator:
                 return None
 
             mol = Chem.AddHs(mol)
-            embed_molecule = getattr(AllChem, "EmbedMolecule")
+            embed_molecule = AllChem.EmbedMolecule
             success = embed_molecule(mol, randomSeed=42)
             if success == -1:
                 return None
 
             if self.method.lower() == "mmff94":
-                mmff_props = getattr(AllChem, "MMFFGetMoleculeProperties")
-                mmff_force_field = getattr(AllChem, "MMFFGetMoleculeForceField")
+                mmff_props = AllChem.MMFFGetMoleculeProperties
+                mmff_force_field = AllChem.MMFFGetMoleculeForceField
                 props = mmff_props(mol)
                 ff = mmff_force_field(mol, props)
                 energy = ff.CalcEnergy()
             elif self.method.lower() == "uff":
-                uff_force_field = getattr(AllChem, "UFFGetMoleculeForceField")
+                uff_force_field = AllChem.UFFGetMoleculeForceField
                 ff = uff_force_field(mol)
                 energy = ff.CalcEnergy()
             else:
@@ -288,20 +288,20 @@ class EnergyCalculator:
                 return None, None
 
             mol = Chem.AddHs(mol)
-            embed_molecule = getattr(AllChem, "EmbedMolecule")
+            embed_molecule = AllChem.EmbedMolecule
             success = embed_molecule(mol, randomSeed=42)
             if success == -1:
                 return None, None
 
             if self.method.lower() == "mmff94":
-                mmff_props = getattr(AllChem, "MMFFGetMoleculeProperties")
-                mmff_force_field = getattr(AllChem, "MMFFGetMoleculeForceField")
+                mmff_props = AllChem.MMFFGetMoleculeProperties
+                mmff_force_field = AllChem.MMFFGetMoleculeForceField
                 props = mmff_props(mol)
                 ff = mmff_force_field(mol, props)
                 ff.Minimize(maxIts=max_iters)
                 energy = ff.CalcEnergy()
             elif self.method.lower() == "uff":
-                uff_force_field = getattr(AllChem, "UFFGetMoleculeForceField")
+                uff_force_field = AllChem.UFFGetMoleculeForceField
                 ff = uff_force_field(mol)
                 ff.Minimize(maxIts=max_iters)
                 energy = ff.CalcEnergy()

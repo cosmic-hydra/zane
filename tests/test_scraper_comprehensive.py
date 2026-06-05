@@ -49,11 +49,7 @@ class TestPubMedSearch:
     def test_search_basic(self, mock_get):
         """Test basic search query"""
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "esearchresult": {
-                "idlist": ["12345", "67890"]
-            }
-        }
+        mock_response.json.return_value = {"esearchresult": {"idlist": ["12345", "67890"]}}
         mock_get.return_value = mock_response
 
         api = PubMedAPI()
@@ -345,9 +341,7 @@ class TestScraperIntegration:
         """Test search followed by fetch"""
         # Setup mock responses
         search_response = MagicMock()
-        search_response.json.return_value = {
-            "esearchresult": {"idlist": ["123", "456"]}
-        }
+        search_response.json.return_value = {"esearchresult": {"idlist": ["123", "456"]}}
 
         fetch_response = MagicMock()
         fetch_response.text = "<PubmedArticle></PubmedArticle>"

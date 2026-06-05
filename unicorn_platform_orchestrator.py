@@ -8,6 +8,7 @@ from models.biologics.crispr_foundry import CRISPRFoundry
 
 app = typer.Typer(help="Unicorn Platform Orchestrator for ZANE")
 
+
 class UnicornOrchestrator:
     def __init__(self):
         self.zkp = ZKPMarketplace()
@@ -47,10 +48,11 @@ class UnicornOrchestrator:
 
         typer.echo("Unicorn workflow completed successfully!")
 
+
 @app.command()
 def run(
     target_seq: str = "ATCGATCGATCG...",
-    fpga_device: str | None = typer.Option(None, "--fpga-device", help="FPGA/ASIC device path (sets env)")
+    fpga_device: str | None = typer.Option(None, "--fpga-device", help="FPGA/ASIC device path (sets env)"),
 ):
     """
     Orchestrate Unicorn Modules 14-16:
@@ -67,8 +69,10 @@ def run(
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1)
 
+
 def main():
     app()
+
 
 if __name__ == "__main__":
     main()

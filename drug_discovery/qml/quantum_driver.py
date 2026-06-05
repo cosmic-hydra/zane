@@ -13,6 +13,7 @@ This abstraction allows the QML engine to run on:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -380,10 +381,7 @@ class AWSBraketDriver(QuantumSimulator):
         start = time.time()
 
         try:
-            if self.local:
-                device = self._LocalSimulator()
-            else:
-                device = self._AwsDevice(self.device_arn)
+            device = self._LocalSimulator() if self.local else self._AwsDevice(self.device_arn)
 
             task = device.run(self._circuit, shots=n_shots)
             result = task.result()
@@ -525,10 +523,8 @@ class QuantumDriver:
         """List available quantum backends."""
         backends = ["local"]
 
-        try:
+        with contextlib.suppress(ImportError):
 
             backends.append("aws_braket")
-        except ImportError:
-            pass
 
         return backends

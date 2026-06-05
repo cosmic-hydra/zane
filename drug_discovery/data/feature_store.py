@@ -6,14 +6,16 @@ and embeddings for efficient reuse across training runs.
 """
 
 import logging
-import pickle
 import os
+import pickle
 from pathlib import Path
-from typing import Dict, Optional, Any, List
+from typing import Any
+
 import numpy as np
-import torch
+
 try:
     from pymongo import MongoClient
+
     _PYMONGO = True
 except ImportError:
     _PYMONGO = False
@@ -37,8 +39,8 @@ class FeatureStore:
         self.store_path.mkdir(parents=True, exist_ok=True)
 
         # In-memory cache
-        self._cache: Dict[str, Any] = {}
-        
+        self._cache: dict[str, Any] = {}
+
         self.use_mongodb = use_mongodb and _PYMONGO
         if self.use_mongodb and MongoClient:
             mongodb_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
@@ -57,7 +59,7 @@ class FeatureStore:
         key: str,
         embedding: np.ndarray,
         feature_type: str = "molecule",
-        metadata: Optional[Dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         """
         Store an embedding vector.
@@ -77,11 +79,7 @@ class FeatureStore:
 
         if self.use_mongodb:
             try:
-                self.collection.update_one(
-                    {"key": key, "feature_type": feature_type},
-                    {"$set": data},
-                    upsert=True
-                )
+                self.collection.update_one({"key": key, "feature_type": feature_type}, {"$set": data}, upsert=True)
             except Exception as e:
                 logger.error(f"Failed to store embedding in MongoDB for {key}: {e}")
         else:
@@ -99,7 +97,7 @@ class FeatureStore:
         self,
         key: str,
         feature_type: str = "molecule",
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Retrieve an embedding vector.
 
@@ -140,15 +138,15 @@ class FeatureStore:
                     return emb
             except Exception as e:
                 logger.error(f"Failed to load embedding for {key}: {e}")
-        
+
         return None
 
     def store_batch(
         self,
-        keys: List[str],
+        keys: list[str],
         embeddings: np.ndarray,
         feature_type: str = "molecule",
-        metadata_list: Optional[List[Dict]] = None,
+        metadata_list: list[dict] | None = None,
     ) -> None:
         """
         Store multiple embeddings efficiently.
@@ -165,29 +163,26 @@ class FeatureStore:
         if self.use_mongodb:
             operations = []
             from pymongo import UpdateOne
-            for key, embedding, metadata in zip(keys, embeddings, metadata_list):
+
+            for key, embedding, metadata in zip(keys, embeddings, metadata_list, strict=False):
                 data = {
                     "key": key,
                     "feature_type": feature_type,
                     "embedding": embedding.tolist() if isinstance(embedding, np.ndarray) else embedding,
                     "metadata": metadata or {},
                 }
-                operations.append(UpdateOne(
-                    {"key": key, "feature_type": feature_type},
-                    {"$set": data},
-                    upsert=True
-                ))
+                operations.append(UpdateOne({"key": key, "feature_type": feature_type}, {"$set": data}, upsert=True))
             if operations:
                 try:
                     self.collection.bulk_write(operations)
                 except Exception as e:
                     logger.error(f"Failed to bulk store embeddings in MongoDB: {e}")
         else:
-            for key, embedding, metadata in zip(keys, embeddings, metadata_list):
+            for key, embedding, metadata in zip(keys, embeddings, metadata_list, strict=False):
                 self.store_embedding(key, embedding, feature_type, metadata)
 
         # Update cache for all
-        for key, embedding, metadata in zip(keys, embeddings, metadata_list):
+        for key, embedding, metadata in zip(keys, embeddings, metadata_list, strict=False):
             cache_key = f"{feature_type}:{key}"
             self._cache[cache_key] = {"embedding": embedding, "metadata": metadata or {}}
 
@@ -195,9 +190,9 @@ class FeatureStore:
 
     def retrieve_batch(
         self,
-        keys: List[str],
+        keys: list[str],
         feature_type: str = "molecule",
-    ) -> Dict[str, np.ndarray]:
+    ) -> dict[str, np.ndarray]:
         """
         Retrieve multiple embeddings.
 
@@ -209,7 +204,7 @@ class FeatureStore:
             Dictionary mapping keys to embeddings
         """
         results = {}
-        
+
         # Check cache first and identify missing keys
         missing_keys = []
         for key in keys:
@@ -218,7 +213,7 @@ class FeatureStore:
                 results[key] = self._cache[cache_key]["embedding"]
             else:
                 missing_keys.append(key)
-        
+
         if not missing_keys:
             return results
 
@@ -247,7 +242,7 @@ class FeatureStore:
         self._cache.clear()
         logger.info("Cleared feature store cache")
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get statistics about stored features."""
         stats = {
             "cache_size": len(self._cache),

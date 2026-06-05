@@ -308,7 +308,7 @@ def run_zkp_penetration_validation(rng: np.random.Generator, assets_dir: Path) -
     plt.ylabel("Blocked attack fraction")
     plt.title("ZKP Penetration Testing Attack-Block Rate")
     plt.grid(axis="y", alpha=0.2)
-    for bar, val in zip(bars, attack_values):
+    for bar, val in zip(bars, attack_values, strict=False):
         plt.text(bar.get_x() + bar.get_width() / 2, val + 0.015, f"{val:.3f}", ha="center", fontsize=8)
     plt.tight_layout()
     plt.savefig(assets_dir / "test_results_zkp_penetration.png", dpi=220)

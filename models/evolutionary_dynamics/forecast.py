@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Sequence
+
 
 @dataclass
 class EvoForecastResult:
@@ -11,9 +12,10 @@ class EvoForecastResult:
     survival_prob: float = 0.0
     success: bool = False
 
+
 class EvolutionaryForecaster:
     """Evolutionary dynamics forecasting (2025).
-    
+
     Predicts resistance trajectories with GFlowNets.
     """
 

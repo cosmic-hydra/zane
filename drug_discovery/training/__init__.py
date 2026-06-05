@@ -2,6 +2,7 @@
 
 from .cryptography import EncryptionProvider as EncryptionProvider
 from .cryptography import PrivacyControl as PrivacyControl
+
 __all__ = [
     "EncryptionProvider",
     "PrivacyControl",
@@ -12,7 +13,7 @@ try:
     from .federated_learning import RobustFedAvg as RobustFedAvg
     from .federated_node import FederatedClient as FederatedClient
 
-    __all__.extend(["FederatedServer", "RobustFedAvg", "FederatedClient"])
+    __all__.extend(["FederatedClient", "FederatedServer", "RobustFedAvg"])
 except ImportError:
     pass
 
@@ -33,7 +34,7 @@ try:
         WarmupScheduler as WarmupScheduler,
     )
 
-    __all__.extend(["AdvancedTrainer", "AdvancedTrainingConfig", "WarmupScheduler", "EMA", "EarlyStopping"])
+    __all__.extend(["EMA", "AdvancedTrainer", "AdvancedTrainingConfig", "EarlyStopping", "WarmupScheduler"])
 except ImportError:
     pass
 

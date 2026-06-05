@@ -11,6 +11,5 @@ if str(REPO_ROOT) not in sys.path:
 
 from dependency_audit import main
 
-
 if __name__ == "__main__":
     raise SystemExit(main())

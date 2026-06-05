@@ -264,7 +264,7 @@ class ActiveSpaceApproximator:
             n_active_electrons = (n_active_electrons // 2) * 2
 
             # Extract active space
-            active_energies, active_coeffs, active_occ, core_energy = orbitals.get_active_space(
+            active_energies, active_coeffs, _active_occ, core_energy = orbitals.get_active_space(
                 n_active_electrons, n_active_orbitals
             )
 

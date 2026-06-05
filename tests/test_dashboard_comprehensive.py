@@ -55,12 +55,27 @@ class TestDashboardSnapshot:
     def test_snapshot_creation_all_fields(self):
         """Test all snapshot fields are accessible"""
         snapshot = DashboardSnapshot(
-            run_id="r1", model_type="transformer", mode="screening",
-            molecules_screened=200, molecules_generated=100, active_jobs=3,
-            hit_rate=0.82, avg_qed=0.80, avg_sa=2.5, best_binding=-9.0,
-            epoch=5, total_epochs=50, train_loss=0.03, val_loss=0.04,
-            latency_ms=200.0, user_query="test", filter_query="test",
-            cpu_util=30.0, gpu_util=60.0, memory_gb=5.0, tick=50,
+            run_id="r1",
+            model_type="transformer",
+            mode="screening",
+            molecules_screened=200,
+            molecules_generated=100,
+            active_jobs=3,
+            hit_rate=0.82,
+            avg_qed=0.80,
+            avg_sa=2.5,
+            best_binding=-9.0,
+            epoch=5,
+            total_epochs=50,
+            train_loss=0.03,
+            val_loss=0.04,
+            latency_ms=200.0,
+            user_query="test",
+            filter_query="test",
+            cpu_util=30.0,
+            gpu_util=60.0,
+            memory_gb=5.0,
+            tick=50,
         )
         assert snapshot.molecules_screened == 200
         assert snapshot.train_loss == 0.03
@@ -69,12 +84,27 @@ class TestDashboardSnapshot:
     def test_snapshot_edge_case_zero_values(self):
         """Test snapshot with zero values"""
         snapshot = DashboardSnapshot(
-            run_id="r0", model_type="gnn", mode="screening",
-            molecules_screened=0, molecules_generated=0, active_jobs=0,
-            hit_rate=0.0, avg_qed=0.0, avg_sa=0.0, best_binding=0.0,
-            epoch=0, total_epochs=0, train_loss=0.0, val_loss=0.0,
-            latency_ms=0.0, user_query="", filter_query="",
-            cpu_util=0.0, gpu_util=0.0, memory_gb=0.0, tick=0,
+            run_id="r0",
+            model_type="gnn",
+            mode="screening",
+            molecules_screened=0,
+            molecules_generated=0,
+            active_jobs=0,
+            hit_rate=0.0,
+            avg_qed=0.0,
+            avg_sa=0.0,
+            best_binding=0.0,
+            epoch=0,
+            total_epochs=0,
+            train_loss=0.0,
+            val_loss=0.0,
+            latency_ms=0.0,
+            user_query="",
+            filter_query="",
+            cpu_util=0.0,
+            gpu_util=0.0,
+            memory_gb=0.0,
+            tick=0,
         )
         assert snapshot.molecules_screened == 0
         assert snapshot.hit_rate == 0.0
@@ -82,12 +112,27 @@ class TestDashboardSnapshot:
     def test_snapshot_edge_case_high_values(self):
         """Test snapshot with high values"""
         snapshot = DashboardSnapshot(
-            run_id="r_high", model_type="ensemble", mode="generation",
-            molecules_screened=1000000, molecules_generated=999999, active_jobs=1000,
-            hit_rate=1.0, avg_qed=1.0, avg_sa=10.0, best_binding=-100.0,
-            epoch=10000, total_epochs=10000, train_loss=999.99, val_loss=999.99,
-            latency_ms=99999.9, user_query="x"*1000, filter_query="x"*1000,
-            cpu_util=100.0, gpu_util=100.0, memory_gb=999.9, tick=999999,
+            run_id="r_high",
+            model_type="ensemble",
+            mode="generation",
+            molecules_screened=1000000,
+            molecules_generated=999999,
+            active_jobs=1000,
+            hit_rate=1.0,
+            avg_qed=1.0,
+            avg_sa=10.0,
+            best_binding=-100.0,
+            epoch=10000,
+            total_epochs=10000,
+            train_loss=999.99,
+            val_loss=999.99,
+            latency_ms=99999.9,
+            user_query="x" * 1000,
+            filter_query="x" * 1000,
+            cpu_util=100.0,
+            gpu_util=100.0,
+            memory_gb=999.9,
+            tick=999999,
         )
         assert snapshot.molecules_screened == 1000000
         assert snapshot.gpu_util == 100.0
@@ -126,7 +171,7 @@ class TestDashboardTheme:
     def test_theme_colors_defined(self):
         """Test each theme has required colors"""
         required_colors = ["primary", "secondary", "accent", "caution", "ok"]
-        for theme_name, theme in _DASHBOARD_THEMES.items():
+        for _theme_name, theme in _DASHBOARD_THEMES.items():
             for color_attr in required_colors:
                 assert hasattr(theme, color_attr)
                 assert isinstance(getattr(theme, color_attr), str)
@@ -322,12 +367,27 @@ class TestDashboardAIAdvisor:
         """Test advisor summarize returns string"""
         advisor = DashboardAIAdvisor(model_id=None)
         snapshot = DashboardSnapshot(
-            run_id="test", model_type="gnn", mode="generation",
-            molecules_screened=100, molecules_generated=50, active_jobs=2,
-            hit_rate=0.7, avg_qed=0.8, avg_sa=3.0, best_binding=-8.0,
-            epoch=5, total_epochs=10, train_loss=0.05, val_loss=0.06,
-            latency_ms=100.0, user_query="test", filter_query="mw<500",
-            cpu_util=50.0, gpu_util=75.0, memory_gb=10.0, tick=50,
+            run_id="test",
+            model_type="gnn",
+            mode="generation",
+            molecules_screened=100,
+            molecules_generated=50,
+            active_jobs=2,
+            hit_rate=0.7,
+            avg_qed=0.8,
+            avg_sa=3.0,
+            best_binding=-8.0,
+            epoch=5,
+            total_epochs=10,
+            train_loss=0.05,
+            val_loss=0.06,
+            latency_ms=100.0,
+            user_query="test",
+            filter_query="mw<500",
+            cpu_util=50.0,
+            gpu_util=75.0,
+            memory_gb=10.0,
+            tick=50,
         )
         summary = advisor.summarize(snapshot)
         assert isinstance(summary, str)
@@ -396,12 +456,27 @@ class TestDashboardIntegration:
     def test_animated_bar_with_snapshot(self):
         """Test animated bar renders snapshot progress"""
         snapshot = DashboardSnapshot(
-            run_id="test", model_type="gnn", mode="generation",
-            molecules_screened=100, molecules_generated=50, active_jobs=2,
-            hit_rate=0.75, avg_qed=0.8, avg_sa=3.0, best_binding=-8.0,
-            epoch=15, total_epochs=20, train_loss=0.04, val_loss=0.05,
-            latency_ms=120.0, user_query="test", filter_query="mw<500",
-            cpu_util=50.0, gpu_util=75.0, memory_gb=10.0, tick=50,
+            run_id="test",
+            model_type="gnn",
+            mode="generation",
+            molecules_screened=100,
+            molecules_generated=50,
+            active_jobs=2,
+            hit_rate=0.75,
+            avg_qed=0.8,
+            avg_sa=3.0,
+            best_binding=-8.0,
+            epoch=15,
+            total_epochs=20,
+            train_loss=0.04,
+            val_loss=0.05,
+            latency_ms=120.0,
+            user_query="test",
+            filter_query="mw<500",
+            cpu_util=50.0,
+            gpu_util=75.0,
+            memory_gb=10.0,
+            tick=50,
         )
         progress = snapshot.epoch / snapshot.total_epochs
         bar = _animated_bar(progress, snapshot.tick)
@@ -415,12 +490,27 @@ class TestDashboardIntegration:
 
         for mode in modes:
             snapshot = DashboardSnapshot(
-                run_id=f"test_{mode}", model_type="gnn", mode=mode,
-                molecules_screened=100, molecules_generated=50, active_jobs=2,
-                hit_rate=0.7, avg_qed=0.8, avg_sa=3.0, best_binding=-8.0,
-                epoch=5, total_epochs=10, train_loss=0.05, val_loss=0.06,
-                latency_ms=100.0, user_query="test", filter_query="mw<500",
-                cpu_util=50.0, gpu_util=75.0, memory_gb=10.0, tick=50,
+                run_id=f"test_{mode}",
+                model_type="gnn",
+                mode=mode,
+                molecules_screened=100,
+                molecules_generated=50,
+                active_jobs=2,
+                hit_rate=0.7,
+                avg_qed=0.8,
+                avg_sa=3.0,
+                best_binding=-8.0,
+                epoch=5,
+                total_epochs=10,
+                train_loss=0.05,
+                val_loss=0.06,
+                latency_ms=100.0,
+                user_query="test",
+                filter_query="mw<500",
+                cpu_util=50.0,
+                gpu_util=75.0,
+                memory_gb=10.0,
+                tick=50,
             )
             summary = advisor.summarize(snapshot)
             assert isinstance(summary, str)

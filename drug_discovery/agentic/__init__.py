@@ -3,4 +3,4 @@
 from .fda_formatter import INDGenerator
 from .swarm import AgenticSwarm, BioethicsAgent, TranslationAgent
 
-__all__ = ["AgenticSwarm", "BioethicsAgent", "TranslationAgent", "INDGenerator"]
+__all__ = ["AgenticSwarm", "BioethicsAgent", "INDGenerator", "TranslationAgent"]

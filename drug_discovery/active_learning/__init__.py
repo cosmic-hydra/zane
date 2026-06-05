@@ -38,16 +38,16 @@ from drug_discovery.active_learning.optimizer import (
 from drug_discovery.active_learning.orchestrator import ActiveLearningOrchestrator as ActiveLearningOrchestrator
 
 __all__ = [
-    "GaussianProcessSurrogate",
-    "SurrogateConfig",
     "AcquisitionFunction",
-    "ExpectedImprovement",
-    "UpperConfidenceBound",
-    "ThompsonSampling",
-    "BayesianOptimizer",
-    "MultiFidelityOptimizer",
-    "ResourceAllocator",
-    "OptimizationResult",
-    "ResourceBudget",
     "ActiveLearningOrchestrator",
+    "BayesianOptimizer",
+    "ExpectedImprovement",
+    "GaussianProcessSurrogate",
+    "MultiFidelityOptimizer",
+    "OptimizationResult",
+    "ResourceAllocator",
+    "ResourceBudget",
+    "SurrogateConfig",
+    "ThompsonSampling",
+    "UpperConfidenceBound",
 ]

@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from drug_discovery.evaluation.herg_predictor import HERGPredictor
+
     _HERG_PREDICTOR = True
 except ImportError:
     _HERG_PREDICTOR = False
@@ -164,7 +165,7 @@ class PreClinicalToxPanel:
         self.herg_threshold = herg_threshold
         self.cyp_threshold = cyp_threshold
         self.ames_threshold = ames_threshold
-        
+
         # Use provided predictor or create default
         if herg_predictor is not None:
             self.herg_predictor = herg_predictor
@@ -189,9 +190,11 @@ class PreClinicalToxPanel:
         if not ames.passed:
             rejection_reasons.append(f"Ames: {ames.risk_class}")
 
-        overall = (herg.inhibition_probability * 0.4
-                   + max(cyp.enzyme_inhibitions.values(), default=0) * 0.3
-                   + ames.mutagenicity_probability * 0.3)
+        overall = (
+            herg.inhibition_probability * 0.4
+            + max(cyp.enzyme_inhibitions.values(), default=0) * 0.3
+            + ames.mutagenicity_probability * 0.3
+        )
 
         return GLPToxPanel(
             smiles=smiles,
@@ -218,14 +221,14 @@ class PreClinicalToxPanel:
         # Use new HERG predictor if available
         if self.herg_predictor is not None and _HERG_PREDICTOR:
             prediction = self.herg_predictor.predict(smiles, calibrate=True)
-            
+
             # Map to CiPA risk classification
             risk_class = "low"
             if prediction.cipa_risk_category == "category_2":
                 risk_class = "moderate"
             elif prediction.cipa_risk_category == "category_3":
                 risk_class = "high"
-            
+
             return HERGResult(
                 smiles=smiles,
                 inhibition_probability=prediction.inhibition_probability,
@@ -234,7 +237,7 @@ class PreClinicalToxPanel:
                 passed=prediction.inhibition_probability <= self.herg_threshold,
                 key_features=prediction.key_concerns,
             )
-        
+
         # Fallback: original heuristic model when new predictor unavailable
         logp = props.get("logp", 2.0)
         tpsa = props.get("tpsa", 60.0)
@@ -248,8 +251,7 @@ class PreClinicalToxPanel:
         basicity_factor = _sigmoid(hbd - 2)
 
         # Weighted combination (normalized)
-        prob = (logp_factor * 0.40 + tpsa_factor * 0.25 + 
-               mw_factor * 0.20 + basicity_factor * 0.15)
+        prob = logp_factor * 0.40 + tpsa_factor * 0.25 + mw_factor * 0.20 + basicity_factor * 0.15
         prob = min(max(prob, 0.0), 1.0)
 
         if prob > 0.7:

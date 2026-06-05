@@ -1,16 +1,17 @@
-from rdkit import Chem
-from rdkit import DataStructs
-from rdkit.Chem import AllChem
-import numpy as np
 import logging
 import os
 
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem
+
 logger = logging.getLogger(__name__)
+
 
 class DeNovoStrictEnforcer:
     """
     Ensures that generated molecules are novel and not regurgitations of known drugs.
     """
+
     def __init__(self, threshold: float = 0.45):
         self.threshold = threshold
         self.known_fingerprints = []
@@ -27,7 +28,7 @@ class DeNovoStrictEnforcer:
 
         logger.info(f"Loading public drug archives from {chembl_db_path}...")
         try:
-            with open(chembl_db_path, 'r') as f:
+            with open(chembl_db_path) as f:
                 for line in f:
                     smiles = line.strip().split()[0]
                     mol = Chem.MolFromSmiles(smiles)
@@ -37,7 +38,7 @@ class DeNovoStrictEnforcer:
                         self.known_smiles.add(smiles)
             logger.info(f"Loaded {len(self.known_fingerprints)} molecules into novelty enforcer.")
         except Exception as e:
-            logger.error(f"Failed to load archives: {str(e)}")
+            logger.error(f"Failed to load archives: {e!s}")
 
     def calculate_novelty_penalty(self, generated_smiles: str) -> float:
         """
@@ -46,7 +47,7 @@ class DeNovoStrictEnforcer:
         """
         mol = Chem.MolFromSmiles(generated_smiles)
         if not mol:
-            return -10.0 # Invalid molecule penalty
+            return -10.0  # Invalid molecule penalty
 
         # Check for exact match first
         if generated_smiles in self.known_smiles:
@@ -54,7 +55,7 @@ class DeNovoStrictEnforcer:
             return -1000.0
 
         fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048)
-        
+
         if not self.known_fingerprints:
             return 0.0
 
@@ -64,8 +65,10 @@ class DeNovoStrictEnforcer:
 
         if max_sim > self.threshold:
             # Catastrophic negative reward for minor tweaks of existing drugs
-            penalty = -100.0 * (max_sim / self.threshold)**2
-            logger.info(f"Novelty Veto: Max similarity {max_sim:.4f} exceeds threshold {self.threshold}. Penalty: {penalty:.2f}")
+            penalty = -100.0 * (max_sim / self.threshold) ** 2
+            logger.info(
+                f"Novelty Veto: Max similarity {max_sim:.4f} exceeds threshold {self.threshold}. Penalty: {penalty:.2f}"
+            )
             return penalty
 
         return 0.0

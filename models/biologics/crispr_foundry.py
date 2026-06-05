@@ -1,15 +1,17 @@
-import torch
 import random
-from typing import Dict
-from transformers import AutoTokenizer, AutoModelForCausalLM
+
+from transformers import AutoModelForCausalLM
+
 
 class MockESM3:
     def generate(self, prompt: str) -> str:
         return "GCTAGCTAGCTAGCTAGCTAGC...novel_Cas_variant"  # Mock CRISPR nuclease sequence
 
+
 class MockRoseTTAFold:
     def predict_structure(self, seq: str) -> dict:
         return {"pdb": "mock.pdb", "confidence": 0.9}
+
 
 class CRISPRFoundry:
     def __init__(self):
@@ -51,4 +53,3 @@ class CRISPRFoundry:
         rmsd = random.uniform(0.8, 1.8)  # Always pass
         print(f"RMSD verification: {rmsd:.2f} A (target: {target_seq[:20]}, nuclease: {nuclease_seq[:20]})")
         return rmsd
-

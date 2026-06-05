@@ -8,12 +8,12 @@ from .orbital_logistics import OrbitalLogisticsOptimizer as OrbitalLogisticsOpti
 from .patient_generator import PatientGenerator as PatientGenerator
 
 __all__ = [
-    "CGSimulator",
-    "PatientGenerator",
     "BayesianPKPD",
+    "CGSimulator",
     "ClinicalTrialSimulator",
     "MicrogravitySimulator",
     "OrbitalLogisticsOptimizer",
+    "PatientGenerator",
 ]
 
 try:
@@ -30,6 +30,6 @@ try:
         generate_lambda_schedule as generate_lambda_schedule,
     )
 
-    __all__.extend(["FEPPipeline", "FEPConfig", "FEPSurrogateNetwork", "generate_lambda_schedule"])
+    __all__.extend(["FEPConfig", "FEPPipeline", "FEPSurrogateNetwork", "generate_lambda_schedule"])
 except ImportError:
     pass

@@ -1,14 +1,17 @@
-import socket
-import requests
 import logging
+import socket
 import sys
-from typing import List
+
+import requests
 
 logger = logging.getLogger(__name__)
 
+
 class CriticalSecurityException(Exception):
     """Raised when the system detects an unauthorized outbound connection."""
+
     pass
+
 
 class AirGapEnforcer:
     """
@@ -16,7 +19,7 @@ class AirGapEnforcer:
     Prevents any IP or proprietary molecular data from leaving the internal network.
     """
 
-    def __init__(self, allowed_hosts: List[str] = None):
+    def __init__(self, allowed_hosts: list[str] | None = None):
         self.allowed_hosts = allowed_hosts or ["localhost", "127.0.0.1"]
         self._original_socket = socket.socket
 
@@ -25,13 +28,13 @@ class AirGapEnforcer:
         Overrides the global socket object to block unauthorized outbound traffic.
         This effectively kills any accidental calls to OpenAI, WandB, or Telemetry.
         """
+
         def guarded_connect(instance, address):
             host = address[0]
             if host not in self.allowed_hosts:
                 logger.critical(f"UNAUTHORIZED OUTBOUND ATTEMPT: {host}")
                 raise CriticalSecurityException(
-                    f"Outbound connection to {host} blocked by AirGapEnforcer. "
-                    "Proprietary IP protection active."
+                    f"Outbound connection to {host} blocked by AirGapEnforcer. " "Proprietary IP protection active."
                 )
             return self._original_socket.connect(instance, address)
 
@@ -45,12 +48,12 @@ class AirGapEnforcer:
         If connection succeeds, the environment is NOT air-gapped.
         """
         test_targets = ["8.8.8.8", "pypi.org", "google.com"]
-        
+
         for target in test_targets:
             try:
                 # Use a very short timeout
                 requests.get(f"http://{target}", timeout=1.0)
-                
+
                 # If we reach here, we are NOT air-gapped
                 logger.error(f"SECURITY BREACH: System can reach {target}. Environment is not isolated.")
                 raise CriticalSecurityException(
@@ -68,6 +71,7 @@ class AirGapEnforcer:
                 logger.info(f"Connection to {target} failed as expected: {e}")
 
         logger.info("Environment isolation verified. Safe for proprietary data processing.")
+
 
 def initialize_security():
     enforcer = AirGapEnforcer()

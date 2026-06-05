@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import random
+from dataclasses import dataclass
 
 import torch
 from torch.utils.data import Dataset, Subset
@@ -313,7 +313,7 @@ def train_test_split_molecular(dataset: MolecularDataset, test_size: float = 0.2
     if n == 0:
         return Subset(dataset, []), Subset(dataset, [])
 
-    test_n = int(round(n * float(test_size)))
+    test_n = round(n * float(test_size))
     if n > 1:
         test_n = max(1, test_n)
     test_n = min(test_n, n)
@@ -359,7 +359,7 @@ def murcko_scaffold_split_molecular(dataset: MolecularDataset, test_size: float 
         rng.shuffle(scaffold_groups)
         scaffold_groups.sort(key=len, reverse=True)
 
-    target_test_n = min(n, max(1 if n > 1 else 0, int(round(n * float(test_size)))))
+    target_test_n = min(n, max(1 if n > 1 else 0, round(n * float(test_size))))
     test_indices: list[int] = []
     train_indices: list[int] = []
 

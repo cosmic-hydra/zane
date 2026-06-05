@@ -1,10 +1,12 @@
 try:
     import gemmi
+
     GEMMI_AVAILABLE = True
 except ImportError:
     GEMMI_AVAILABLE = False
 
 from rdkit import Chem
+
 
 def parse_cif_to_mol(cif_path: str) -> Chem.Mol:
     if not GEMMI_AVAILABLE:

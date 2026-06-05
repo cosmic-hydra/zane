@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 import math
-import os
 from typing import Any
 
 import torch
@@ -59,11 +58,11 @@ class HighToxicityVeto(Exception):
 # Off-target definitions
 # ---------------------------------------------------------------------------
 _OFF_TARGETS: list[tuple[str, float]] = [
-    ("hERG", 0.5),       # Cardiac ion channel — QT prolongation risk
-    ("CYP3A4", 0.6),     # Major CYP450 isoform — DDI / liver toxicity
-    ("5-HT2B", 0.55),    # Serotonin receptor — valvulopathy risk
-    ("hNAV1.5", 0.55),   # Cardiac sodium channel — arrhythmia risk
-    ("hKv1.5", 0.5),     # Cardiac potassium channel — atrial arrhythmia
+    ("hERG", 0.5),  # Cardiac ion channel — QT prolongation risk
+    ("CYP3A4", 0.6),  # Major CYP450 isoform — DDI / liver toxicity
+    ("5-HT2B", 0.55),  # Serotonin receptor — valvulopathy risk
+    ("hNAV1.5", 0.55),  # Cardiac sodium channel — arrhythmia risk
+    ("hKv1.5", 0.5),  # Cardiac potassium channel — atrial arrhythmia
 ]
 
 
@@ -186,10 +185,11 @@ class ToxPanelScorer:
         self.raise_on_first = raise_on_first
         self.use_advanced_models = use_advanced_models
         self._admet_predictor = None
-        
+
         if self.use_advanced_models:
             try:
-                from drug_discovery.evaluation.advanced_admet import AdvancedADMETPredictor, ADMETConfig
+                from drug_discovery.evaluation.advanced_admet import ADMETConfig, AdvancedADMETPredictor
+
                 self._admet_predictor = AdvancedADMETPredictor(ADMETConfig())
                 # In a real scenario, we'd load weights here.
             except ImportError:
@@ -230,7 +230,7 @@ class ToxPanelScorer:
                     dummy_pos = torch.randn(3, 3)
                     dummy_edge = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
                     dummy_tokens = torch.randint(0, 10, (1, 10))
-                    
+
                     preds = self._admet_predictor(dummy_z, dummy_pos, dummy_edge, dummy_tokens)
                     if endpoint in preds:
                         probs = F.softmax(preds[endpoint], dim=-1)

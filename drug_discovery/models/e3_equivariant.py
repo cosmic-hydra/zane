@@ -8,7 +8,6 @@ import logging
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from torch_geometric.nn import MessagePassing, global_mean_pool
 
 logger = logging.getLogger(__name__)
@@ -98,10 +97,7 @@ class E3EquivariantGNN(nn.Module):
             x_new = F.relu(x_new)
 
             # Residual connection
-            if i > 0:
-                x = x + x_new
-            else:
-                x = x_new
+            x = x + x_new if i > 0 else x_new
 
         # Global pooling
         x = global_mean_pool(x, batch)

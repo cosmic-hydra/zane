@@ -189,8 +189,7 @@ class RBACManager:
         """Raise :class:`PermissionError` if the user lacks *permission*."""
         if not user.has_permission(permission):
             raise PermissionError(
-                f"User {user.user_id} (role={user.role.name}) "
-                f"lacks permission {permission.value}"
+                f"User {user.user_id} (role={user.role.name}) " f"lacks permission {permission.value}"
             )
 
     def verify_signature(
@@ -212,9 +211,7 @@ class RBACManager:
         if not user.has_permission(Permission.SIGN_PREDICTION) and not user.has_permission(
             Permission.APPROVE_CHECKPOINT
         ):
-            raise SignatureError(
-                f"User {user.user_id} lacks signing permission"
-            )
+            raise SignatureError(f"User {user.user_id} lacks signing permission")
 
         user.last_auth = time.monotonic()
 
@@ -224,9 +221,7 @@ class RBACManager:
             "role": user.role.name,
             "reason": reason,
             "timestamp": time.time(),
-            "signature_hash": hashlib.sha256(
-                f"{user.user_id}:{reason}:{time.time()}".encode()
-            ).hexdigest(),
+            "signature_hash": hashlib.sha256(f"{user.user_id}:{reason}:{time.time()}".encode()).hexdigest(),
         }
         logger.info("Electronic signature recorded for user %s: %s", user.user_id, reason)
         return signature_record
@@ -269,9 +264,7 @@ def require_permission(permission: Permission, rbac: RBACManager | None = None) 
             if rbac:
                 rbac.check_permission(user, permission)
             elif not user.has_permission(permission):
-                raise PermissionError(
-                    f"User {user.user_id} lacks {permission.value}"
-                )
+                raise PermissionError(f"User {user.user_id} lacks {permission.value}")
             return fn(*args, **kwargs)
 
         return wrapper

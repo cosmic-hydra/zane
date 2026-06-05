@@ -360,7 +360,7 @@ class FailureAwareTrainer:
         self.error_table: dict[str, float] = {}
 
     def update_errors(self, ids: Sequence[str], losses: torch.Tensor) -> None:
-        for sample_id, loss_val in zip(ids, losses.detach().cpu().tolist()):
+        for sample_id, loss_val in zip(ids, losses.detach().cpu().tolist(), strict=False):
             prev = self.error_table.get(sample_id, 0.0)
             self.error_table[sample_id] = 0.7 * prev + 0.3 * float(loss_val)
 
@@ -464,7 +464,7 @@ class MetaLearnerMAML:
             pred = cloned(support_x)
             loss = loss_fn(pred, support_y)
             grads = torch.autograd.grad(loss, cloned.parameters(), create_graph=True)
-            for param, grad in zip(cloned.parameters(), grads):
+            for param, grad in zip(cloned.parameters(), grads, strict=False):
                 param.data = param.data - self.inner_lr * grad
         return cloned
 
