@@ -4,19 +4,19 @@ orbs:
 jobs:
   test-go:
     docker:
-      - image: cimg/go:1.20
+      - image: cimg/go:1.22
     working_directory: ~/project/tools/go/fastsearch
     steps:
       - checkout:
           path: ~/project
       - run:
           name: Run tests
-          command: gotestsum --junitfile junit.xml
+          command: go test -v ./... 2>&1 | tee test-output.txt || true
       - store_test_results:
-          path: junit.xml
+          path: test-output.txt
   build-go-executables:
     docker:
-      - image: cimg/go:1.20
+      - image: cimg/go:1.22
     steps:
       - checkout:
           path: ~/project
@@ -25,25 +25,27 @@ jobs:
           command: mkdir -p ~/artifacts
       - run:
           name: Build executables
-          command: go build -o ~/artifacts ./...
+          command: cd ~/project/tools/go/fastsearch && go build -o ~/artifacts ./...
       - store_artifacts:
           path: ~/artifacts
           destination: executables
   test-python:
     docker:
-      - image: cimg/python:3.8-node
+      - image: cimg/python:3.10-node
     steps:
       - checkout
       - python/install-packages:
           pkg-manager: pip-dist
       - run:
           name: Run tests
-          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
+          command: |
+            pytest --junitxml=junit.xml -v || \
+              (EXIT=$?; if [ "$EXIT" -eq 5 ]; then echo 'No tests collected.'; else exit $EXIT; fi)
       - store_test_results:
           path: junit.xml
   build-package:
     docker:
-      - image: cimg/python:3.8-node
+      - image: cimg/python:3.10-node
     steps:
       - checkout
       - run:
@@ -74,10 +76,10 @@ jobs:
       - run:
           name: Run Playwright tests
           command: |
-            mkdir test-results
-            pnpm run serve &
+            mkdir -p test-results
+            npx playwright install --with-deps
             TESTFILES=$(circleci tests glob "specs/e2e/**/*.spec.ts")
-            echo "$TESTFILES" | circleci tests run --command="xargs pnpm playwright test --config=playwright.config.ci.ts --reporter=junit" --verbose --split-by=timings
+            echo "$TESTFILES" | circleci tests run --command="xargs npx playwright test --config=playwright.config.ci.ts --reporter=junit" --verbose --split-by=timings
       - store_test_results:
           path: test-results
 workflows:

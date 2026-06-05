@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pill, Clock, Zap, ShoppingBag, ArrowRight, ShieldCheck, Info } from 'lucide-react';
+import { Pill, Clock, Zap, ShoppingBag, ShieldCheck, Info } from 'lucide-react';
 
 interface Compound {
   smiles: string;

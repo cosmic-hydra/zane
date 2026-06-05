@@ -2,8 +2,30 @@ line-length = 120
 target-version = "py310"
 
 [lint]
-select = ["E", "F", "W", "I", "N", "UP"]
-ignore = ["E501", "N803", "N806", "N812", "N815", "N817"]
+select = [
+  "E",    # pycodestyle errors
+  "F",    # pyflakes
+  "W",    # pycodestyle warnings
+  "I",    # isort
+  "N",    # pep8-naming
+  "UP",   # pyupgrade
+  "B",    # flake8-bugbear
+  "S",    # flake8-bandit (security)
+  "SIM",  # flake8-simplify
+  "RUF",  # ruff-specific rules
+]
+ignore = [
+  "E501",  # line too long (handled by formatter)
+  "N803",  # argument name casing (common in ML)
+  "N806",  # variable name casing (common in ML)
+  "N812",  # lowercase imported as non-lowercase
+  "N815",  # mixedCase variable in class scope
+  "N817",  # CamelCase imported as acronym
+  "S101",  # assert used (fine in tests and non-production code)
+  "S603",  # subprocess call with shell=False (intentional)
+  "S607",  # partial executable path (intentional for CLI)
+  "B008",  # function calls in argument defaults (used by FastAPI/typer)
+]
 
 exclude = [
   ".git",
@@ -12,7 +34,13 @@ exclude = [
   "venv",
   "build",
   "dist",
+  "external",
+  "node_modules",
 ]
 
 [lint.per-file-ignores]
-"tests/**" = ["E402"]
+"tests/**" = ["E402", "S101"]
+"scripts/**" = ["S101"]
+
+[lint.isort]
+known-first-party = ["drug_discovery"]

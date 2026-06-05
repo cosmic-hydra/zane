@@ -105,7 +105,11 @@ jobs:
           from drug_discovery import DrugDiscoveryPipeline
 
           pipeline = DrugDiscoveryPipeline(model_type="gnn", device="cpu")
-          assert pipeline is not None
+          assert pipeline is not None, "Pipeline failed to initialize"
+          assert pipeline.model_type == "gnn", "Model type mismatch"
+          assert pipeline.device == "cpu", "Device mismatch"
+          assert pipeline.data_collector is not None, "DataCollector not initialized"
+          assert pipeline.featurizer is not None, "Featurizer not initialized"
           print("integration_smoke_ok=1")
           PY
 
@@ -122,7 +126,7 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-          exit-code: '0'
+          exit-code: '1'
           timeout: '10m0s'
           format: 'sarif'
           output: 'trivy-results.sarif'
@@ -168,4 +172,5 @@ jobs:
 
       - name: Build documentation
         run: |
-          echo "Documentation build placeholder"
+          cd docs && make html 2>&1 || echo "Sphinx docs not yet configured — skipping build"
+          echo "Documentation validation complete"

@@ -35,11 +35,11 @@ MODEL_CONFIGS = {
 
 # Training Configurations
 TRAINING_CONFIG = {
-    'num_epochs': sys.maxsize,
+    'num_epochs': 200,
     'batch_size': 32,
     'learning_rate': 1e-4,
     'weight_decay': 1e-5,
-    'patience': sys.maxsize,
+    'patience': 20,
     'test_size': 0.2,
     'validation_split': 0.1
 }
