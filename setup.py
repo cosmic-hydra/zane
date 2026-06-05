@@ -26,12 +26,11 @@ setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=requirements,
     extras_require={
         "integrations": [

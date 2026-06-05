@@ -888,7 +888,7 @@ class DrugDiscoveryPipeline:
         
         # 2. Inference
         inference = CausalInference(data)
-        confounders = [c for col in data.columns if col not in [treatment, outcome]]
+        confounders = [col for col in data.columns if col not in [treatment, outcome]]
         ate = inference.estimate_treatment_effect(treatment, outcome, confounders)
         
         return {

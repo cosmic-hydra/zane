@@ -11,6 +11,7 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     python3-dev \
+    python3-venv \
     git \
     wget \
     cmake \
@@ -21,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /build
 
 # Upgrade pip
-RUN pip3 install --no-cache-dir --upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
 
 # Install PyTorch with CUDA 12.1 support
 RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
@@ -51,6 +52,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     libxml2 \
     libgomp1 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -62,10 +64,21 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY . .
 
+# Install the package in editable mode
+RUN pip3 install --no-cache-dir -e .
+
 # Environment variables for distributed computing and MLOps
 ENV RAY_DASHBOARD_HOST=0.0.0.0
-ENV MLFLOW_TRACKING_URI=http://mlflow-server:5000
-ENV DVC_REMOTE_URL=s3://zane-data-lake/dvc-store
+
+# Create non-root user for security
+RUN groupadd -r zane && useradd -r -g zane -d /app zane \
+    && chown -R zane:zane /app
+USER zane
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
 
 # Set default command
-CMD ["python3", "-m", "drug_discovery.pipeline"]
+CMD ["uvicorn", "infrastructure.api_gateway:app", "--host", "0.0.0.0", "--port", "8000"]

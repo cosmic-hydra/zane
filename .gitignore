@@ -33,8 +33,8 @@ wheels/
 
 # Environments
 .env
-.env.*
-.env.example
+.env.local
+.env.*.local
 .venv
 env/
 venv/
@@ -69,8 +69,10 @@ mlruns/
 # Testing
 .pytest_cache/
 .coverage
+coverage.xml
 htmlcov/
 .tox/
+junit.xml
 
 # OS
 .DS_Store
@@ -85,3 +87,29 @@ temp_uploads/
 # Test cache
 test_cache/
 test_pipeline.pt
+
+# Node.js (frontend)
+node_modules/
+.next/
+out/
+.env.local
+
+# Go binaries
+tools/bin/
+
+# Cython build artifacts
+cython/*.c
+cython/*.html
+
+# MyPy cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# DVC
+/dvc.lock
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*

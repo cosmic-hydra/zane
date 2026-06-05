@@ -3,14 +3,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { Upload, FileText, Activity, Clock, CheckCircle, AlertCircle, User, MapPin, Printer, Mail, Phone } from 'lucide-react';
+import { Upload, FileText, Activity, Clock, CheckCircle, AlertCircle, User, Printer, Phone } from 'lucide-react';
 import TherapeuticBlueprintTable from '../../components/TherapeuticBlueprintTable';
 
 export default function PatientPortal() {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [blueprint, setBlueprint] = useState<any>(null);
+  const [blueprint, setBlueprint] = useState<Record<string, unknown> | null>(null);
   const [agreed, setAgreed] = useState(false);
 
   // Form State

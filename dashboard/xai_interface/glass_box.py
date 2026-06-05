@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from rdkit import Chem
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem, Descriptors
 
 from .inference_engine import SubMillisecondSurrogateEngine
 from .state_manager import MoleculeStateManager
@@ -114,7 +114,7 @@ class AugmentedChemistInterface:
             "dg_variance": scores["dg_variance"],
             "admet_toxicity_gauge": min(max(scores["admet_mean"], 0.0), 1.0),  # Clamp to 0-1
             "admet_variance": scores["admet_variance"],
-            "molecular_weight": Chem.Descriptors.MolWt(mol),
+            "molecular_weight": Descriptors.MolWt(mol),
         }
 
 
