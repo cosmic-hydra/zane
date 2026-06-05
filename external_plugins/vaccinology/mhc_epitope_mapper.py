@@ -7,17 +7,16 @@ from Bio import SeqIO
 
 logger = logging.getLogger(__name__)
 
+
 class PatientEpitopeMapper:
     """
     Simulates binding affinity of viral peptides against patient-specific MHC alleles.
     """
+
     def __init__(self):
         # Mock neural network for binding prediction (similar to NetMHCpan architecture)
         self.model = nn.Sequential(
-            nn.Linear(20 * 9, 128), # 9-mer peptides, 20 amino acids
-            nn.ReLU(),
-            nn.Linear(128, 1),
-            nn.Sigmoid()
+            nn.Linear(20 * 9, 128), nn.ReLU(), nn.Linear(128, 1), nn.Sigmoid()  # 9-mer peptides, 20 amino acids
         )
         self.aa_map = {aa: i for i, aa in enumerate("ACDEFGHIKLMNPQRSTVWY")}
 
@@ -40,7 +39,7 @@ class PatientEpitopeMapper:
                 sequence = str(record.seq)
                 # Sliding window of 9 amino acids
                 for i in range(len(sequence) - 8):
-                    peptide = sequence[i:i+9]
+                    peptide = sequence[i : i + 9]
 
                     # Simulated prediction logic
                     # In a real system, this would be conditioned on the HLA allele
@@ -49,15 +48,17 @@ class PatientEpitopeMapper:
 
                     # Convert score to nanomolar Kd (Log scale mapping)
                     # High score = Low Kd (strong binding)
-                    kd_nm = 50000**(1 - binding_score)
+                    kd_nm = 50000 ** (1 - binding_score)
 
-                    results.append({
-                        "peptide": peptide,
-                        "start_pos": i,
-                        "kd_nm": kd_nm,
-                        "allele": patient_hla_alleles[0] if patient_hla_alleles else "HLA-A*02:01",
-                        "immunogenicity_score": binding_score
-                    })
+                    results.append(
+                        {
+                            "peptide": peptide,
+                            "start_pos": i,
+                            "kd_nm": kd_nm,
+                            "allele": patient_hla_alleles[0] if patient_hla_alleles else "HLA-A*02:01",
+                            "immunogenicity_score": binding_score,
+                        }
+                    )
 
             df = pd.DataFrame(results)
             # Filter for "strong binders" (Kd < 50nM)

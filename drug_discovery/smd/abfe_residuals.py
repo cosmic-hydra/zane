@@ -3,6 +3,7 @@
 Provides residual computations and outlier identification to track simulation
 convergence and identify problematic systems.
 """
+
 from __future__ import annotations
 
 import math

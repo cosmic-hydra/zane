@@ -11,13 +11,16 @@ from sqlalchemy.orm import sessionmaker
 logger = logging.getLogger(__name__)
 Base = declarative_base()
 
+
 class ProprietaryMolecule(Base):
     """Encrypted storage for pharma partner molecules."""
-    __tablename__ = 'proprietary_library'
+
+    __tablename__ = "proprietary_library"
     id = Column(Integer, primary_key=True)
     batch_id = Column(String(100), index=True)
     canonical_smiles = Column(String, unique=True)
-    encrypted_metadata = Column(LargeBinary) # For sensitive properties
+    encrypted_metadata = Column(LargeBinary)  # For sensitive properties
+
 
 class EnterpriseDataIngestor:
     """
@@ -59,7 +62,7 @@ class EnterpriseDataIngestor:
             raise FileNotFoundError(f"SDF file not found: {filepath}")
 
         session = self.Session()
-        inf = open(filepath, 'rb')
+        inf = open(filepath, "rb")
         supplier = Chem.ForwardSDMolSupplier(inf)
 
         count = 0
@@ -74,7 +77,7 @@ class EnterpriseDataIngestor:
                 entry = ProprietaryMolecule(
                     batch_id=batch_id,
                     canonical_smiles=smiles,
-                    encrypted_metadata=b"" # Placeholder for actual encrypted blob
+                    encrypted_metadata=b"",  # Placeholder for actual encrypted blob
                 )
                 session.merge(entry)
                 count += 1

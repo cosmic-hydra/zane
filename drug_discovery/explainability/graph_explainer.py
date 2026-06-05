@@ -45,5 +45,5 @@ class GraphExplainer:
         return {
             "node_attributions": attributions.tolist(),
             "top_nodes": top_indices.tolist(),
-            "explanation_method": "gradient_norm"
+            "explanation_method": "gradient_norm",
         }

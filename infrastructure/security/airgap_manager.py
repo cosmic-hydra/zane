@@ -6,9 +6,12 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+
 class CriticalSecurityException(Exception):
     """Raised when the system detects an unauthorized outbound connection."""
+
     pass
+
 
 class AirGapEnforcer:
     """
@@ -25,13 +28,13 @@ class AirGapEnforcer:
         Overrides the global socket object to block unauthorized outbound traffic.
         This effectively kills any accidental calls to OpenAI, WandB, or Telemetry.
         """
+
         def guarded_connect(instance, address):
             host = address[0]
             if host not in self.allowed_hosts:
                 logger.critical(f"UNAUTHORIZED OUTBOUND ATTEMPT: {host}")
                 raise CriticalSecurityException(
-                    f"Outbound connection to {host} blocked by AirGapEnforcer. "
-                    "Proprietary IP protection active."
+                    f"Outbound connection to {host} blocked by AirGapEnforcer. " "Proprietary IP protection active."
                 )
             return self._original_socket.connect(instance, address)
 
@@ -68,6 +71,7 @@ class AirGapEnforcer:
                 logger.info(f"Connection to {target} failed as expected: {e}")
 
         logger.info("Environment isolation verified. Safe for proprietary data processing.")
+
 
 def initialize_security():
     enforcer = AirGapEnforcer()

@@ -260,7 +260,8 @@ class TestStrictComplianceGate(unittest.TestCase):
         )
         # Should have toxicity-related checks
         toxicity_checks = [
-            c for c in assessment.compliance_checks
+            c
+            for c in assessment.compliance_checks
             if any(x in c.check_name for x in ["hERG", "Ames", "Hepatotoxicity"])
         ]
         self.assertGreater(len(toxicity_checks), 0)
@@ -362,6 +363,7 @@ class TestPropertyCalculation(unittest.TestCase):
 def run_test_log_output() -> None:
     """Run tests with logging."""
     import logging
+
     logging.basicConfig(level=logging.DEBUG)
     unittest.main()
 

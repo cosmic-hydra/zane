@@ -237,6 +237,7 @@ class TestUncertaintyEstimator:
 
     def test_batch_uncertainty_estimation(self):
         """Test batch uncertainty estimation."""
+
         def dummy_model1(smiles):
             return 0.5
 

@@ -88,9 +88,7 @@ def format_molecule_record(row: Mapping[str, Any] | pd.Series) -> str:
     if name:
         lines.append(f"Name: {name}")
     lines.append(f"SMILES: {smiles}")
-    lines.append(
-        "Purpose: Continue learning public chemistry records for local medicinal chemistry fine-tuning."
-    )
+    lines.append("Purpose: Continue learning public chemistry records for local medicinal chemistry fine-tuning.")
     return "\n".join(lines)
 
 

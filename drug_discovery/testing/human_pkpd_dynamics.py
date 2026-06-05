@@ -13,13 +13,13 @@ class HumanPKPDEngine:
     def __init__(self):
         # Default PK parameters (normalized for human adult)
         self.params = {
-            "ka": 0.5,     # Absorption rate (1/hr)
-            "ke": 0.1,     # Elimination rate (1/hr)
-            "k12": 0.05,   # Central to peripheral 1 (1/hr)
-            "k21": 0.03,   # Peripheral 1 to central (1/hr)
-            "k13": 0.02,   # Central to peripheral 2 (1/hr)
-            "k31": 0.01,   # Peripheral 2 to central (1/hr)
-            "Vc": 15.0,    # Apparent volume of central compartment (L)
+            "ka": 0.5,  # Absorption rate (1/hr)
+            "ke": 0.1,  # Elimination rate (1/hr)
+            "k12": 0.05,  # Central to peripheral 1 (1/hr)
+            "k21": 0.03,  # Peripheral 1 to central (1/hr)
+            "k13": 0.02,  # Central to peripheral 2 (1/hr)
+            "k31": 0.01,  # Peripheral 2 to central (1/hr)
+            "Vc": 15.0,  # Apparent volume of central compartment (L)
         }
 
     def _model_3comp(self, y, t, ka, ke, k12, k21, k13, k31, Vc):
@@ -40,12 +40,7 @@ class HumanPKPDEngine:
 
         return [dy0, dy1, dy2, dy3]
 
-    def simulate_plasma_concentration(
-        self,
-        dose_mg: float,
-        duration_hrs: int = 48,
-        points: int = 100
-    ) -> np.ndarray:
+    def simulate_plasma_concentration(self, dose_mg: float, duration_hrs: int = 48, points: int = 100) -> np.ndarray:
         """
         Solves the 3-compartment model over the specified timeline.
         Returns central compartment concentration (mg/L).
@@ -54,10 +49,13 @@ class HumanPKPDEngine:
         y0 = [dose_mg, 0.0, 0.0, 0.0]  # Initial state
 
         args = (
-            self.params["ka"], self.params["ke"],
-            self.params["k12"], self.params["k21"],
-            self.params["k13"], self.params["k31"],
-            self.params["Vc"]
+            self.params["ka"],
+            self.params["ke"],
+            self.params["k12"],
+            self.params["k21"],
+            self.params["k13"],
+            self.params["k31"],
+            self.params["Vc"],
         )
 
         sol = odeint(self._model_3comp, y0, t, args=args)
@@ -67,11 +65,7 @@ class HumanPKPDEngine:
         return t, c_central
 
     def evaluate_pd_efficacy(
-        self,
-        concentrations: np.ndarray,
-        emax: float = 100.0,
-        ec50: float = 1.5,
-        gamma: float = 2.0
+        self, concentrations: np.ndarray, emax: float = 100.0, ec50: float = 1.5, gamma: float = 2.0
     ) -> np.ndarray:
         """
         Sigmoidal Emax model to map concentration to therapeutic effect (0-100%).
@@ -91,5 +85,5 @@ class HumanPKPDEngine:
             "therapeutic_effects": effects.tolist(),
             "c_max": float(np.max(c_central)),
             "t_max": float(t[np.argmax(c_central)]),
-            "auc": float(np.trapz(c_central, t))
+            "auc": float(np.trapz(c_central, t)),
         }

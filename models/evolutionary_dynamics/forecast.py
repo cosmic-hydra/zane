@@ -12,6 +12,7 @@ class EvoForecastResult:
     survival_prob: float = 0.0
     success: bool = False
 
+
 class EvolutionaryForecaster:
     """Evolutionary dynamics forecasting (2025).
 

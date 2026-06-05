@@ -2,7 +2,7 @@
 
 import sys
 
-sys.path.insert(0, '/workspaces/zane')
+sys.path.insert(0, "/workspaces/zane")
 
 from drug_discovery.compliance.audit_trail import ComplianceAuditLogger
 from drug_discovery.safety.parametrized_toxicity_gate import (
@@ -52,9 +52,7 @@ print("  ✓ Parametrized toxicity gate working")
 print("\n[TEST 4] Audit Trail & Compliance Logging")
 audit_logger = ComplianceAuditLogger()
 audit_logger.log_compound_screened("CCO", "COMP-001", "test_user")
-audit_logger.log_quality_assessment(
-    "COMP-001", "CCO", "TIER_1", True, ["none"], "test_user"
-)
+audit_logger.log_quality_assessment("COMP-001", "CCO", "TIER_1", True, ["none"], "test_user")
 is_verified = audit_logger.verify_integrity()
 report = audit_logger.export_report()
 print(f"  Audit entries recorded: {report['total_entries']}")

@@ -35,8 +35,12 @@ def _estimate_from_smiles(smiles: str) -> dict[str, float | int | bool]:
     triple_bonds = smiles.count("#")
     halogens = sum(smiles.count(atom) for atom in ("F", "Cl", "Br", "I"))
 
-    molecular_weight = float(max(0.0, 12.0 * carbon_like + 14.0 * hetero_atoms + 19.0 * halogens + 1.0 * smiles.count("H")))
-    logp = round(0.54 * carbon_like - 1.35 * hetero_polar - 0.08 * ring_closures + 0.12 * double_bonds + 0.16 * triple_bonds, 2)
+    molecular_weight = float(
+        max(0.0, 12.0 * carbon_like + 14.0 * hetero_atoms + 19.0 * halogens + 1.0 * smiles.count("H"))
+    )
+    logp = round(
+        0.54 * carbon_like - 1.35 * hetero_polar - 0.08 * ring_closures + 0.12 * double_bonds + 0.16 * triple_bonds, 2
+    )
     hbd = int(min(10, hetero_polar))
     hba = int(min(15, hetero_polar + halogens))
     tpsa = round(11.0 * hetero_polar + 2.0 * ring_closures + 1.5 * double_bonds, 1)
@@ -109,9 +113,22 @@ class SwissADMEProxy:
             "tpsa": tpsa,
             "rotatable_bonds": rotatable_bonds,
             "ring_closures": ring_closures,
-            "gi_absorption": round(max(0.0, min(1.0, 0.92 - 0.35 * _safe_div(tpsa, 140.0) - 0.06 * max(0.0, logp - 3.0))), 3),
+            "gi_absorption": round(
+                max(0.0, min(1.0, 0.92 - 0.35 * _safe_div(tpsa, 140.0) - 0.06 * max(0.0, logp - 3.0))), 3
+            ),
             "bbb_permeant": molecular_weight <= 450 and tpsa <= 90 and logp <= 4.5,
-            "cyp_inhib": round(max(0.0, min(1.0, 0.15 + 0.12 * max(0.0, logp) + 0.05 * max(0, sum(1 for atom in mol.GetAtoms() if atom.GetSymbol() in {"Cl", "Br", "I", "F"}) - 1)))),
+            "cyp_inhib": round(
+                max(
+                    0.0,
+                    min(
+                        1.0,
+                        0.15
+                        + 0.12 * max(0.0, logp)
+                        + 0.05
+                        * max(0, sum(1 for atom in mol.GetAtoms() if atom.GetSymbol() in {"Cl", "Br", "I", "F"}) - 1),
+                    ),
+                )
+            ),
             "lipinski_ok": lipinski_violations <= 1,
             "veber_ok": rotatable_bonds <= 10 and tpsa <= 140,
         }

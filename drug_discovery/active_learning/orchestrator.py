@@ -17,12 +17,7 @@ class ActiveLearningOrchestrator:
     3. Retrain the model on new labels.
     """
 
-    def __init__(
-        self,
-        model_trainer: Any,
-        featurizer: MolecularFeaturizer,
-        optimizer: BayesianOptimizer | None = None
-    ):
+    def __init__(self, model_trainer: Any, featurizer: MolecularFeaturizer, optimizer: BayesianOptimizer | None = None):
         self.trainer = model_trainer
         self.featurizer = featurizer
         self.optimizer = optimizer or BayesianOptimizer()
@@ -51,8 +46,8 @@ class ActiveLearningOrchestrator:
         labels = oracle(suggested_smiles)
 
         # 4. Update dataset
-        new_data = pd.DataFrame({'smiles': suggested_smiles, 'target': labels})
-        self.labeled_data = pd.concat([self.labeled_data, new_data]).drop_duplicates('smiles')
+        new_data = pd.DataFrame({"smiles": suggested_smiles, "target": labels})
+        self.labeled_data = pd.concat([self.labeled_data, new_data]).drop_duplicates("smiles")
 
         # 5. Tell optimizer
         X_new = X_pool[indices]
@@ -64,5 +59,5 @@ class ActiveLearningOrchestrator:
         return {
             "num_new_labels": len(labels),
             "suggested_smiles": suggested_smiles,
-            "total_labeled": len(self.labeled_data)
+            "total_labeled": len(self.labeled_data),
         }

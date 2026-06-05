@@ -849,10 +849,12 @@ class DrugDiscoveryPipeline:
         return {
             "clusters": clusters.to_dict(),
             "cluster_characteristics": cluster_info.to_dict(),
-            "top_biomarkers": biomarkers.head(10).to_dict()
+            "top_biomarkers": biomarkers.head(10).to_dict(),
         }
 
-    def refine_lead_candidates(self, candidates_smiles: list[str], target_protein_pdb: str | None = None) -> list[dict[str, Any]]:
+    def refine_lead_candidates(
+        self, candidates_smiles: list[str], target_protein_pdb: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         Refine a list of candidates using the Ensemble Refiner.
         """
@@ -864,7 +866,7 @@ class DrugDiscoveryPipeline:
         refiner = EnsembleRefiner(
             property_predictor=self.property_predictor,
             admet_predictor=self.admet_predictor,
-            physics_simulator=self # Pipeline itself can act as adapter if it has OpenMM calls
+            physics_simulator=self,  # Pipeline itself can act as adapter if it has OpenMM calls
         )
 
         return refiner.rank_candidates(candidates_smiles, target_protein_pdb)
@@ -884,7 +886,4 @@ class DrugDiscoveryPipeline:
         confounders = [col for col in data.columns if col not in [treatment, outcome]]
         ate = inference.estimate_treatment_effect(treatment, outcome, confounders)
 
-        return {
-            "average_treatment_effect": ate,
-            "causal_graph_summary": graph.graph.number_of_edges()
-        }
+        return {"average_treatment_effect": ate, "causal_graph_summary": graph.graph.number_of_edges()}

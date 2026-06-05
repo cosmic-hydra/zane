@@ -142,10 +142,16 @@ class FEPPipeline:
             for lv in self.lambdas:
                 lam = torch.tensor([lv], device=self.device, dtype=torch.float32)  # type: ignore[union-attr]
                 ea = self.surrogate(
-                    ligand_a["z"].to(self.device), ligand_a["pos"].to(self.device), ligand_a["edges"].to(self.device), lam
+                    ligand_a["z"].to(self.device),
+                    ligand_a["pos"].to(self.device),
+                    ligand_a["edges"].to(self.device),
+                    lam,
                 ).item()
                 eb = self.surrogate(
-                    ligand_b["z"].to(self.device), ligand_b["pos"].to(self.device), ligand_b["edges"].to(self.device), lam
+                    ligand_b["z"].to(self.device),
+                    ligand_b["pos"].to(self.device),
+                    ligand_b["edges"].to(self.device),
+                    lam,
                 ).item()
                 energies_a.append(ea)
                 energies_b.append(eb)

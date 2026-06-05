@@ -43,5 +43,5 @@ class FingerprintExplainer:
         return {
             "bit_attributions": attr_np.tolist(),
             "top_influential_bits": top_bits.tolist(),
-            "explanation_method": "gradient"
+            "explanation_method": "gradient",
         }

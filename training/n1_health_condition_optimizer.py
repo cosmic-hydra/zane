@@ -3,11 +3,13 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class ConditionAdaptiveRewardFunction:
     """
     Dynamically adjusts the reinforcement learning reward landscape based on
     individual patient physiological constraints.
     """
+
     def __init__(self, renal_threshold: float = 30.0, hepatic_threshold: float = 120.0):
         self.renal_threshold = renal_threshold
         self.hepatic_threshold = hepatic_threshold
@@ -20,10 +22,10 @@ class ConditionAdaptiveRewardFunction:
         If patient_state.eGFR < 30, molecules with high renal clearance are heavily penalized.
         """
         penalty = 0.0
-        egfr = getattr(patient_state, 'egfr', 90.0)
+        egfr = getattr(patient_state, "egfr", 90.0)
 
         # Predicted renal clearance (normalized 0-1)
-        renal_clearance = predicted_properties.get('renal_clearance', 0.5)
+        renal_clearance = predicted_properties.get("renal_clearance", 0.5)
 
         if egfr < self.renal_threshold:
             # Severe renal impairment: patient cannot clear drugs via kidneys
@@ -39,10 +41,10 @@ class ConditionAdaptiveRewardFunction:
         """
         Adjusts reward for hepatic clearance if the liver is impaired.
         """
-        ast = getattr(patient_state, 'ast', 25.0)
-        alt = getattr(patient_state, 'alt', 25.0)
+        ast = getattr(patient_state, "ast", 25.0)
+        alt = getattr(patient_state, "alt", 25.0)
 
-        hepatic_toxicity = predicted_properties.get('hepatic_toxicity', 0.1)
+        hepatic_toxicity = predicted_properties.get("hepatic_toxicity", 0.1)
 
         if ast > self.hepatic_threshold or alt > self.hepatic_threshold:
             # Liver is already under stress; any hepatic toxicity is amplified
@@ -50,10 +52,9 @@ class ConditionAdaptiveRewardFunction:
 
         return 0.0
 
-    def compute_n1_optimized_reward(self,
-                                    base_reward: float,
-                                    patient_state: Any,
-                                    predicted_properties: dict[str, float]) -> float:
+    def compute_n1_optimized_reward(
+        self, base_reward: float, patient_state: Any, predicted_properties: dict[str, float]
+    ) -> float:
         """
         Combines the base drug-likeness reward with patient-specific physiological penalties.
         """

@@ -99,7 +99,7 @@ class ClinicalTrialSimulator:
 
         # Pooled standard error for proportion difference
         p_pooled = (treatment_results.sum() + control_results.sum()) / (n_treatment + n_control)
-        se = np.sqrt(p_pooled * (1 - p_pooled) * (1/n_treatment + 1/n_control))
+        se = np.sqrt(p_pooled * (1 - p_pooled) * (1 / n_treatment + 1 / n_control))
 
         # Z-statistic
         z_stat = (treatment_rate - control_rate) / (se + 1e-10)  # Add small epsilon to avoid division by zero

@@ -229,13 +229,15 @@ class TestRBACDecorators:
     def test_require_signature_passes(self):
         role = Role.from_template("lead")
         user = User(
-            user_id="u3", name="Lead",
+            user_id="u3",
+            name="Lead",
             role=role,
             password_hash=sha256_hash(None),  # we set manually
             is_active=True,
         )
         # Set a real password hash
         import hashlib
+
         user.password_hash = hashlib.sha256(b"u3:mypass").hexdigest()
 
         @require_signature(reason="test export")

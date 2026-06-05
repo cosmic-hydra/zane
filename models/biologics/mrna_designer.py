@@ -63,8 +63,8 @@ class MRNADesigner:
             length = len(seq_upper)
 
             # Count base pairs and composition
-            gc_content = (seq_upper.count('G') + seq_upper.count('C')) / max(1, length)
-            au_content = (seq_upper.count('A') + seq_upper.count('U')) / max(1, length)
+            gc_content = (seq_upper.count("G") + seq_upper.count("C")) / max(1, length)
+            au_content = (seq_upper.count("A") + seq_upper.count("U")) / max(1, length)
 
             # Base stacking/pairing energies (negative = favorable)
             # GC pairs: ~3 kcal/mol, AU pairs: ~2 kcal/mol
@@ -90,7 +90,7 @@ class MRNADesigner:
             # Approximation: Z ~ length^2 * structure_diversity_factor
             # More mutable sequences (low GC) have more structures
             structure_diversity = 1.0 + (1.0 - gc_content) * length / 10
-            z = (length ** 1.5) * structure_diversity * 1e6
+            z = (length**1.5) * structure_diversity * 1e6
 
         # Avoid pseudoknots in 5' UTR (conceptual using NetworkX to find cycles in folding graphs)
         graph = nx.Graph()

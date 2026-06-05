@@ -12,10 +12,12 @@ logger = logging.getLogger(__name__)
 
 try:
     import ray
+
     _RAY_AVAILABLE = True
 except ImportError:
     ray = None
     _RAY_AVAILABLE = False
+
 
 @dataclass
 class AF3Result:
@@ -37,6 +39,7 @@ class AF3Result:
             "success": self.success,
             "error": self.error,
         }
+
 
 class AlphaFold3Docking:
     """Proxy for AlphaFold3 ligand binding using DiffDock/OpenFold stack.
@@ -75,6 +78,7 @@ class AlphaFold3Docking:
         def dock_task(smiles: str):
             # Delegate to DiffDock if available
             from drug_discovery.physics import DiffDockAdapter
+
             DiffDockAdapter()
             # Mock
             return AF3Result(smiles, "mock", ["pocket"], 0.8).as_dict()

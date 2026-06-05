@@ -11,9 +11,11 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
+
 class AuditEntry(Base):
     """SQLAlchemy model for ALCOA+ audit trail."""
-    __tablename__ = 'audit_ledger'
+
+    __tablename__ = "audit_ledger"
 
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -23,6 +25,7 @@ class AuditEntry(Base):
     previous_hash = Column(String(64), nullable=False)
     current_hash = Column(String(64), nullable=False, unique=True)
     metadata_json = Column(Text)  # For ALCOA+ extra context
+
 
 class ALCOAAuditLedger:
     """
@@ -42,7 +45,9 @@ class ALCOAAuditLedger:
         session.close()
         return last_entry.current_hash if last_entry else "0" * 64
 
-    def log_immutable_event(self, user_id: str, function_name: str, params: dict[str, Any], metadata: dict | None = None):
+    def log_immutable_event(
+        self, user_id: str, function_name: str, params: dict[str, Any], metadata: dict | None = None
+    ):
         """
         Logs an event with cryptographic chaining to prevent silent tampering.
         Ensures data is Attributable and Contemporaneous.
@@ -64,7 +69,7 @@ class ALCOAAuditLedger:
                 parameters=param_str,
                 previous_hash=previous_hash,
                 current_hash=current_hash,
-                metadata_json=json.dumps(metadata) if metadata else None
+                metadata_json=json.dumps(metadata) if metadata else None,
             )
 
             session.add(entry)
@@ -76,11 +81,13 @@ class ALCOAAuditLedger:
         finally:
             session.close()
 
+
 def requires_e_signature(func: Callable):
     """
     Decorator that forces re-authentication before executing critical functions.
     Compliance: 21 CFR Part 11.10(j) and 11.50.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         # In a production environment, this would interface with an Identity Provider (IdP)
@@ -88,7 +95,7 @@ def requires_e_signature(func: Callable):
         print(f"[E-SIGNATURE] Verification required for: {func.__name__}")
 
         # Simulated re-authentication check
-        authenticated = kwargs.get('__authenticated_esign', False)
+        authenticated = kwargs.get("__authenticated_esign", False)
         if not authenticated:
             raise PermissionError(
                 f"Electronic Signature verification failed for '{func.__name__}'. "
@@ -96,20 +103,18 @@ def requires_e_signature(func: Callable):
             )
 
         # If authenticated, execute and log
-        user_id = kwargs.get('user_id', 'unknown_user')
+        user_id = kwargs.get("user_id", "unknown_user")
         ledger = ALCOAAuditLedger()
 
         # Filter sensitive kwargs before logging
-        log_params = {k: v for k, v in kwargs.items() if k != '__authenticated_esign'}
+        log_params = {k: v for k, v in kwargs.items() if k != "__authenticated_esign"}
 
         result = func(*args, **kwargs)
 
         ledger.log_immutable_event(
-            user_id=user_id,
-            function_name=func.__name__,
-            params=log_params,
-            metadata={"esignature_verified": True}
+            user_id=user_id, function_name=func.__name__, params=log_params, metadata={"esignature_verified": True}
         )
 
         return result
+
     return wrapper

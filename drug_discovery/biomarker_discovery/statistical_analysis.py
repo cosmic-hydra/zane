@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -45,12 +44,14 @@ class BiomarkerStatisticalAnalysis:
             t_stat, p_val = stats.ttest_ind(v1, v2)
             fold_change = v1.mean() / (v2.mean() + 1e-9)
 
-            results.append({
-                "feature": feature,
-                "t_statistic": t_stat,
-                "p_value": p_val,
-                "log2_fold_change": np.log2(fold_change + 1e-9)
-            })
+            results.append(
+                {
+                    "feature": feature,
+                    "t_statistic": t_stat,
+                    "p_value": p_val,
+                    "log2_fold_change": np.log2(fold_change + 1e-9),
+                }
+            )
 
         return pd.DataFrame(results).sort_values("p_value")
 
@@ -64,10 +65,6 @@ class BiomarkerStatisticalAnalysis:
                 continue
 
             corr, p_val = stats.pearsonr(self.data[feature], self.data[target_feature])
-            correlations.append({
-                "feature": feature,
-                "correlation": corr,
-                "p_value": p_val
-            })
+            correlations.append({"feature": feature, "correlation": corr, "p_value": p_val})
 
         return pd.DataFrame(correlations).sort_values("p_value")

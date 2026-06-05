@@ -5,9 +5,11 @@ from dataclasses import dataclass
 
 try:
     import ray
+
     _RAY_AVAILABLE = True
 except ImportError:
     _RAY_AVAILABLE = False
+
 
 @dataclass
 class DynamicsResult:
@@ -17,6 +19,7 @@ class DynamicsResult:
     binding_delta: float = 0.0
     converged: bool = False
     success: bool = False
+
 
 class AI2BMDDynamics:
     """AI2BMD proxy for fast biomolecular dynamics (2025).
@@ -34,7 +37,7 @@ class AI2BMDDynamics:
             # Heuristic stability RMSD based on SMILES complexity
             # More complex ligands may have higher RMSD
             smiles_len = len(smiles)
-            heavy_atoms = smiles.count('C') + smiles.count('N') + smiles.count('O') + smiles.count('S')
+            heavy_atoms = smiles.count("C") + smiles.count("N") + smiles.count("O") + smiles.count("S")
 
             # RMSD typically ranges 1.0 - 4.0 Angstroms
             base_rmsd = 1.5
@@ -43,7 +46,7 @@ class AI2BMDDynamics:
 
             # Binding affinity (ΔG) based on interaction features
             # More hydrophobic atoms -> better binding
-            hydrophobic_ratio = smiles.count('C') / max(1, smiles_len * 0.5)
+            hydrophobic_ratio = smiles.count("C") / max(1, smiles_len * 0.5)
 
             # Base ΔG ranges -6 to -12 kcal/mol for known binders
             base_delta = -7.0
@@ -51,17 +54,12 @@ class AI2BMDDynamics:
             delta = max(-12.0, min(-4.0, base_delta + affinity_factor))
 
             # PDB complexity affects convergence
-            pdb_atoms = pdb.count('ATOM')
+            pdb_atoms = pdb.count("ATOM")
             converged = rmsd < 3.5 or pdb_atoms > 1000
             success = rmsd < 4.0
 
             res = DynamicsResult(
-                smiles,
-                pdb,
-                stability_rmsd=rmsd,
-                binding_delta=delta,
-                converged=converged,
-                success=success
+                smiles, pdb, stability_rmsd=rmsd, binding_delta=delta, converged=converged, success=success
             )
             results.append(res)
         return results

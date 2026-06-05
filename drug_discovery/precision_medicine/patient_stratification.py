@@ -1,4 +1,3 @@
-
 import pandas as pd
 from sklearn.cluster import KMeans
 
@@ -25,5 +24,5 @@ class PatientStratifier:
         Analyze the mean values of features for each cluster.
         """
         df_with_clusters = self.data.copy()
-        df_with_clusters['cluster'] = clusters
-        return df_with_clusters.groupby('cluster').mean()
+        df_with_clusters["cluster"] = clusters
+        return df_with_clusters.groupby("cluster").mean()

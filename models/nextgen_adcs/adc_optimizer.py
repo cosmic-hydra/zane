@@ -13,6 +13,7 @@ class ADCResult:
     tox_score: float = 0.0
     success: bool = False
 
+
 class ADCOptimizer:
     """Optimizer for next-gen ADCs with BBB shuttles (2024).
 

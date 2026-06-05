@@ -5,11 +5,13 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+
 class EpigeneticAgeCalculator:
     """
     Calculates biological age using DNA methylation data and adjusts therapeutic
     dosing to prevent overdose in senescent biological systems.
     """
+
     def __init__(self):
         # Pre-trained Horvath Clock coefficients (simplified mock subset)
         # Real Horvath clock uses 353 specific CpG sites
@@ -18,7 +20,7 @@ class EpigeneticAgeCalculator:
             "cg00374713": 0.12,
             "cg00864867": -0.08,
             "cg01234567": 0.22,
-            "intercept": 0.65
+            "intercept": 0.65,
         }
 
     def calculate_horvath_clock(self, methylation_array_path: str) -> float:
@@ -32,9 +34,10 @@ class EpigeneticAgeCalculator:
             # Linear combination of methylation levels
             log_age = self.horvath_coefficients["intercept"]
             for cpg, coeff in self.horvath_coefficients.items():
-                if cpg == "intercept": continue
+                if cpg == "intercept":
+                    continue
 
-                beta_value = df.loc[df['cpg_id'] == cpg, 'beta_value']
+                beta_value = df.loc[df["cpg_id"] == cpg, "beta_value"]
                 if not beta_value.empty:
                     log_age += coeff * beta_value.values[0]
 
@@ -47,9 +50,11 @@ class EpigeneticAgeCalculator:
 
         except Exception as e:
             logger.error(f"Failed to calculate epigenetic age: {e!s}")
-            return 45.0 # Default adult age
+            return 45.0  # Default adult age
 
-    def adjust_dosing_for_senescence(self, base_dose: float, biological_age: float, chronological_age: float = 50.0) -> float:
+    def adjust_dosing_for_senescence(
+        self, base_dose: float, biological_age: float, chronological_age: float = 50.0
+    ) -> float:
         """
         Dynamically scales the therapeutic dose if the patient's epigenetic age
         indicates severe cellular senescence.
@@ -69,7 +74,8 @@ class EpigeneticAgeCalculator:
         adjusted_dose = base_dose * reduction_factor
 
         if reduction_factor < 1.0:
-            logger.warning(f"Dose adjusted for senescence. Factor: {reduction_factor:.2f}. "
-                           f"New dose: {adjusted_dose:.2f}")
+            logger.warning(
+                f"Dose adjusted for senescence. Factor: {reduction_factor:.2f}. " f"New dose: {adjusted_dose:.2f}"
+            )
 
         return float(adjusted_dose)

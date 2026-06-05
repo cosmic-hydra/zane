@@ -43,6 +43,7 @@ class RetrosynthesisPlanner:
         self.use_ray = use_ray
         if self.use_ray:
             import ray
+
             if not ray.is_initialized():
                 ray.init(ignore_reinit_error=True, address=os.getenv("RAY_ADDRESS"))
 
@@ -62,8 +63,7 @@ class RetrosynthesisPlanner:
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.backends)) as executor:
             future_to_backend = {
-                executor.submit(backend.plan, target_smiles, max_depth=max_depth): backend
-                for backend in self.backends
+                executor.submit(backend.plan, target_smiles, max_depth=max_depth): backend for backend in self.backends
             }
 
             for future in concurrent.futures.as_completed(future_to_backend):
@@ -152,6 +152,7 @@ class RetrosynthesisPlanner:
         """Plan synthesis for a batch of molecules, optionally using Ray."""
         if self.use_ray:
             import ray
+
             @ray.remote
             def remote_plan(planner, smiles, depth):
                 return planner.plan_synthesis(smiles, max_depth=depth)

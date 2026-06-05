@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from drug_discovery.evaluation.herg_predictor import HERGPredictor
+
     _HERG_PREDICTOR = True
 except ImportError:
     _HERG_PREDICTOR = False
@@ -189,9 +190,11 @@ class PreClinicalToxPanel:
         if not ames.passed:
             rejection_reasons.append(f"Ames: {ames.risk_class}")
 
-        overall = (herg.inhibition_probability * 0.4
-                   + max(cyp.enzyme_inhibitions.values(), default=0) * 0.3
-                   + ames.mutagenicity_probability * 0.3)
+        overall = (
+            herg.inhibition_probability * 0.4
+            + max(cyp.enzyme_inhibitions.values(), default=0) * 0.3
+            + ames.mutagenicity_probability * 0.3
+        )
 
         return GLPToxPanel(
             smiles=smiles,
@@ -248,8 +251,7 @@ class PreClinicalToxPanel:
         basicity_factor = _sigmoid(hbd - 2)
 
         # Weighted combination (normalized)
-        prob = (logp_factor * 0.40 + tpsa_factor * 0.25 +
-               mw_factor * 0.20 + basicity_factor * 0.15)
+        prob = logp_factor * 0.40 + tpsa_factor * 0.25 + mw_factor * 0.20 + basicity_factor * 0.15
         prob = min(max(prob, 0.0), 1.0)
 
         if prob > 0.7:

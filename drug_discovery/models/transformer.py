@@ -2,7 +2,6 @@
 Transformer-based Models for Molecular Property Prediction
 """
 
-
 import math
 
 import torch
@@ -120,6 +119,7 @@ class SwiGLU(nn.Module):
     SwiGLU activation function (used in LLaMA and other modern transformers).
     Ref: Shazeer, "GLU Variants Improve Transformer" (2020).
     """
+
     def __init__(self, input_dim: int, output_dim: int):
         super().__init__()
         self.w1 = nn.Linear(input_dim, output_dim)
@@ -133,6 +133,7 @@ class ModernMolecularTransformer(nn.Module):
     """
     Improved Transformer model using SwiGLU activations and Pre-Norm.
     """
+
     def __init__(
         self,
         input_dim: int = 2048,
@@ -150,9 +151,9 @@ class ModernMolecularTransformer(nn.Module):
             nhead=num_heads,
             dim_feedforward=hidden_dim * 4,
             dropout=dropout,
-            activation=lambda x: F.silu(x), # SwiGLU is used in the FFN part, but PyTorch's layer is limited
+            activation=lambda x: F.silu(x),  # SwiGLU is used in the FFN part, but PyTorch's layer is limited
             batch_first=True,
-            norm_first=True # Pre-Norm for better stability
+            norm_first=True,  # Pre-Norm for better stability
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
         self.output_layer = nn.Linear(hidden_dim, output_dim)

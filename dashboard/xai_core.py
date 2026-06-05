@@ -81,15 +81,13 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-_INPUT_DIM: int = 1024       # Morgan fingerprint length
+_INPUT_DIM: int = 1024  # Morgan fingerprint length
 _HIDDEN_DIM: int = 128
 _OUTPUT_DIM: int = 1
 _DROPOUT_P: float = 0.15
 _MC_SAMPLES: int = 10
 _CONFIDENCE_THRESHOLD: float = 0.1  # variance above this triggers warning
-_DEFAULT_MODEL_PATH: str = os.path.join(
-    os.environ.get("TMPDIR", "/tmp"), "zane_xai_surrogate.onnx"
-)
+_DEFAULT_MODEL_PATH: str = os.path.join(os.environ.get("TMPDIR", "/tmp"), "zane_xai_surrogate.onnx")
 
 
 # ---------------------------------------------------------------------------

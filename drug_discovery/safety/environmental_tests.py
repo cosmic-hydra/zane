@@ -3,6 +3,7 @@
 These are lightweight heuristic/estimator modules useful for gating compounds
 before heavy experimental assays. Intended to be used as part of QA pipelines.
 """
+
 from __future__ import annotations
 
 import math
@@ -17,10 +18,10 @@ def estimate_ph_stability(smiles: str, ph: float) -> dict[str, Any]:
     """
     # Heuristic: acids degrade in high pH, bases degrade in low pH.
     score = 0.8
-    if any(x in smiles for x in ['C(=O)O', 'CO2H', 'O=C(O)']):  # carboxylic acid moieties
+    if any(x in smiles for x in ["C(=O)O", "CO2H", "O=C(O)"]):  # carboxylic acid moieties
         # acids less stable at high pH
         score -= max(0.0, (ph - 7.0) * 0.08)
-    if any(x in smiles for x in ['N', 'NH', 'N(']):
+    if any(x in smiles for x in ["N", "NH", "N("]):
         # basic amines less stable at low pH
         score -= max(0.0, (7.0 - ph) * 0.06)
     # clamp
@@ -34,8 +35,8 @@ def estimate_plasma_binding(smiles: str) -> dict[str, Any]:
     Returns {'fraction_bound': 0-1, 'confidence': 0-1}
     """
     # Heuristic: high logP and aromatic rings increase plasma binding
-    aromatic = smiles.count('c') + smiles.count('C') // 4
-    logp_est = 1.0 + aromatic * 0.4 - smiles.count('N') * 0.3
+    aromatic = smiles.count("c") + smiles.count("C") // 4
+    logp_est = 1.0 + aromatic * 0.4 - smiles.count("N") * 0.3
     # map to 0-1
     frac = 1.0 - 1.0 / (1.0 + math.exp(logp_est - 2.5))
     frac = max(0.0, min(0.99, frac))

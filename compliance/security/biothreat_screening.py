@@ -80,23 +80,20 @@ class BiothreatScreening:
         mw_factor = max(-2.0, min(2.0, mw_factor))  # Clamp to [-2, 2]
 
         # Factor 2: Hydrophobic atoms (Aromatic + Aliphatic carbons)
-        hydrophobic_atoms = sum(1 for atom in mol.GetAtoms()
-                               if atom.GetIsAromatic() or atom.GetSymbol() == 'C')
+        hydrophobic_atoms = sum(1 for atom in mol.GetAtoms() if atom.GetIsAromatic() or atom.GetSymbol() == "C")
         hydro_factor = hydrophobic_atoms * 0.05  # ~0.5 per hydrophobic group
         hydro_factor = max(0, min(3.0, hydro_factor))
 
         # Factor 3: Hydrogen bond donors/acceptors (serine catalytic triad has H-bond sites)
-        hbd = sum(1 for atom in mol.GetAtoms()
-                 if atom.GetTotalNumHs() > 0 and atom.GetSymbol() in ['N', 'O'])
-        hba = sum(1 for atom in mol.GetAtoms()
-                 if atom.GetTotalValence() > 1 and atom.GetSymbol() in ['N', 'O'])
+        hbd = sum(1 for atom in mol.GetAtoms() if atom.GetTotalNumHs() > 0 and atom.GetSymbol() in ["N", "O"])
+        hba = sum(1 for atom in mol.GetAtoms() if atom.GetTotalValence() > 1 and atom.GetSymbol() in ["N", "O"])
         hbond_factor = (hbd + hba) * 0.3
         hbond_factor = max(0, min(2.0, hbond_factor))
 
         # Factor 4: Rotatable bonds (more flexibility = worse, usually)
-        rotatable = sum(1 for bond in mol.GetBonds()
-                       if bond.GetBondType() == Chem.BondType.SINGLE and
-                       not bond.IsInRing())
+        rotatable = sum(
+            1 for bond in mol.GetBonds() if bond.GetBondType() == Chem.BondType.SINGLE and not bond.IsInRing()
+        )
         rot_penalty = rotatable * -0.05
         rot_penalty = max(-1.0, min(0, rot_penalty))
 

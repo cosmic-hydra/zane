@@ -10,7 +10,7 @@ from drug_discovery.training import ContinuousLearner
 
 def main():
     # Initialize pipeline
-    pipeline = DrugDiscoveryPipeline(model_type='gnn')
+    pipeline = DrugDiscoveryPipeline(model_type="gnn")
 
     # Initial training
     print("Initial training phase...")
@@ -25,7 +25,7 @@ def main():
     continuous_learner = ContinuousLearner(
         trainer=pipeline.trainer,
         data_collector=pipeline.data_collector,
-        retrain_threshold=500  # Retrain after 500 new samples
+        retrain_threshold=500,  # Retrain after 500 new samples
     )
 
     # Simulate continuous learning loop
@@ -53,8 +53,8 @@ def main():
             data = combined_data
 
         # Make predictions on new molecules
-        if not new_data.empty and 'smiles' in new_data.columns:
-            sample_smiles = new_data['smiles'].iloc[0]
+        if not new_data.empty and "smiles" in new_data.columns:
+            sample_smiles = new_data["smiles"].iloc[0]
             properties = pipeline.predict_properties(sample_smiles)
             print("\nPredictions for new molecule:")
             print(f"  SMILES: {sample_smiles}")

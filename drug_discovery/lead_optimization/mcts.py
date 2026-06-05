@@ -32,7 +32,7 @@ class LeadMCTSOptimizer:
             if score > best_score:
                 best_score = score
                 best_smiles = new_smiles
-                current_smiles = new_smiles # Greedy exploration
+                current_smiles = new_smiles  # Greedy exploration
 
         return best_smiles
 

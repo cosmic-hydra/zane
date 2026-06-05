@@ -6,11 +6,13 @@ from Bio.PDB import PDBParser
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
 class PrefusionLockEngine:
     """
     Engine for stabilizing viral fusion proteins in their prefusion conformation
     to enhance vaccine efficacy.
     """
+
     def __init__(self, pdb_path: str | None = None):
         self.pdb_path = pdb_path
         self.parser = PDBParser(QUIET=True)
@@ -21,6 +23,7 @@ class PrefusionLockEngine:
         if not self.rosetta_initialized:
             try:
                 import pyrosetta
+
                 pyrosetta.init(extra_options="-constant_seed -mute all")
                 self.rosetta_initialized = True
                 logger.info("PyRosetta initialized successfully.")
@@ -57,9 +60,9 @@ class PrefusionLockEngine:
             # Structural mocking: Proline substitutions in loops typically stabilize
             ddg = 0.0
             for mut in mutation_list:
-                if mut.endswith('P'):
-                    ddg -= 1.5 # Heuristic stabilization for Proline
-                if mut.startswith('C') and 'C' in mut[1:]: # Disulfide bond
+                if mut.endswith("P"):
+                    ddg -= 1.5  # Heuristic stabilization for Proline
+                if mut.startswith("C") and "C" in mut[1:]:  # Disulfide bond
                     ddg -= 3.0
             return ddg
 
@@ -80,7 +83,7 @@ class PrefusionLockEngine:
             # Simple heuristic: high B-factors often correlate with flexibility
             avg_b = np.mean([atom.get_bfactor() for atom in res.get_atoms()])
 
-            if avg_b > 50.0: # Threshold for high flexibility
+            if avg_b > 50.0:  # Threshold for high flexibility
                 hinge_indices.append(res.get_id()[1])
 
         logger.info(f"Identified {len(hinge_indices)} metastable hinge candidates in {pdb_path}")
@@ -95,6 +98,6 @@ class PrefusionLockEngine:
 
         # Focus on top 2 most flexible regions for Proline substitution
         for idx in hinges[:2]:
-            suggestions.append(f"X{idx}P") # X represents original AA
+            suggestions.append(f"X{idx}P")  # X represents original AA
 
         return suggestions

@@ -23,13 +23,13 @@ class TestDataCollectorBasics:
 
     def test_data_collector_init(self):
         """Test DataCollector initialization"""
-        with patch.dict('os.environ', {'HOME': '/tmp'}):
+        with patch.dict("os.environ", {"HOME": "/tmp"}):
             collector = DataCollector()
             assert collector is not None
 
     def test_data_collector_with_cache_dir(self):
         """Test DataCollector with custom cache directory"""
-        with patch.dict('os.environ', {'HOME': '/tmp'}):
+        with patch.dict("os.environ", {"HOME": "/tmp"}):
             collector = DataCollector(cache_dir="/tmp/test_cache")
             assert collector is not None
 
@@ -59,14 +59,13 @@ class TestDataCollectorBasics:
 
     def test_collect_approved_drugs_mock(self):
         """Test collecting approved drugs"""
-        with patch.dict('os.environ', {'HOME': '/tmp'}):
+        with patch.dict("os.environ", {"HOME": "/tmp"}):
             collector = DataCollector()
             # Mock the actual method
             with patch.object(collector, "collect_approved_drugs") as mock_collect:
-                mock_collect.return_value = pd.DataFrame({
-                    "smiles": ["CC(=O)O", "CC(=O)OC"],
-                    "name": ["acetic_acid", "methyl_acetate"]
-                })
+                mock_collect.return_value = pd.DataFrame(
+                    {"smiles": ["CC(=O)O", "CC(=O)OC"], "name": ["acetic_acid", "methyl_acetate"]}
+                )
                 df = collector.collect_approved_drugs()
                 assert len(df) == 2
 
@@ -206,10 +205,7 @@ class TestDataValidation:
 
     def test_missing_values_handling(self):
         """Test handling of missing values"""
-        df = pd.DataFrame({
-            "smiles": ["CC(=O)O", None, "CC(=O)N"],
-            "property": [1.0, 2.0, None]
-        })
+        df = pd.DataFrame({"smiles": ["CC(=O)O", None, "CC(=O)N"], "property": [1.0, 2.0, None]})
         assert df.isnull().sum().sum() > 0
 
 
@@ -218,14 +214,8 @@ class TestDataMerging:
 
     def test_merge_two_dataframes(self):
         """Test merging two DataFrames"""
-        df1 = pd.DataFrame({
-            "smiles": ["CC(=O)O", "CC(=O)OC"],
-            "source": ["source1", "source1"]
-        })
-        df2 = pd.DataFrame({
-            "smiles": ["CC(=O)N", "CN1C"],
-            "source": ["source2", "source2"]
-        })
+        df1 = pd.DataFrame({"smiles": ["CC(=O)O", "CC(=O)OC"], "source": ["source1", "source1"]})
+        df2 = pd.DataFrame({"smiles": ["CC(=O)N", "CN1C"], "source": ["source2", "source2"]})
 
         merged = pd.concat([df1, df2], ignore_index=True)
         assert len(merged) == 4
@@ -257,7 +247,7 @@ class TestDataQuality:
 
     def test_data_quality_report(self):
         """Test data quality report generation"""
-        with patch.dict('os.environ', {'HOME': '/tmp'}):
+        with patch.dict("os.environ", {"HOME": "/tmp"}):
             collector = DataCollector()
             with patch.object(collector, "generate_data_quality_report") as mock_report:
                 mock_report.return_value = {
@@ -273,19 +263,14 @@ class TestDataQuality:
 
     def test_duplicate_detection(self):
         """Test duplicate detection"""
-        df = pd.DataFrame({
-            "smiles": ["CC(=O)O", "CC(=O)O", "CC(=O)N", "CC(=O)N"]
-        })
+        df = pd.DataFrame({"smiles": ["CC(=O)O", "CC(=O)O", "CC(=O)N", "CC(=O)N"]})
 
         duplicates = df.duplicated(subset=["smiles"])
         assert duplicates.sum() == 2
 
     def test_missing_data_detection(self):
         """Test missing data detection"""
-        df = pd.DataFrame({
-            "smiles": ["CC(=O)O", None, "CC(=O)N"],
-            "property": [1.0, 2.0, None]
-        })
+        df = pd.DataFrame({"smiles": ["CC(=O)O", None, "CC(=O)N"], "property": [1.0, 2.0, None]})
 
         missing = df.isnull().sum()
         assert missing.sum() > 0
@@ -296,10 +281,7 @@ class TestDataSplitting:
 
     def test_random_split(self):
         """Test random train-test split"""
-        df = pd.DataFrame({
-            "smiles": [f"MOL{i}" for i in range(100)],
-            "property": np.random.randn(100)
-        })
+        df = pd.DataFrame({"smiles": [f"MOL{i}" for i in range(100)], "property": np.random.randn(100)})
 
         train_size = int(0.8 * len(df))
         train = df[:train_size]
@@ -310,10 +292,7 @@ class TestDataSplitting:
 
     def test_stratified_split(self):
         """Test stratified splitting"""
-        df = pd.DataFrame({
-            "smiles": [f"MOL{i}" for i in range(100)],
-            "class": [0] * 70 + [1] * 30
-        })
+        df = pd.DataFrame({"smiles": [f"MOL{i}" for i in range(100)], "class": [0] * 70 + [1] * 30})
 
         # Simple stratification
         class_0 = df[df["class"] == 0]
@@ -324,10 +303,7 @@ class TestDataSplitting:
 
     def test_scaffold_split(self):
         """Test scaffold-based splitting"""
-        df = pd.DataFrame({
-            "smiles": [f"MOL{i}" for i in range(100)],
-            "scaffold": [i % 10 for i in range(100)]
-        })
+        df = pd.DataFrame({"smiles": [f"MOL{i}" for i in range(100)], "scaffold": [i % 10 for i in range(100)]})
 
         # Group by scaffold
         for scaffold in df["scaffold"].unique():
@@ -343,7 +319,7 @@ class TestBatchProcessing:
         data = list(range(100))
         batch_size = 32
 
-        batches = [data[i:i+batch_size] for i in range(0, len(data), batch_size)]
+        batches = [data[i : i + batch_size] for i in range(0, len(data), batch_size)]
 
         assert len(batches) == 4
         assert len(batches[0]) == 32
@@ -355,7 +331,7 @@ class TestBatchProcessing:
 
         num_batches = 0
         for i in range(0, len(df), batch_size):
-            _batch = df[i:i+batch_size]
+            _batch = df[i : i + batch_size]
             num_batches += 1
 
         assert num_batches == 4
@@ -377,7 +353,7 @@ class TestDataCaching:
 
     def test_cache_directory_creation(self):
         """Test cache directory is created"""
-        with patch.dict('os.environ', {'HOME': '/tmp'}), patch("os.makedirs"):
+        with patch.dict("os.environ", {"HOME": "/tmp"}), patch("os.makedirs"):
             collector = DataCollector(cache_dir="/tmp/test_cache")
             assert collector is not None
 

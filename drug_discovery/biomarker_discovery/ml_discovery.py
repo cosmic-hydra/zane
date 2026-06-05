@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -27,6 +26,7 @@ class BiomarkerMLDiscovery:
             model = RandomForestClassifier(n_estimators=100, random_state=42)
         else:
             from sklearn.ensemble import RandomForestRegressor
+
             model = RandomForestRegressor(n_estimators=100, random_state=42)
 
         model.fit(X, y)
@@ -36,10 +36,7 @@ class BiomarkerMLDiscovery:
 
         ranked_features = []
         for f in range(X.shape[1]):
-            ranked_features.append({
-                "feature": features[indices[f]],
-                "importance": importances[indices[f]]
-            })
+            ranked_features.append({"feature": features[indices[f]], "importance": importances[indices[f]]})
 
         return pd.DataFrame(ranked_features)
 
@@ -58,7 +55,4 @@ class BiomarkerMLDiscovery:
         probs = model.predict_proba(X_test)[:, 1]
         auc = roc_auc_score(y_test, probs)
 
-        return {
-            "auc_roc": auc,
-            "num_features": len(panel_features)
-        }
+        return {"auc_roc": auc, "num_features": len(panel_features)}

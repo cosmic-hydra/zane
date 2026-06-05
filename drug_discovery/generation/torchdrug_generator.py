@@ -5,6 +5,7 @@ import torch
 try:
     import torchdrug as td
     from torchdrug import data, models, tasks, utils
+
     TORCHDRUG_AVAILABLE = True
 except ImportError:
     TORCHDRUG_AVAILABLE = False
@@ -14,6 +15,7 @@ except ImportError:
 from ..data.rdkit_utils import smiles_to_sdf
 
 logger = logging.getLogger(__name__)
+
 
 class TorchDrugGenerator:
     def __init__(self, model_name: str = "VAE", num_layers: int = 3):
@@ -33,7 +35,7 @@ class TorchDrugGenerator:
                 encoder_layers=num_layers,
                 decoder_layers=num_layers,
                 latent_size=128,
-                use_layer_norm=True
+                use_layer_norm=True,
             )
             task = tasks.MoleculeGeneration(model, self.dataset, td.metrics.MoleculeMetrics("valid"))
         # Add GNN etc.

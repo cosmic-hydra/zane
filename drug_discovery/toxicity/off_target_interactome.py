@@ -58,11 +58,11 @@ class HighToxicityVeto(Exception):
 # Off-target definitions
 # ---------------------------------------------------------------------------
 _OFF_TARGETS: list[tuple[str, float]] = [
-    ("hERG", 0.5),       # Cardiac ion channel — QT prolongation risk
-    ("CYP3A4", 0.6),     # Major CYP450 isoform — DDI / liver toxicity
-    ("5-HT2B", 0.55),    # Serotonin receptor — valvulopathy risk
-    ("hNAV1.5", 0.55),   # Cardiac sodium channel — arrhythmia risk
-    ("hKv1.5", 0.5),     # Cardiac potassium channel — atrial arrhythmia
+    ("hERG", 0.5),  # Cardiac ion channel — QT prolongation risk
+    ("CYP3A4", 0.6),  # Major CYP450 isoform — DDI / liver toxicity
+    ("5-HT2B", 0.55),  # Serotonin receptor — valvulopathy risk
+    ("hNAV1.5", 0.55),  # Cardiac sodium channel — arrhythmia risk
+    ("hKv1.5", 0.5),  # Cardiac potassium channel — atrial arrhythmia
 ]
 
 
@@ -189,6 +189,7 @@ class ToxPanelScorer:
         if self.use_advanced_models:
             try:
                 from drug_discovery.evaluation.advanced_admet import ADMETConfig, AdvancedADMETPredictor
+
                 self._admet_predictor = AdvancedADMETPredictor(ADMETConfig())
                 # In a real scenario, we'd load weights here.
             except ImportError:

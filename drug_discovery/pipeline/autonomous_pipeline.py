@@ -154,7 +154,7 @@ class FaultTolerantExecutor:
 
                 if attempt < self.max_retries - 1:
                     # Calculate delay
-                    delay = self.retry_delay * 2 ** attempt if self.exponential_backoff else self.retry_delay
+                    delay = self.retry_delay * 2**attempt if self.exponential_backoff else self.retry_delay
 
                     logger.info(f"Retrying in {delay} seconds...")
                     await asyncio.sleep(delay)
@@ -300,6 +300,7 @@ class StreamingDataPipeline:
                 # Elite filtering (20000x better candidates)
                 if elite_filter and "smiles" in processed_batch.columns:
                     from drug_discovery.safety import SmilesValidator
+
                     validator = SmilesValidator()
                     mask = processed_batch["smiles"].apply(validator.is_elite_smiles)
                     processed_batch = processed_batch[mask].reset_index(drop=True)

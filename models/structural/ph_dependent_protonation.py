@@ -1,4 +1,3 @@
-
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 
@@ -10,10 +9,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class MicroenvironmentIonizationEngine:
     """
     Handles molecular ionization states based on localized pH environments.
     """
+
     def __init__(self):
         if DimorphiteDL:
             self.engine = DimorphiteDL(min_ph=0.0, max_ph=14.0, silent=True)
@@ -59,11 +60,11 @@ class MicroenvironmentIonizationEngine:
 
         # If the molecule is neutral and has high LogP, it might precipitate in aqueous environment
         # Solubility score: higher is better
-        solubility_score = 1.0 / (1.0 + 10**(logp - 2.0))
+        solubility_score = 1.0 / (1.0 + 10 ** (logp - 2.0))
 
         # Increase solubility score if ionized
         if num_charges > 0:
-            solubility_score *= (1.5 * num_charges)
+            solubility_score *= 1.5 * num_charges
 
         return min(solubility_score, 1.0)
 
@@ -74,4 +75,4 @@ class MicroenvironmentIonizationEngine:
         """
         # Dimorphite-DL handles pH distribution, but we can't easily extract exact pKa
         # without running a range. This is a simplified proxy.
-        return [7.0] # Mock pKa
+        return [7.0]  # Mock pKa

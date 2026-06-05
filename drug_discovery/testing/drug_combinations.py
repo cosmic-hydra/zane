@@ -393,12 +393,14 @@ class DrugCombinationTester:
 
             # If the interaction is antagonistic, it might be a good balancer
             if prediction["interaction_type"] == "antagonistic":
-                results.append({
-                    "toxic_smiles": toxic_smiles,
-                    "balancer_smiles": balancer_smiles,
-                    "balancing_efficiency": abs(prediction["synergy_score"]),
-                    "confidence": prediction["confidence"]
-                })
+                results.append(
+                    {
+                        "toxic_smiles": toxic_smiles,
+                        "balancer_smiles": balancer_smiles,
+                        "balancing_efficiency": abs(prediction["synergy_score"]),
+                        "confidence": prediction["confidence"],
+                    }
+                )
 
         df = pd.DataFrame(results)
         if not df.empty:

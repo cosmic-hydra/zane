@@ -7,20 +7,19 @@ import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
+
 class CustomLipidNanoparticleEngine(nn.Module):
     """
     Designs personalized Lipid Nanoparticles (LNPs) by matching nanoparticle
     ligands to patient-specific tissue expression profiles.
     """
+
     def __init__(self, embedding_dim: int = 128):
         super().__init__()
         self.embedding_dim = embedding_dim
         # Simple GNN or MLP to predict binding affinity between ligands and receptors
         self.binding_predictor = nn.Sequential(
-            nn.Linear(embedding_dim * 2, 256),
-            nn.ReLU(),
-            nn.Linear(256, 1),
-            nn.Sigmoid()
+            nn.Linear(embedding_dim * 2, 256), nn.ReLU(), nn.Linear(256, 1), nn.Sigmoid()
         )
 
     def ingest_tissue_expression(self, rna_seq_path: str, target_organ: str) -> list[str]:
@@ -32,15 +31,15 @@ class CustomLipidNanoparticleEngine(nn.Module):
             df = pd.read_csv(rna_seq_path)
             # Filter for surface proteins (using a mock column 'is_surface_receptor')
             # and sort by expression level or fold-change
-            receptors = df[(df['organ'] == target_organ) & (df['is_surface_receptor'])]
-            over_expressed = receptors.sort_values(by='fold_change', ascending=False).head(5)
+            receptors = df[(df["organ"] == target_organ) & (df["is_surface_receptor"])]
+            over_expressed = receptors.sort_values(by="fold_change", ascending=False).head(5)
 
-            target_list = over_expressed['gene_symbol'].tolist()
+            target_list = over_expressed["gene_symbol"].tolist()
             logger.info(f"Identified {len(target_list)} over-expressed receptors for {target_organ}: {target_list}")
             return target_list
         except Exception as e:
             logger.error(f"Failed to parse RNA-Seq data: {e!s}")
-            return ["ASGR1"] # Default for liver targeting (Asialoglycoprotein receptor 1)
+            return ["ASGR1"]  # Default for liver targeting (Asialoglycoprotein receptor 1)
 
     def optimize_lnp_ligands(self, target_receptors: list[str]) -> dict[str, Any]:
         """
@@ -53,7 +52,7 @@ class CustomLipidNanoparticleEngine(nn.Module):
             {"name": "GalNAc-PEG-DSPE", "target": "ASGR1", "affinity": 0.98},
             {"name": "Mannose-PEG-Cholesterol", "target": "CD206", "affinity": 0.95},
             {"name": "Transferrin-PEG-DMG", "target": "TFRC", "affinity": 0.92},
-            {"name": "Folate-PEG-DOPE", "target": "FOLR1", "affinity": 0.94}
+            {"name": "Folate-PEG-DOPE", "target": "FOLR1", "affinity": 0.94},
         ]
 
         best_ligand = None
@@ -66,13 +65,13 @@ class CustomLipidNanoparticleEngine(nn.Module):
                     best_ligand = ligand
 
         if not best_ligand:
-            best_ligand = ligand_candidates[0] # Fallback
+            best_ligand = ligand_candidates[0]  # Fallback
 
         optimized_formulation = {
             "helper_lipid_ligand": best_ligand["name"],
             "target_receptor": best_ligand["target"],
             "predicted_tissue_tropism": highest_score if highest_score > 0 else 0.8,
-            "off_target_risk": 0.01 # Minimal off-target binding
+            "off_target_risk": 0.01,  # Minimal off-target binding
         }
 
         logger.info(f"LNP Optimization Complete: {optimized_formulation['helper_lipid_ligand']} selected.")

@@ -13,10 +13,10 @@ def main():
 
     # Example molecules
     molecules = {
-        'Aspirin': 'CC(=O)OC1=CC=CC=C1C(=O)O',
-        'Ibuprofen': 'CC(C)CC1=CC=C(C=C1)C(C)C(=O)O',
-        'Caffeine': 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C',
-        'Penicillin': 'CC1(C)SC2C(NC(=O)Cc3ccccc3)C(=O)N2C1C(=O)O',
+        "Aspirin": "CC(=O)OC1=CC=CC=C1C(=O)O",
+        "Ibuprofen": "CC(C)CC1=CC=C(C=C1)C(C)C(=O)O",
+        "Caffeine": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
+        "Penicillin": "CC1(C)SC2C(NC(=O)Cc3ccccc3)C(=O)N2C1C(=O)O",
     }
 
     results = []
@@ -36,7 +36,7 @@ def main():
         print("\nLipinski's Rule of Five:")
         print(f"  Pass: {lipinski['passes']}")
         print(f"  Violations: {lipinski['num_violations']}")
-        if lipinski['violations']:
+        if lipinski["violations"]:
             print(f"  Issues: {', '.join(lipinski['violations'])}")
 
         # Drug-likeness
@@ -64,25 +64,27 @@ def main():
             print(f"  {flag}: {'Yes' if value else 'No'}")
 
         # Calculate properties
-        props = lipinski['properties']
+        props = lipinski["properties"]
         print("\nMolecular Properties:")
         print(f"  MW: {props['molecular_weight']:.2f}")
         print(f"  LogP: {props['logp']:.2f}")
         print(f"  H-bond donors: {props['h_bond_donors']}")
         print(f"  H-bond acceptors: {props['h_bond_acceptors']}")
 
-        print("\n" + "="*50 + "\n")
+        print("\n" + "=" * 50 + "\n")
 
         # Store results
-        results.append({
-            'name': name,
-            'smiles': smiles,
-            'lipinski_pass': lipinski['passes'],
-            'qed': qed,
-            'sa_score': sa_score,
-            'mw': props['molecular_weight'],
-            'logp': props['logp'],
-        })
+        results.append(
+            {
+                "name": name,
+                "smiles": smiles,
+                "lipinski_pass": lipinski["passes"],
+                "qed": qed,
+                "sa_score": sa_score,
+                "mw": props["molecular_weight"],
+                "logp": props["logp"],
+            }
+        )
 
     # Create summary DataFrame
     df = pd.DataFrame(results)
@@ -90,9 +92,9 @@ def main():
     print(df.to_string(index=False))
 
     # Filter drug-like molecules
-    drug_like = df[(df['lipinski_pass']) & (df['qed'] > 0.5)]
+    drug_like = df[(df["lipinski_pass"]) & (df["qed"] > 0.5)]
     print(f"\n✓ Drug-like molecules: {len(drug_like)}/{len(df)}")
-    print(drug_like['name'].tolist())
+    print(drug_like["name"].tolist())
 
 
 if __name__ == "__main__":

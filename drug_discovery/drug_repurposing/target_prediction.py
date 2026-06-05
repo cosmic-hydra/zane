@@ -21,10 +21,7 @@ class ReverseScreening:
         for target_name, _model in self.target_models.items():
             # In a real scenario, we'd use the model to predict activity
             # score = model.predict(smiles)
-            score = 0.5 # Placeholder
-            results.append({
-                "target": target_name,
-                "score": score
-            })
+            score = 0.5  # Placeholder
+            results.append({"target": target_name, "score": score})
 
         return sorted(results, key=lambda x: x["score"], reverse=True)

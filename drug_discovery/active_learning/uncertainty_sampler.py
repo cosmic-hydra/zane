@@ -1,4 +1,5 @@
 """Active learning utilities: uncertainty-based sampling and batch selection."""
+
 from __future__ import annotations
 
 import heapq
@@ -65,6 +66,7 @@ class UncertaintySampler:
         entropies = []
         for p in probs:
             import math
+
             e = 0.0
             for pi in p:
                 if pi > 0:

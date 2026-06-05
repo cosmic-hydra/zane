@@ -26,10 +26,6 @@ class DrugSimilaritySearch:
         for i, fp in enumerate(self.library_fps):
             similarity = DataStructs.TanimotoSimilarity(query_fp, fp)
             if similarity >= threshold:
-                results.append({
-                    "name": self.drug_names[i],
-                    "smiles": self.library_smiles[i],
-                    "similarity": similarity
-                })
+                results.append({"name": self.drug_names[i], "smiles": self.library_smiles[i], "similarity": similarity})
 
         return sorted(results, key=lambda x: x["similarity"], reverse=True)

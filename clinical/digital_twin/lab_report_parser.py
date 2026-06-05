@@ -9,10 +9,12 @@ from pydantic import BaseModel, Field
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class PatientHealthState(BaseModel):
     """
     Represents the mathematical constraints of a patient's health state.
     """
+
     patient_id: str
     egfr: float = Field(..., description="Estimated Glomerular Filtration Rate (mL/min/1.73m2)")
     ast: float = Field(..., description="Aspartate Aminotransferase (U/L)")
@@ -23,10 +25,12 @@ class PatientHealthState(BaseModel):
     conditions: list[str] = Field(default_factory=list)
     organ_viability: dict[str, str] = Field(default_factory=dict)
 
+
 class LabReportIngestor:
     """
     Ingests and parses unstructured health reports to extract biological constraints.
     """
+
     def __init__(self):
         self.constraints: dict[str, Any] = {}
 
@@ -54,14 +58,18 @@ class LabReportIngestor:
             logger.warning("Some critical biomarkers were not found in the report. Using defaults where appropriate.")
 
         return PatientHealthState(
-            patient_id="PID-" + re.search(r"Patient ID[:\s]+(\w+)", text, re.I).group(1) if re.search(r"Patient ID[:\s]+(\w+)", text, re.I) else "UNKNOWN",
+            patient_id=(
+                "PID-" + re.search(r"Patient ID[:\s]+(\w+)", text, re.I).group(1)
+                if re.search(r"Patient ID[:\s]+(\w+)", text, re.I)
+                else "UNKNOWN"
+            ),
             egfr=egfr if egfr is not None else 90.0,
             ast=ast if ast is not None else 25.0,
             alt=alt if alt is not None else 25.0,
             blood_ph=ph,
             sodium_level=sodium if sodium is not None else 140.0,
             allergies=re.findall(r"Allergy[:\s]+(\w+)", text, re.I),
-            conditions=re.findall(r"Condition[:\s]+(\w+)", text, re.I)
+            conditions=re.findall(r"Condition[:\s]+(\w+)", text, re.I),
         )
 
     def _extract_value(self, text: str, pattern: str) -> float | None:

@@ -62,22 +62,12 @@ class TestMolecularTransformerBasics:
 
     def test_transformer_init(self):
         """Test Transformer initialization"""
-        transformer = MolecularTransformer(
-            input_dim=64,
-            model_dim=256,
-            num_heads=8,
-            num_layers=4
-        )
+        transformer = MolecularTransformer(input_dim=64, model_dim=256, num_heads=8, num_layers=4)
         assert transformer is not None
 
     def test_transformer_forward_pass(self):
         """Test Transformer forward pass"""
-        transformer = MolecularTransformer(
-            input_dim=32,
-            model_dim=128,
-            num_heads=4,
-            num_layers=2
-        )
+        transformer = MolecularTransformer(input_dim=32, model_dim=128, num_heads=4, num_layers=2)
         x = torch.randn(4, 10, 32)  # (batch, seq_len, input_dim)
 
         try:
@@ -90,34 +80,19 @@ class TestMolecularTransformerBasics:
     def test_transformer_number_of_heads(self):
         """Test Transformer with different attention heads"""
         for num_heads in [1, 2, 4, 8]:
-            transformer = MolecularTransformer(
-                input_dim=64,
-                model_dim=256,
-                num_heads=num_heads,
-                num_layers=2
-            )
+            transformer = MolecularTransformer(input_dim=64, model_dim=256, num_heads=num_heads, num_layers=2)
             assert transformer is not None
 
     def test_transformer_number_of_layers(self):
         """Test Transformer with different layer counts"""
         for num_layers in [1, 2, 3, 6, 12]:
-            transformer = MolecularTransformer(
-                input_dim=64,
-                model_dim=256,
-                num_heads=8,
-                num_layers=num_layers
-            )
+            transformer = MolecularTransformer(input_dim=64, model_dim=256, num_heads=8, num_layers=num_layers)
             assert transformer is not None
 
     def test_transformer_model_dimensions(self):
         """Test Transformer with different model dimensions"""
         for model_dim in [64, 128, 256, 512, 1024]:
-            transformer = MolecularTransformer(
-                input_dim=32,
-                model_dim=model_dim,
-                num_heads=8,
-                num_layers=2
-            )
+            transformer = MolecularTransformer(input_dim=32, model_dim=model_dim, num_heads=8, num_layers=2)
             assert transformer is not None
 
 
@@ -127,6 +102,7 @@ class TestDrugModelingBasics:
     def test_drug_modeling_init(self):
         """Test drug modeling module initialization"""
         from drug_discovery.models import drug_modeling
+
         assert drug_modeling is not None
 
     @patch("drug_discovery.models.drug_modeling.DrugModel")
@@ -241,6 +217,7 @@ class TestOptimizationBasics:
     def test_optimization_module_imports(self):
         """Test optimization module can be imported"""
         from drug_discovery.optimization import bayesian, multi_objective
+
         assert bayesian is not None
         assert multi_objective is not None
 
@@ -304,10 +281,7 @@ class TestPipelineWorkflow:
 
     def test_pipeline_data_preparation(self):
         """Test pipeline data preparation stage"""
-        data = pd.DataFrame({
-            "smiles": ["CC(=O)O", "CC(=O)OC", "CC(=O)N"],
-            "property": [1.0, 2.0, 3.0]
-        })
+        data = pd.DataFrame({"smiles": ["CC(=O)O", "CC(=O)OC", "CC(=O)N"], "property": [1.0, 2.0, 3.0]})
 
         assert len(data) == 3
         assert "smiles" in data.columns
@@ -494,7 +468,7 @@ class TestEarlyStoppingPatterns:
         losses = [1.0, 0.9, 0.85, 0.83, 0.82, 0.82, 0.82, 0.82]
         patience = 3
 
-        best_loss = float('inf')
+        best_loss = float("inf")
         patience_count = 0
 
         for loss in losses:

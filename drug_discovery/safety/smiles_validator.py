@@ -262,10 +262,10 @@ class SmilesValidator:
 
         # Avoid extremely reactive groups
         reactive_patterns = [
-            "[F,Cl,Br,I][F,Cl,Br,I]", # Halogen-halogen
-            "[O,N]-[O,N]",           # Peroxides/Hydrazines (sometimes okay but often unstable)
-            "C#C-C#C",               # Polyynes
-            "[S,C]=[O,S]=O",         # Ketenes/Sulfines
+            "[F,Cl,Br,I][F,Cl,Br,I]",  # Halogen-halogen
+            "[O,N]-[O,N]",  # Peroxides/Hydrazines (sometimes okay but often unstable)
+            "C#C-C#C",  # Polyynes
+            "[S,C]=[O,S]=O",  # Ketenes/Sulfines
         ]
         return all(not mol.HasSubstructMatch(Chem.MolFromSmarts(pattern)) for pattern in reactive_patterns)
 

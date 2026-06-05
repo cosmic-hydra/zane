@@ -5,14 +5,18 @@ from rdkit import Chem
 
 logger = logging.getLogger(__name__)
 
+
 class MicrobiomeToxicityVeto(Exception):
     """Exception raised when a drug is predicted to be metabolized into a toxic byproduct by gut flora."""
+
     pass
+
 
 class PharmacobiomiomicEngine:
     """
     Analyzes the interaction between a patient's gut microbiome and drug candidates.
     """
+
     def __init__(self):
         # Known microbial enzymatic reactions (simplified mapping)
         # In a real system, this would be a large database of metabolic pathways
@@ -20,15 +24,15 @@ class PharmacobiomiomicEngine:
             "azoreductase": ["Bacteroides", "Clostridium", "Enterococcus"],
             "beta-glucuronidase": ["Escherichia coli", "Bacteroides vulgatus"],
             "nitroreductase": ["Bacteroides fragilis"],
-            "sulfatase": ["Peptostreptococcus"]
+            "sulfatase": ["Peptostreptococcus"],
         }
 
         # Chemical fragments targeted by these enzymes
         self.reactive_fragments = {
             "azoreductase": "N=N",
-            "beta-glucuronidase": "OC1OC(C(O)C(O)C1O)C(=O)O", # Glucuronide fragment
+            "beta-glucuronidase": "OC1OC(C(O)C(O)C1O)C(=O)O",  # Glucuronide fragment
             "nitroreductase": "[N+](=O)[O-]",
-            "sulfatase": "OS(=O)(=O)O"
+            "sulfatase": "OS(=O)(=O)O",
         }
 
     def parse_metagenomic_seq(self, fastq_path: str) -> dict[str, float]:
@@ -44,9 +48,9 @@ class PharmacobiomiomicEngine:
                 record_count += 1
                 # Mock taxonomic classification logic
                 seq_str = str(record.seq)
-                if "GATC" in seq_str: # Mock marker for Bacteroides
+                if "GATC" in seq_str:  # Mock marker for Bacteroides
                     abundance_profile["Bacteroides"] = abundance_profile.get("Bacteroides", 0) + 1
-                if "ATGC" in seq_str: # Mock marker for E. coli
+                if "ATGC" in seq_str:  # Mock marker for E. coli
                     abundance_profile["Escherichia coli"] = abundance_profile.get("Escherichia coli", 0) + 1
 
             # Normalize to relative abundance
@@ -77,8 +81,10 @@ class PharmacobiomiomicEngine:
                 relevant_strains = self.microbial_enzymes.get(enzyme, [])
                 abundance = sum(microbiome_profile.get(strain, 0) for strain in relevant_strains)
 
-                if abundance > 0.15: # Threshold for clinical significance
-                    logger.warning(f"VETO: Drug contains {enzyme} substrate and patient has high abundance of {relevant_strains}")
+                if abundance > 0.15:  # Threshold for clinical significance
+                    logger.warning(
+                        f"VETO: Drug contains {enzyme} substrate and patient has high abundance of {relevant_strains}"
+                    )
                     raise MicrobiomeToxicityVeto(
                         f"Molecule contains fragment {pattern} which is likely to be cleaved by {enzyme} "
                         f"present in patient's microbiome (abundance: {abundance:.2%})."

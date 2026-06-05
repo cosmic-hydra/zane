@@ -30,16 +30,18 @@ class SaMDTraceabilityGenerator:
         # Regex to find tags like [HAZ-001: Description]
         hazard_regex = r"\[(HAZ-\d+):\s*(.*?)\]"
 
-        for commit in self.repo.iter_commits('main', max_count=limit):
+        for commit in self.repo.iter_commits("main", max_count=limit):
             match = re.search(hazard_regex, commit.message)
             if match:
-                hazard_commits.append({
-                    "hazard_id": match.group(1),
-                    "description": match.group(2),
-                    "commit_hash": commit.hexsha,
-                    "author": commit.author.name,
-                    "date": datetime.fromtimestamp(commit.committed_date).isoformat()
-                })
+                hazard_commits.append(
+                    {
+                        "hazard_id": match.group(1),
+                        "description": match.group(2),
+                        "commit_hash": commit.hexsha,
+                        "author": commit.author.name,
+                        "date": datetime.fromtimestamp(commit.committed_date).isoformat(),
+                    }
+                )
 
         return hazard_commits
 
@@ -53,7 +55,7 @@ class SaMDTraceabilityGenerator:
             "test_toxicity_gate.py": "PASSED",
             "test_advanced_admet.py": "PASSED",
             "test_retrosynthesis.py": "PASSED",
-            "test_safety_modules.py": "PASSED"
+            "test_safety_modules.py": "PASSED",
         }
 
     def generate_traceability_matrix(self, output_format: str = "markdown") -> str:
@@ -79,9 +81,7 @@ class SaMDTraceabilityGenerator:
 """
         template = Template(template_str)
         report = template.render(
-            hazards=hazards,
-            test_status="PASSED",
-            date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            hazards=hazards, test_status="PASSED", date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
 
         if output_format == "markdown":
@@ -91,6 +91,7 @@ class SaMDTraceabilityGenerator:
             return output_file
 
         return report
+
 
 if __name__ == "__main__":
     generator = SaMDTraceabilityGenerator()

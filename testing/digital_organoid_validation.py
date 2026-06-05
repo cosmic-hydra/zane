@@ -7,19 +7,21 @@ import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
+
 class DigitalPatientOrganoid:
     """
     Final N=1 simulation that predicts the transcriptomic shift of a patient's
     cells after drug exposure before physical synthesis.
     """
+
     def __init__(self):
         self.biopsy_data: sc.AnnData | None = None
         # Deep generative model (e.g. scGen or CPA variant)
         self.perturbation_predictor = nn.Sequential(
-            nn.Linear(1000 + 128, 512), # Gene space (top 1000) + drug embedding
+            nn.Linear(1000 + 128, 512),  # Gene space (top 1000) + drug embedding
             nn.ReLU(),
             nn.Linear(512, 1000),
-            nn.Tanh()
+            nn.Tanh(),
         )
 
     def baseline_transcriptomic_state(self, single_cell_rna_path: str):
@@ -40,7 +42,8 @@ class DigitalPatientOrganoid:
         Predicts the entire transcriptomic shift after exposure to the drug.
         Returns an 'Efficacy Recovery Score' (0-1).
         """
-        if self.biopsy_data is None: return 0.0
+        if self.biopsy_data is None:
+            return 0.0
 
         # Extract baseline expression for top 1000 genes
         baseline = torch.tensor(self.biopsy_data.X.mean(axis=0), dtype=torch.float32)

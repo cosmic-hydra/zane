@@ -11,11 +11,13 @@ from training.n1_health_condition_optimizer import ConditionAdaptiveRewardFuncti
 
 logger = logging.getLogger(__name__)
 
+
 class PanArchitectureReward:
     """
     The master orchestrator that integrates every ZANE subsystem into a
     single unified reward signal for the Reinforcement Learning agent.
     """
+
     def __init__(self, patient_state: Any):
         self.patient_state = patient_state
         self.n1_optimizer = ConditionAdaptiveRewardFunction()
@@ -31,7 +33,7 @@ class PanArchitectureReward:
             "admet_safety": 0.15,
             "n1_metabolic_fit": 0.15,
             "physicochemical": 0.10,
-            "solubility": 0.10
+            "solubility": 0.10,
         }
 
     async def calculate_total_reward(self, smiles: str, predicted_properties: dict[str, float]) -> float:
@@ -43,19 +45,17 @@ class PanArchitectureReward:
             # 1. Novelty Check (Banning memorized drugs)
             novelty_penalty = self.novelty_enforcer.calculate_novelty_penalty(smiles)
             if novelty_penalty < -500:
-                return novelty_penalty # Immediate rejection for memorized drugs
+                return novelty_penalty  # Immediate rejection for memorized drugs
 
             # 2. Patient-Specific Metabolic Fit (eGFR/AST/ALT)
             n1_reward = self.n1_optimizer.compute_n1_optimized_reward(
-                base_reward=0,
-                patient_state=self.patient_state,
-                predicted_properties=predicted_properties
+                base_reward=0, patient_state=self.patient_state, predicted_properties=predicted_properties
             )
 
             # 3. Microbiome Toxicity Veto
             try:
                 # Assuming patient microbiome profile is part of patient_state
-                microbiome_profile = getattr(self.patient_state, 'microbiome_profile', {"Bacteroides": 0.4})
+                microbiome_profile = getattr(self.patient_state, "microbiome_profile", {"Bacteroides": 0.4})
                 self.microbiome_engine.predict_microbial_cleavage(smiles, microbiome_profile)
                 microbiome_reward = 1.0
             except MicrobiomeToxicityVeto as e:
@@ -63,7 +63,7 @@ class PanArchitectureReward:
                 microbiome_reward = -100.0
 
             # 4. pH-Dependent Solubility (Localized microenvironment)
-            target_ph = getattr(self.patient_state, 'target_tissue_ph', 6.5) # e.g. Tumor pH
+            target_ph = getattr(self.patient_state, "target_tissue_ph", 6.5)  # e.g. Tumor pH
             solubility_score = self.ph_engine.calculate_ph_dependent_solubility(smiles, target_ph)
 
             # 5. Physicochemical Constraints (Learned via RAG)
@@ -73,12 +73,12 @@ class PanArchitectureReward:
 
             # Master Equation Integration
             total_reward = (
-                self.weights["docking_score"] * base_docking +
-                self.weights["novelty"] * (1.0 + novelty_penalty/100.0) +
-                self.weights["admet_safety"] * admet_score +
-                self.weights["n1_metabolic_fit"] * (1.0 + n1_reward/100.0) +
-                self.weights["solubility"] * solubility_score +
-                (0.1 * microbiome_reward) # Extra weight for microbiome safety
+                self.weights["docking_score"] * base_docking
+                + self.weights["novelty"] * (1.0 + novelty_penalty / 100.0)
+                + self.weights["admet_safety"] * admet_score
+                + self.weights["n1_metabolic_fit"] * (1.0 + n1_reward / 100.0)
+                + self.weights["solubility"] * solubility_score
+                + (0.1 * microbiome_reward)  # Extra weight for microbiome safety
             )
 
             logger.info(f"Unified Reward for {smiles}: {total_reward:.4f}")

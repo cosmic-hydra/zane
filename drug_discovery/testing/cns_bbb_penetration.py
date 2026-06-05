@@ -31,21 +31,32 @@ class BioavailabilityScreener:
 
         # pKa estimation (very heuristic for this scaffolding)
         # Bases often have pKa ~9, Acids ~4.
-        pka = 8.0 # Default fallback
-        if mol.HasSubstructMatch(Chem.MolFromSmarts("[NX3;H2,H1,H0;c,C]")): # Amine
+        pka = 8.0  # Default fallback
+        if mol.HasSubstructMatch(Chem.MolFromSmarts("[NX3;H2,H1,H0;c,C]")):  # Amine
             pka = 9.5
-        elif mol.HasSubstructMatch(Chem.MolFromSmarts("C(=O)[OH]")): # Carboxylic acid
+        elif mol.HasSubstructMatch(Chem.MolFromSmarts("C(=O)[OH]")):  # Carboxylic acid
             pka = 4.5
 
         # Desirability functions (normalized to [0, 1])
-        def f_clogp(x): return 1.0 if x <= 3.0 else np.exp(-(x-3.0)**2 / 2.0)
-        def f_mw(x): return 1.0 if x <= 360.0 else np.exp(-(x-360.0)**2 / 5000.0)
+        def f_clogp(x):
+            return 1.0 if x <= 3.0 else np.exp(-((x - 3.0) ** 2) / 2.0)
+
+        def f_mw(x):
+            return 1.0 if x <= 360.0 else np.exp(-((x - 360.0) ** 2) / 5000.0)
+
         def f_tpsa(x):
-            if 40 <= x <= 90: return 1.0
-            elif x < 40: return x/40.0
-            else: return np.exp(-(x-90.0)**2 / 1000.0)
-        def f_hbd(x): return 1.0 if x <= 0 else 0.8 if x == 1 else 0.0
-        def f_pka(x): return np.exp(-(x-8.0)**2 / 10.0)
+            if 40 <= x <= 90:
+                return 1.0
+            elif x < 40:
+                return x / 40.0
+            else:
+                return np.exp(-((x - 90.0) ** 2) / 1000.0)
+
+        def f_hbd(x):
+            return 1.0 if x <= 0 else 0.8 if x == 1 else 0.0
+
+        def f_pka(x):
+            return np.exp(-((x - 8.0) ** 2) / 10.0)
 
         scores = [f_clogp(clogp), f_mw(mw), f_tpsa(tpsa), f_hbd(hbd), f_pka(pka)]
         return float(np.sum(scores))
@@ -76,5 +87,5 @@ class BioavailabilityScreener:
             "smiles": smiles,
             "cns_mpo_score": mpo_score,
             "pgp_efflux_risk": pgp_efflux,
-            "likely_cns_penetrant": mpo_score >= 4.0 and not pgp_efflux
+            "likely_cns_penetrant": mpo_score >= 4.0 and not pgp_efflux,
         }

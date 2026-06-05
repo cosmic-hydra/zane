@@ -6,7 +6,9 @@ from rdkit.Chem import Descriptors
 
 class SevereToxicityVeto(Exception):
     """Exception raised when a molecule fails critical human organ safety checks."""
+
     pass
+
 
 class IdiosyncraticToxScreener:
     """
@@ -54,8 +56,8 @@ class IdiosyncraticToxScreener:
         alerts = {
             "halogenated_phenol": "Oc1c([F,Cl,Br,I])cc([F,Cl,Br,I])cc1",
             "nitro_phenol": "Oc1c([N+](=O)[O-])cc([N+](=O)[O-])cc1",
-            "lipophilic_weak_acid": "c1ccccc1-[C,N,S](=O)=O", # Generic benzoic/sulfonic acid
-            "quinone": "C1(=O)C=CC(=O)C=C1"
+            "lipophilic_weak_acid": "c1ccccc1-[C,N,S](=O)=O",  # Generic benzoic/sulfonic acid
+            "quinone": "C1(=O)C=CC(=O)C=C1",
         }
 
         found_alerts = []
@@ -89,5 +91,5 @@ class IdiosyncraticToxScreener:
             "smiles": smiles,
             "dili_risk_score": dili_risk,
             "mitochondrial_safe": not mito_risk,
-            "organ_safety_pass": dili_risk < 1.0 and not mito_risk
+            "organ_safety_pass": dili_risk < 1.0 and not mito_risk,
         }

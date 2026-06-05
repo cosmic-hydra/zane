@@ -6,11 +6,13 @@ from scipy.optimize import least_squares
 
 logger = logging.getLogger(__name__)
 
+
 class CircadianDosingOptimizer:
     """
     Optimizes drug dosing schedules based on patient-specific circadian rhythms
     derived from wearable telemetry.
     """
+
     def __init__(self):
         self.telemetry_data: pd.DataFrame | None = None
         self.circadian_params: dict[str, float] = {}
@@ -22,8 +24,8 @@ class CircadianDosingOptimizer:
         """
         try:
             df = pd.read_csv(timeseries_csv)
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
-            df['hour'] = df['timestamp'].dt.hour + df['timestamp'].dt.minute / 60.0
+            df["timestamp"] = pd.to_datetime(df["timestamp"])
+            df["hour"] = df["timestamp"].dt.hour + df["timestamp"].dt.minute / 60.0
             self.telemetry_data = df
 
             # Fit a cosinor model to body temperature to find the acrophase (peak)
@@ -38,8 +40,8 @@ class CircadianDosingOptimizer:
 
     def _fit_circadian_model(self, df: pd.DataFrame):
         """Fits a cosinor model to the telemetry data."""
-        t = df['hour'].values
-        y = df['body_temperature'].values if 'body_temperature' in df else df['heart_rate'].values
+        t = df["hour"].values
+        y = df["body_temperature"].values if "body_temperature" in df else df["heart_rate"].values
 
         def model(params, t):
             mesor, amp, phi = params
@@ -55,7 +57,7 @@ class CircadianDosingOptimizer:
         self.circadian_params = {
             "mesor": res.x[0],
             "amplitude": res.x[1],
-            "acrophase": res.x[2] % (2 * np.pi) * 24 / (2 * np.pi)
+            "acrophase": res.x[2] % (2 * np.pi) * 24 / (2 * np.pi),
         }
         logger.info(f"Circadian phase detected: Acrophase at {self.circadian_params['acrophase']:.2f}h")
 
@@ -73,11 +75,13 @@ class CircadianDosingOptimizer:
         individualized_target_hour = (target_receptor_peak_hour + phase_shift) % 24
 
         # If the drug takes 'absorption_delay' hours to reach Tmax
-        absorption_delay = 2.0 # Assume 2 hours for standard oral delivery
+        absorption_delay = 2.0  # Assume 2 hours for standard oral delivery
 
         optimal_dosing_time = (individualized_target_hour - absorption_delay) % 24
 
-        logger.info(f"Optimal dosing time calculated: {optimal_dosing_time:.2f}h "
-                    f"to reach peak at {individualized_target_hour:.2f}h")
+        logger.info(
+            f"Optimal dosing time calculated: {optimal_dosing_time:.2f}h "
+            f"to reach peak at {individualized_target_hour:.2f}h"
+        )
 
         return optimal_dosing_time

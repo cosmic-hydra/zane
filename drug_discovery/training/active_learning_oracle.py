@@ -212,6 +212,7 @@ def _mol_to_pdb_block(mol_h) -> str | None:
 # Ray-remote ABFE function
 # ---------------------------------------------------------------------------
 if _RAY_AVAILABLE:
+
     @ray.remote(num_cpus=1)  # type: ignore[misc]
     def simulate_abfe_remote(smiles: str, protein_pdb: str) -> float:
         """Ray-distributed ABFE task.

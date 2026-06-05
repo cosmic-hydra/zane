@@ -1,4 +1,5 @@
 """Audit adapter exposing the project's audit trail from a top-level package."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -19,8 +20,12 @@ class ComplianceAuditAdapter:
     def log_screen(self, smiles: str, compound_id: str | None = None, user_id: str = "system") -> ComplianceAuditEntry:
         return self.logger.log_compound_screened(smiles=smiles, compound_id=compound_id, user_id=user_id)
 
-    def log_prediction(self, compound_id: str, smiles: str, predictions: dict[str, float], user_id: str = "system") -> ComplianceAuditEntry:
-        return self.logger.log_toxicity_prediction(compound_id=compound_id, smiles=smiles, predictions=predictions, user_id=user_id)
+    def log_prediction(
+        self, compound_id: str, smiles: str, predictions: dict[str, float], user_id: str = "system"
+    ) -> ComplianceAuditEntry:
+        return self.logger.log_toxicity_prediction(
+            compound_id=compound_id, smiles=smiles, predictions=predictions, user_id=user_id
+        )
 
     def verify(self) -> bool:
         return self.logger.verify_integrity()

@@ -12,9 +12,9 @@ class mRNAResult:
     half_life: float = 0.0
     success: bool = False
 
+
 class mRNAOptimizer:
-    """mRNA sequence optimizer with saRNA (2026 breakthrough).
-    """
+    """mRNA sequence optimizer with saRNA (2026 breakthrough)."""
 
     def optimize(self, antigen: str) -> mRNAResult:
         utr = "saRNA_UTR"

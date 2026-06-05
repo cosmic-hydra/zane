@@ -12,6 +12,7 @@ class AnalogResult:
     tox_reduction: float = 0.0
     potency_gain: float = 0.0
 
+
 class DeepGraphAnalogGenerator:
     """Deep graph networks for low-tox analog generation (2025).
 

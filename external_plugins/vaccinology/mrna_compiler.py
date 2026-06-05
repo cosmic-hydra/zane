@@ -2,22 +2,24 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class ThermodynamicmRNACompiler:
     """
     Optimizes mRNA sequences for maximum protein expression and thermodynamic stability.
     """
+
     def __init__(self):
         # Standard human codon usage bias (simplified)
         self.codon_table = {
-            'A': ['GCC', 'GCT', 'GCA', 'GCG'],
-            'L': ['CTG', 'CTC', 'TTG', 'TTA', 'CTT', 'CTA'],
-            'P': ['CCC', 'CCT', 'CCA', 'CCG'],
-            'R': ['CGC', 'AGG', 'CGT', 'AGA', 'CGA', 'CGG'],
-            'V': ['GTG', 'GTC', 'GTT', 'GTA'],
+            "A": ["GCC", "GCT", "GCA", "GCG"],
+            "L": ["CTG", "CTC", "TTG", "TTA", "CTT", "CTA"],
+            "P": ["CCC", "CCT", "CCA", "CCG"],
+            "R": ["CGC", "AGG", "CGT", "AGA", "CGA", "CGG"],
+            "V": ["GTG", "GTC", "GTT", "GTA"],
             # ... (mapping would be complete in production)
         }
         # Preferred codons for humans
-        self.preferred_codons = {'A': 'GCC', 'L': 'CTG', 'P': 'CCC', 'R': 'CGC', 'V': 'GTG'}
+        self.preferred_codons = {"A": "GCC", "L": "CTG", "P": "CCC", "R": "CGC", "V": "GTG"}
 
     def optimize_codon_adaptation_index(self, amino_acid_seq: str) -> str:
         """
@@ -29,7 +31,7 @@ class ThermodynamicmRNACompiler:
                 mrna_seq.append(self.preferred_codons[aa])
             else:
                 # Fallback to random if not in preferred (simulated)
-                mrna_seq.append('AUG') # Simplified fallback
+                mrna_seq.append("AUG")  # Simplified fallback
 
         optimized_seq = "".join(mrna_seq)
         logger.info(f"Codon optimization complete. Sequence length: {len(optimized_seq)}nt")
@@ -51,20 +53,20 @@ class ThermodynamicmRNACompiler:
 
         def get_mfe(seq):
             if RNA:
-                (_ss, mfe) = RNA.fold(seq)
+                _ss, mfe = RNA.fold(seq)
                 return mfe
             else:
                 # Mock MFE: High GC content generally lowers MFE
-                gc_content = (seq.count('G') + seq.count('C')) / len(seq)
-                return -100.0 * gc_content # Simulated MFE
+                gc_content = (seq.count("G") + seq.count("C")) / len(seq)
+                return -100.0 * gc_content  # Simulated MFE
 
         best_mfe = get_mfe(current_seq)
 
         # Iterative optimization (Monte Carlo approach)
-        for _i in range(10): # Simplified 10 iterations
+        for _i in range(10):  # Simplified 10 iterations
             # Propose a synonymous codon swap
             # (Logic omitted for brevity - would maintain amino acid identity)
-            test_seq = current_seq # Simulate a swap
+            test_seq = current_seq  # Simulate a swap
             test_mfe = get_mfe(test_seq)
 
             if test_mfe < best_mfe:
@@ -86,5 +88,5 @@ class ThermodynamicmRNACompiler:
             "mrna_sequence": stable_mrna,
             "modifications": "1-methylpseudouridine",
             "5_utr": "GGGAUAAUACUCAUACUAUUCCCGAGUAUUACUAUACUCCCAUCG",
-            "3_utr": "UUUGAAUUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+            "3_utr": "UUUGAAUUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
         }

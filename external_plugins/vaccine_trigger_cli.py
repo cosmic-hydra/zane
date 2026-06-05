@@ -5,8 +5,9 @@ import os
 import sys
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("VaccineTrigger")
+
 
 def run_generate_mrna(args):
     """
@@ -47,7 +48,7 @@ def run_generate_mrna(args):
         stability_report = {
             "stabilizing_mutations": mutations,
             "predicted_ddg": ddg,
-            "conformation": "prefusion_locked"
+            "conformation": "prefusion_locked",
         }
 
     # Final Package
@@ -56,14 +57,15 @@ def run_generate_mrna(args):
         "target_fasta": args.viral_fasta,
         "optimized_payload": payload,
         "structural_validation": stability_report,
-        "patient_context": {"hla_alleles": hla_alleles}
+        "patient_context": {"hla_alleles": hla_alleles},
     }
 
     output_file = args.output or "vaccine_blueprint.json"
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         json.dump(blueprint, f, indent=4)
 
     logger.info(f"Vaccine design complete. Blueprint saved to {output_file}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="ZANE External Vaccine Generation CLI")
@@ -82,6 +84,7 @@ def main():
         run_generate_mrna(args)
     else:
         parser.print_help()
+
 
 if __name__ == "__main__":
     main()

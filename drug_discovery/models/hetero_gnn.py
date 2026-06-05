@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 from torch_geometric.nn import GATConv, HeteroConv, Linear
@@ -17,7 +16,7 @@ class HeteroGNN(nn.Module):
         hidden_dim: int = 128,
         num_layers: int = 3,
         output_dim: int = 1,
-        dropout: float = 0.2
+        dropout: float = 0.2,
     ):
         super().__init__()
 
@@ -25,9 +24,7 @@ class HeteroGNN(nn.Module):
         self.edge_types = edge_types
 
         # Node encoders for each type
-        self.node_encoders = nn.ModuleDict({
-            node_type: Linear(-1, hidden_dim) for node_type in node_types
-        })
+        self.node_encoders = nn.ModuleDict({node_type: Linear(-1, hidden_dim) for node_type in node_types})
 
         # Heterogeneous convolution layers
         self.convs = nn.ModuleList()
@@ -37,7 +34,7 @@ class HeteroGNN(nn.Module):
                 # edge_type is (src, rel, dst)
                 conv_dict[edge_type] = GATConv((-1, -1), hidden_dim, add_self_loops=False)
 
-            self.convs.append(HeteroConv(conv_dict, aggr='sum'))
+            self.convs.append(HeteroConv(conv_dict, aggr="sum"))
 
         # Final prediction heads
         self.fc1 = nn.Linear(hidden_dim, hidden_dim // 2)

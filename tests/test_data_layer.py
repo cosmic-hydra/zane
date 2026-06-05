@@ -54,10 +54,12 @@ class TestDataNormalizer:
 
     def test_normalize_dataframe(self):
         """Test DataFrame normalization."""
-        df = pd.DataFrame({
-            "smiles": [*self.test_smiles, "CCO"],  # Include duplicate
-            "activity": [1.0, 2.0, 3.0, 1.5],
-        })
+        df = pd.DataFrame(
+            {
+                "smiles": [*self.test_smiles, "CCO"],  # Include duplicate
+                "activity": [1.0, 2.0, 3.0, 1.5],
+            }
+        )
 
         normalized_df = self.normalizer.normalize_dataframe(
             df,
@@ -70,9 +72,11 @@ class TestDataNormalizer:
 
     def test_apply_filters(self):
         """Test molecular filters."""
-        df = pd.DataFrame({
-            "smiles": self.test_smiles,
-        })
+        df = pd.DataFrame(
+            {
+                "smiles": self.test_smiles,
+            }
+        )
 
         filtered_df = self.normalizer.apply_filters(
             df,
@@ -157,10 +161,12 @@ class TestDatasetVersioning:
 
     def test_create_version(self):
         """Test dataset version creation."""
-        df = pd.DataFrame({
-            "smiles": ["CCO", "CC(C)O"],
-            "activity": [1.0, 2.0],
-        })
+        df = pd.DataFrame(
+            {
+                "smiles": ["CCO", "CC(C)O"],
+                "activity": [1.0, 2.0],
+            }
+        )
 
         version_id = self.versioning.create_version(
             df,
@@ -173,10 +179,12 @@ class TestDatasetVersioning:
 
     def test_load_version(self):
         """Test loading dataset version."""
-        df = pd.DataFrame({
-            "smiles": ["CCO", "CC(C)O"],
-            "activity": [1.0, 2.0],
-        })
+        df = pd.DataFrame(
+            {
+                "smiles": ["CCO", "CC(C)O"],
+                "activity": [1.0, 2.0],
+            }
+        )
 
         version_id = self.versioning.create_version(df, version_name="test")
         loaded_df = self.versioning.load_version(version_id)
@@ -212,10 +220,12 @@ class TestMolecularDataset:
 
     def setup_method(self):
         """Setup test fixtures."""
-        self.df = pd.DataFrame({
-            "smiles": ["CCO", "CC(C)O", "CCCO"],
-            "target": [1.0, 0.0, 1.0],
-        })
+        self.df = pd.DataFrame(
+            {
+                "smiles": ["CCO", "CC(C)O", "CCCO"],
+                "target": [1.0, 0.0, 1.0],
+            }
+        )
 
     def test_fingerprint_featurization(self):
         """Test fingerprint featurization."""

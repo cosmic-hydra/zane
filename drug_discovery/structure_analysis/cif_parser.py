@@ -1,5 +1,6 @@
 try:
     import gemmi
+
     GEMMI_AVAILABLE = True
 except ImportError:
     GEMMI_AVAILABLE = False

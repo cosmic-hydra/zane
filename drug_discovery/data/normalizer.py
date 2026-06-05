@@ -208,10 +208,7 @@ class DataNormalizer:
             normalized_data.append(new_row)
 
         result_df = pd.DataFrame(normalized_data)
-        logger.info(
-            f"Normalized {len(df)} -> {len(result_df)} molecules "
-            f"(removed {len(df) - len(result_df)})"
-        )
+        logger.info(f"Normalized {len(df)} -> {len(result_df)} molecules " f"(removed {len(df) - len(result_df)})")
 
         return result_df
 
@@ -279,13 +276,8 @@ class DataNormalizer:
 
         if molecular_weight_range:
             min_mw, max_mw = molecular_weight_range
-            filtered = filtered[
-                (filtered["mol_weight"] >= min_mw) & (filtered["mol_weight"] <= max_mw)
-            ]
+            filtered = filtered[(filtered["mol_weight"] >= min_mw) & (filtered["mol_weight"] <= max_mw)]
 
-        logger.info(
-            f"Applied filters: {len(df)} -> {len(filtered)} molecules "
-            f"(removed {len(df) - len(filtered)})"
-        )
+        logger.info(f"Applied filters: {len(df)} -> {len(filtered)} molecules " f"(removed {len(df) - len(filtered)})")
 
         return filtered

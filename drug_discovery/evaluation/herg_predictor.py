@@ -59,21 +59,18 @@ class HERGPredictor:
         self,
         # QSAR coefficients (learned from data, tunable parameters)
         logp_coeff: float = 0.40,  # logP contribution to hERG inhibition (reduced for more specificity)
-        mw_coeff: float = 0.08,    # MW contribution (weak)
+        mw_coeff: float = 0.08,  # MW contribution (weak)
         tpsa_coeff: float = -0.30,  # TPSA contribution (negative = less polar is more hERG active)
         basic_n_coeff: float = 0.20,  # Basic nitrogen count contribution
-        hbd_coeff: float = -0.05,   # H-bond donors (weak/negative)
+        hbd_coeff: float = -0.05,  # H-bond donors (weak/negative)
         aromatic_rings_coeff: float = 0.15,  # Aromatic rings (planar = hERG risk)
-
         # IC50 estimation parameters
         ic50_baseline_nM: float = 5000.0,  # Baseline IC50 for reference compound
         ic50_potency_range: tuple[float, float] = (100.0, 50000.0),  # [most potent, least potent]
-
         # Risk classification thresholds (CiPA-oriented)
         cipa_low_threshold: float = 0.25,  # P(inhibitor) threshold for low risk (increased for specificity)
         cipa_cat2_threshold: float = 0.50,  # Threshold for category 2 (intermediate)
         cipa_high_threshold: float = 0.75,  # Threshold for high risk
-
         # QTc prolongation parameters
         qtc_threshold_ms: float = 60.0,  # Clinical QTc change threshold
         ic50_for_qtc_risk_nM: float = 10000.0,  # IC50 where QTc risk becomes moderate
@@ -309,7 +306,7 @@ class HERGPredictor:
         log_low = log_ic50 - 1.645 * log_std
         log_high = log_ic50 + 1.645 * log_std
 
-        return (10 ** log_low, 10 ** log_high)
+        return (10**log_low, 10**log_high)
 
     def _classify_cipa_risk(self, prob: float) -> str:
         """Classify CiPA (Comprehensive in vitro Proarrhythmia Assay) risk category.
@@ -369,9 +366,7 @@ class HERGPredictor:
         base_confidence = 0.8
         return max(0.5, base_confidence - mw_penalty - logp_penalty)
 
-    def _identify_concerns(
-        self, props: dict[str, float], prob: float, ic50: float
-    ) -> list[str]:
+    def _identify_concerns(self, props: dict[str, float], prob: float, ic50: float) -> list[str]:
         """Identify key structural/property concerns contributing to hERG risk."""
         concerns = []
 

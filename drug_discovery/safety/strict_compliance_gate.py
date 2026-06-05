@@ -183,9 +183,15 @@ class StrictComplianceGate:
         # Set thresholds based on compliance level if not explicitly provided
         level_config = self._get_thresholds_for_level(compliance_level)
 
-        self.strict_herg_threshold = strict_herg_threshold if strict_herg_threshold is not None else level_config["herg"]
-        self.strict_ames_threshold = strict_ames_threshold if strict_ames_threshold is not None else level_config["ames"]
-        self.strict_hepatotox_threshold = strict_hepatotox_threshold if strict_hepatotox_threshold is not None else level_config["hepatotox"]
+        self.strict_herg_threshold = (
+            strict_herg_threshold if strict_herg_threshold is not None else level_config["herg"]
+        )
+        self.strict_ames_threshold = (
+            strict_ames_threshold if strict_ames_threshold is not None else level_config["ames"]
+        )
+        self.strict_hepatotox_threshold = (
+            strict_hepatotox_threshold if strict_hepatotox_threshold is not None else level_config["hepatotox"]
+        )
         self.strict_logp_max = strict_logp_max if strict_logp_max is not None else level_config["logp_max"]
         self.strict_logp_min = strict_logp_min if strict_logp_min is not None else level_config["logp_min"]
 
@@ -193,7 +199,11 @@ class StrictComplianceGate:
         self.strict_tpsa_min, self.strict_tpsa_max = tpsa_range
 
         self.strict_mw_max = strict_mw_max if strict_mw_max is not None else level_config["mw_max"]
-        self.strict_rotatable_bonds_max = strict_rotatable_bonds_max if strict_rotatable_bonds_max is not None else level_config["rotatable_bonds_max"]
+        self.strict_rotatable_bonds_max = (
+            strict_rotatable_bonds_max
+            if strict_rotatable_bonds_max is not None
+            else level_config["rotatable_bonds_max"]
+        )
 
         self.aromatic_ring_penalty = aromatic_ring_penalty
         self.basic_amine_penalty = basic_amine_penalty
@@ -268,10 +278,7 @@ class StrictComplianceGate:
         # Validate SMILES
         if not self._validate_smiles(smiles):
             return self._create_rejection_assessment(
-                smiles,
-                audit_id,
-                "Invalid SMILES structure",
-                "Failed basic SMILES validation"
+                smiles, audit_id, "Invalid SMILES structure", "Failed basic SMILES validation"
             )
 
         # Calculate molecular properties
@@ -284,18 +291,14 @@ class StrictComplianceGate:
         checks = self._run_compliance_checks(props, toxicity_probs or {})
 
         # Calculate quality tier
-        quality_tier, tier_confidence = self._classify_quality_tier(
-            checks, risk_factors, props
-        )
+        quality_tier, tier_confidence = self._classify_quality_tier(checks, risk_factors, props)
 
         # Verify data integrity
         integrity = self._verify_data_integrity(smiles, props)
 
         # Generate assessment
         overall_passed = all(c.passed for c in checks)
-        recommendation = self._generate_recommendation(
-            quality_tier, checks, risk_factors
-        )
+        recommendation = self._generate_recommendation(quality_tier, checks, risk_factors)
 
         return QualityAssessment(
             smiles=smiles,
@@ -372,10 +375,7 @@ class StrictComplianceGate:
         """Count aromatic rings."""
         try:
             ri = mol.GetRingInfo()
-            return sum(
-                1 for ring in ri.AtomRings()
-                if all(mol.GetAtomWithIdx(i).GetIsAromatic() for i in ring)
-            )
+            return sum(1 for ring in ri.AtomRings() if all(mol.GetAtomWithIdx(i).GetIsAromatic() for i in ring))
         except Exception:
             return 0
 
@@ -461,7 +461,9 @@ class StrictComplianceGate:
                 message=f"LogP = {logp:.2f}, allowed range [{self.strict_logp_min}, {self.strict_logp_max}]",
                 value=logp,
                 threshold=self.strict_logp_max,
-                remediation="Reduce lipophilicity by removing hydrophobic groups" if logp > self.strict_logp_max else None,
+                remediation=(
+                    "Reduce lipophilicity by removing hydrophobic groups" if logp > self.strict_logp_max else None
+                ),
             )
         )
 
@@ -700,12 +702,14 @@ def evaluate_batch_with_strict_compliance(
             passed_count += 1
         else:
             rejected_count += 1
-            critical_issues.append({
-                "smiles": smiles,
-                "audit_id": assessment.audit_id,
-                "tier": assessment.quality_tier.value,
-                "recommendation": assessment.recommendation,
-            })
+            critical_issues.append(
+                {
+                    "smiles": smiles,
+                    "audit_id": assessment.audit_id,
+                    "tier": assessment.quality_tier.value,
+                    "recommendation": assessment.recommendation,
+                }
+            )
 
     return {
         "compliance_level": compliance_level.value,
@@ -714,8 +718,5 @@ def evaluate_batch_with_strict_compliance(
         "rejected": rejected_count,
         "pass_rate": passed_count / max(1, len(smiles_list)),
         "critical_issues": critical_issues,
-        "assessments": {
-            smiles: assessment.as_dict()
-            for smiles, assessment in assessments.items()
-        },
+        "assessments": {smiles: assessment.as_dict() for smiles, assessment in assessments.items()},
     }

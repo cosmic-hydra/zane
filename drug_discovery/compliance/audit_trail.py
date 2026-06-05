@@ -134,10 +134,7 @@ class AuditTrail:
         entry.audit_id = self._generate_audit_id(entry)
 
         self.entries.append(entry)
-        logger.info(
-            f"Audit entry recorded: {event_type.value} "
-            f"(audit_id={entry.audit_id})"
-        )
+        logger.info(f"Audit entry recorded: {event_type.value} " f"(audit_id={entry.audit_id})")
 
         return entry
 
@@ -303,11 +300,7 @@ class ComplianceAuditLogger:
         user_id: str = "system",
     ) -> ComplianceAuditEntry:
         """Log approval decision."""
-        event_type = (
-            AuditEventType.APPROVAL_DECISION
-            if decision == "approved"
-            else AuditEventType.REJECTION_DECISION
-        )
+        event_type = AuditEventType.APPROVAL_DECISION if decision == "approved" else AuditEventType.REJECTION_DECISION
         return self.audit_trail.add_entry(
             event_type,
             user_id=user_id,

@@ -32,7 +32,7 @@ class TestErrorHandling:
 
     def test_missing_dependencies(self):
         """Test handling of missing dependencies"""
-        with patch.dict('sys.modules', {'nonexistent_module': None}):
+        with patch.dict("sys.modules", {"nonexistent_module": None}):
             try:
                 # Simulate import
                 pass
@@ -43,9 +43,9 @@ class TestErrorHandling:
         """Test handling of corrupted data"""
         corrupted_data = [
             None,
-            float('nan'),
-            float('inf'),
-            -float('inf'),
+            float("nan"),
+            float("inf"),
+            -float("inf"),
         ]
 
         for data in corrupted_data:
@@ -178,7 +178,7 @@ class TestNumericStability:
         denominator = 1e-15
 
         # Should handle without overflow
-        with np.errstate(over='ignore'):
+        with np.errstate(over="ignore"):
             result = numerator / np.maximum(denominator, 1e-10)
             assert np.isfinite(result)
 
@@ -236,10 +236,7 @@ class TestConcurrency:
 
         # Simulate data loading
         samples_per_worker = len(data) // num_workers
-        loaded = [
-            data[i*samples_per_worker:(i+1)*samples_per_worker]
-            for i in range(num_workers)
-        ]
+        loaded = [data[i * samples_per_worker : (i + 1) * samples_per_worker] for i in range(num_workers)]
 
         assert len(loaded) == num_workers
 
@@ -262,7 +259,7 @@ class TestFileHandling:
             assert os.path.exists(temp_dir)
             # Create file in temp dir
             test_file = os.path.join(temp_dir, "test.txt")
-            with open(test_file, 'w') as f:
+            with open(test_file, "w") as f:
                 f.write("test")
             assert os.path.exists(test_file)
 
@@ -468,6 +465,7 @@ class TestVersioning:
     def test_numpy_version(self):
         """Test numpy version availability"""
         import numpy
+
         version = numpy.__version__
         assert isinstance(version, str)
         assert len(version) > 0
@@ -475,6 +473,7 @@ class TestVersioning:
     def test_torch_version(self):
         """Test torch version availability"""
         import torch
+
         version = torch.__version__
         assert isinstance(version, str)
         assert len(version) > 0
@@ -482,6 +481,7 @@ class TestVersioning:
     def test_pandas_version(self):
         """Test pandas version availability"""
         import pandas
+
         version = pandas.__version__
         assert isinstance(version, str)
         assert len(version) > 0
@@ -493,16 +493,19 @@ class TestDocstringCoverage:
     def test_module_docstrings(self):
         """Test modules have docstrings"""
         from drug_discovery.models import ensemble
+
         assert ensemble.__doc__ is not None or ensemble is not None
 
     def test_class_docstrings(self):
         """Test classes have docstrings"""
         from drug_discovery.models.ensemble import EnsembleModel
+
         assert EnsembleModel.__doc__ is not None or EnsembleModel is not None
 
     def test_function_docstrings(self):
         """Test functions have docstrings"""
         from drug_discovery.dashboard import _resolve_theme
+
         assert _resolve_theme.__doc__ is not None or _resolve_theme is not None
 
 

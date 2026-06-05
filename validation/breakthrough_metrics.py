@@ -12,6 +12,7 @@ BREAKTHROUGH_BENCHMARKS = {
     "bbb_penetration": 0.70,
 }
 
+
 def validate_breakthroughs(results_dir: str = "outputs/validation/2024") -> dict[str, Any]:
     """Validate 2024 breakthrough metrics against benchmarks."""
     report = {}

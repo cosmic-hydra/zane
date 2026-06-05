@@ -9,7 +9,12 @@ class MockBacalhauClient:
 
     def wait(self, job_id: str) -> dict:
         print(f"Mock Bacalhau wait for {job_id}")
-        return {"status": "success", "results": ["/ipfs/mock_crispr_data.json"], "outputs": {"data": "optimized results"}}
+        return {
+            "status": "success",
+            "results": ["/ipfs/mock_crispr_data.json"],
+            "outputs": {"data": "optimized results"},
+        }
+
 
 class OSKernel:
     def __init__(self):
@@ -23,24 +28,20 @@ class OSKernel:
         try:
             # LabOP integration stub
             from labop.core import Protocol  # assume pip install labop
+
             protocol = Protocol.from_string(protocol_str)
             compiler = protocol.compiler()
             job_spec = compiler.compile()
             return job_spec.as_dict()
         except ImportError:
             print("LabOP not available, mock compilation")
-            return {
-                "engine": "docker",
-                "spec": {
-                    "run": protocol_str,
-                    "inputs": {}
-                }
-            }
+            return {"engine": "docker", "spec": {"run": protocol_str, "inputs": {}}}
 
     def dispatch_bacalhau(self, job_spec: dict[str, Any]) -> dict[str, Any]:
         "Dispatch job to Bacalhau for distributed execution"
         try:
             from bacalhau.apiclient import api_client
+
             client = api_client.Client()
             with client.new_request_ctx():
                 job_request = client.submit(job_spec)

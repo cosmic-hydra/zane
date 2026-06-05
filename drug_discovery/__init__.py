@@ -6,6 +6,7 @@ __all__ = ["__version__"]
 # Core pipeline
 try:
     from drug_discovery.pipeline import DrugDiscoveryPipeline as DrugDiscoveryPipeline
+
     __all__.append("DrugDiscoveryPipeline")
 except Exception:
     pass
@@ -21,15 +22,17 @@ try:
     from drug_discovery.structure_analysis.cif_parser import parse_cif_to_mol
     from drug_discovery.structure_analysis.xrpd_analysis import analyze_xrpd
 
-    __all__.extend([
-        "ADMETScreen",
-        "TorchDrugGenerator",
-        "VinaDocker",
-        "analyze_xrpd",
-        "filter_admet",
-        "parse_cif_to_mol",
-        "run_diffdock",
-        "smiles_to_sdf"
-    ])
+    __all__.extend(
+        [
+            "ADMETScreen",
+            "TorchDrugGenerator",
+            "VinaDocker",
+            "analyze_xrpd",
+            "filter_admet",
+            "parse_cif_to_mol",
+            "run_diffdock",
+            "smiles_to_sdf",
+        ]
+    )
 except Exception:
     pass

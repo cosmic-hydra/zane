@@ -13,6 +13,7 @@ import pandas as pd
 
 try:
     from pymongo import MongoClient
+
     _PYMONGO = True
 except ImportError:
     _PYMONGO = False
@@ -26,7 +27,9 @@ T = TypeVar("T")
 class DataCollector:
     """Collect and merge records from multiple sources with safe fallbacks."""
 
-    def __init__(self, cache_dir: str = "./data/cache", api_keys: dict[str, str] | None = None, use_mongodb: bool = True):
+    def __init__(
+        self, cache_dir: str = "./data/cache", api_keys: dict[str, str] | None = None, use_mongodb: bool = True
+    ):
         self.cache_dir = cache_dir
         self.api_keys = api_keys or {}
         Path(cache_dir).mkdir(parents=True, exist_ok=True)
@@ -111,7 +114,7 @@ class DataCollector:
             self.collection.update_one(
                 {"source": source, "query": query},
                 {"$set": {"source": source, "query": query, "data": data, "timestamp": time.time()}},
-                upsert=True
+                upsert=True,
             )
         except Exception as e:
             logger.warning(f"Failed to write to MongoDB cache: {e}")
@@ -185,7 +188,9 @@ class DataCollector:
                         query = query.filter(target_chembl_id=target_results[0].get("target_chembl_id"))
                 if activity_type:
                     query = query.filter(standard_type=activity_type)
-                return query.only(["molecule_chembl_id", "canonical_smiles", "molecule_pref_name"])[: max(0, int(limit))]
+                return query.only(["molecule_chembl_id", "canonical_smiles", "molecule_pref_name"])[
+                    : max(0, int(limit))
+                ]
             return new_client.molecule.filter(molecule_structures__isnull=False).only(
                 ["molecule_chembl_id", "molecule_structures", "pref_name"]
             )[: max(0, int(limit))]
@@ -202,7 +207,12 @@ class DataCollector:
                     rows.append(
                         {
                             "smiles": str(smiles),
-                            "name": str(item.get("pref_name") or item.get("molecule_pref_name") or item.get("molecule_chembl_id") or ""),
+                            "name": str(
+                                item.get("pref_name")
+                                or item.get("molecule_pref_name")
+                                or item.get("molecule_chembl_id")
+                                or ""
+                            ),
                             "source": "chembl",
                         }
                     )
@@ -301,7 +311,9 @@ class DataCollector:
                 }
                 response = requests.post(search_url, json=payload, timeout=20)
                 response.raise_for_status()
-                ids = [item.get("identifier") for item in response.json().get("result_set", []) if item.get("identifier")]
+                ids = [
+                    item.get("identifier") for item in response.json().get("result_set", []) if item.get("identifier")
+                ]
             except Exception as exc:
                 logger.warning("PDB search failed: %s", exc)
                 return pd.DataFrame()

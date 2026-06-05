@@ -81,10 +81,7 @@ class ToxicityVerdict:
             "safety_score": self.safety_score,
             "drug_likeness": self.drug_likeness,
             "lipinski_violations": self.lipinski_violations,
-            "endpoints": [
-                {"name": e.name, "probability": e.probability, "passed": e.passed}
-                for e in self.endpoints
-            ],
+            "endpoints": [{"name": e.name, "probability": e.probability, "passed": e.passed} for e in self.endpoints],
             "rejection_reasons": self.rejection_reasons,
         }
 
@@ -176,7 +173,9 @@ class ToxicityGate:
         # Hepatotoxicity
         hepato_p = admet_scores.get("hepatotox", self._estimate_hepatotox(props))
         ep = EndpointScore(
-            "Hepatotoxicity", hepato_p, self.config.hepatotox_threshold,
+            "Hepatotoxicity",
+            hepato_p,
+            self.config.hepatotox_threshold,
             hepato_p <= self.config.hepatotox_threshold,
         )
         endpoints.append(ep)
@@ -186,7 +185,9 @@ class ToxicityGate:
         # Cytotoxicity
         cyto_p = admet_scores.get("cytotox", self._estimate_cytotox(props))
         ep = EndpointScore(
-            "Cytotoxicity", cyto_p, self.config.cytotox_threshold,
+            "Cytotoxicity",
+            cyto_p,
+            self.config.cytotox_threshold,
             cyto_p <= self.config.cytotox_threshold,
         )
         endpoints.append(ep)
@@ -221,7 +222,7 @@ class ToxicityGate:
             drug_likeness=drug_likeness,
             lipinski_violations=lipinski_violations,
             rejection_reasons=rejection_reasons,
-            metadata={"suggested_counters": suggested_counters}
+            metadata={"suggested_counters": suggested_counters},
         )
 
     def _suggest_counter_toxins(self, endpoints: list[EndpointScore]) -> list[str]:
@@ -370,7 +371,7 @@ class ToxicityGate:
 
         # Geometric mean
         product = d_mw * d_logp * d_hba * d_hbd * d_tox
-        return max(0.0, product ** 0.2)
+        return max(0.0, product**0.2)
 
 
 # ---------------------------------------------------------------------------

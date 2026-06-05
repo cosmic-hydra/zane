@@ -8,12 +8,14 @@ def test_rdkit_utils():
     mols = smiles_to_mols(smiles)
     assert len(mols) == 1
 
+
 def test_torchdrug_generate():
     gen = TorchDrugGenerator()
     smiles = gen.generate(10)
     assert len(smiles) == 10
 
+
 def test_admet_screen():
     screen = ADMETScreen()
     preds = screen.predict(["CCO"])
-    assert 'herg' in preds
+    assert "herg" in preds

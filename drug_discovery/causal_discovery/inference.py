@@ -1,4 +1,3 @@
-
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
@@ -32,4 +31,4 @@ class CausalInference:
         Predict what would happen if the treatment was set to a new value.
         """
         # Simplified implementation
-        return 0.0 # Placeholder
+        return 0.0  # Placeholder

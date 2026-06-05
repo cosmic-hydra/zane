@@ -13,6 +13,7 @@ class BaseEditResult:
     off_target_score: float = 0.0
     success: bool = False
 
+
 class CRISPRBaseEditor(CRISPRFoundry):
     """Casgevy-inspired base editor (2024 breakthrough).
 

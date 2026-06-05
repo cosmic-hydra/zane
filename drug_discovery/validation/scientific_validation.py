@@ -158,7 +158,10 @@ def scaffold_kfold(smiles_list, n_folds=5, seed=42):
         smallest = min(range(n_folds), key=lambda i: sizes[i])
         folds[smallest].extend(ss)
         sizes[smallest] += len(ss)
-    return [(functools.reduce(operator.iadd, [folds[j] for j in range(n_folds) if j != i], []), folds[i]) for i in range(n_folds)]
+    return [
+        (functools.reduce(operator.iadd, [folds[j] for j in range(n_folds) if j != i], []), folds[i])
+        for i in range(n_folds)
+    ]
 
 
 # --- Statistical tests ---

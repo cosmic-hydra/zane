@@ -204,14 +204,16 @@ def _execute_generation_task(task_id: str, request_data: dict[str, Any]) -> dict
         candidates = []
         for c in result.final_candidates:
             scores = c.get("scores", {})
-            candidates.append({
-                "smiles": c.get("smiles", ""),
-                "delta_g": scores.get("delta_g"),
-                "toxicity": scores.get("toxicity", 0.0),
-                "drug_likeness": scores.get("drug_likeness", 0.0),
-                "sa_score": scores.get("sa_score", 3.0),
-                "pareto_rank": c.get("pareto_rank", 0),
-            })
+            candidates.append(
+                {
+                    "smiles": c.get("smiles", ""),
+                    "delta_g": scores.get("delta_g"),
+                    "toxicity": scores.get("toxicity", 0.0),
+                    "drug_likeness": scores.get("drug_likeness", 0.0),
+                    "sa_score": scores.get("sa_score", 3.0),
+                    "pareto_rank": c.get("pareto_rank", 0),
+                }
+            )
 
         task_result = {
             "task_id": task_id,

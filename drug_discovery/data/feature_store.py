@@ -15,6 +15,7 @@ import numpy as np
 
 try:
     from pymongo import MongoClient
+
     _PYMONGO = True
 except ImportError:
     _PYMONGO = False
@@ -78,11 +79,7 @@ class FeatureStore:
 
         if self.use_mongodb:
             try:
-                self.collection.update_one(
-                    {"key": key, "feature_type": feature_type},
-                    {"$set": data},
-                    upsert=True
-                )
+                self.collection.update_one({"key": key, "feature_type": feature_type}, {"$set": data}, upsert=True)
             except Exception as e:
                 logger.error(f"Failed to store embedding in MongoDB for {key}: {e}")
         else:
@@ -166,6 +163,7 @@ class FeatureStore:
         if self.use_mongodb:
             operations = []
             from pymongo import UpdateOne
+
             for key, embedding, metadata in zip(keys, embeddings, metadata_list, strict=False):
                 data = {
                     "key": key,
@@ -173,11 +171,7 @@ class FeatureStore:
                     "embedding": embedding.tolist() if isinstance(embedding, np.ndarray) else embedding,
                     "metadata": metadata or {},
                 }
-                operations.append(UpdateOne(
-                    {"key": key, "feature_type": feature_type},
-                    {"$set": data},
-                    upsert=True
-                ))
+                operations.append(UpdateOne({"key": key, "feature_type": feature_type}, {"$set": data}, upsert=True))
             if operations:
                 try:
                     self.collection.bulk_write(operations)

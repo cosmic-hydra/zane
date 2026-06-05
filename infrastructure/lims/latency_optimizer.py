@@ -3,6 +3,7 @@
 Provides simple instrumentation, adaptive warmup, and lightweight caching
 to reduce perceived latency for remote LIMS calls.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -57,9 +58,11 @@ class LimsLatencyOptimizer:
 
     def pre_warm(self, fn: Callable[..., Any], *args, **kwargs) -> None:
         """Run a background pre-warm call (fire-and-forget)."""
+
         def runner():
             with contextlib.suppress(Exception):
                 fn(*args, **kwargs)
+
         t = threading.Thread(target=runner, daemon=True)
         t.start()
 
@@ -68,6 +71,7 @@ class LimsLatencyOptimizer:
 
         key_func: optional callable to produce cache key from args/kwargs
         """
+
         def decorator(fn: Callable[..., Any]):
             @functools.wraps(fn)
             def wrapper(*args, **kwargs):
@@ -93,12 +97,15 @@ class LimsLatencyOptimizer:
                     with contextlib.suppress(Exception):
                         self.cache_set(key, result)
                 return result
+
             return wrapper
+
         return decorator
 
 
 # convenience factory
 _default_optimizer: LimsLatencyOptimizer | None = None
+
 
 def get_default_optimizer() -> LimsLatencyOptimizer:
     global _default_optimizer

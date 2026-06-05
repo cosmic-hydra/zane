@@ -38,7 +38,7 @@ class PostMarketEdge:
         window_size = max(10, len(sensor_time_series) // 20)
 
         for i in range(0, len(sensor_time_series), max(1, window_size // 2)):
-            window = sensor_time_series[i:min(i + window_size, len(sensor_time_series))]
+            window = sensor_time_series[i : min(i + window_size, len(sensor_time_series))]
             if len(window) == 0:
                 states.append(1)  # Default to Active if window empty
                 continue
@@ -61,7 +61,7 @@ class PostMarketEdge:
                     states.append(state)
 
         # Pad or trim to match input length
-        states = states[:len(sensor_time_series)]
+        states = states[: len(sensor_time_series)]
         if len(states) < len(sensor_time_series):
             states.extend([1] * (len(sensor_time_series) - len(states)))
 

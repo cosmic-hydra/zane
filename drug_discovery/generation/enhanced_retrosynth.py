@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 # Insilico/Exscientia style forward synthesis + retrosynth
 
+
 @dataclass
 class SynthResult:
     target_smiles: str
@@ -11,6 +12,7 @@ class SynthResult:
     forward_synth_yields: list[float] = None
     accessibility_score: float = 0.0
     success: bool = False
+
 
 class EnhancedRetrosynth:
     """Enhanced retrosynthesis with forward synthesis planning (2024 generative breakthrough).

@@ -4,20 +4,22 @@ from rdkit import Chem
 
 logger = logging.getLogger(__name__)
 
+
 class DynamicDDINetwork:
     """
     Simulates competitive inhibition and metabolic pathway interference between
     AI-generated drugs and existing patient prescriptions.
     """
+
     def __init__(self):
         self.active_meds = []
         self.cyp_map = {
             "Warfarin": ["CYP2C9", "CYP1A2"],
             "Atorvastatin": ["CYP3A4"],
             "Clopidogrel": ["CYP2C19"],
-            "Metoprolol": ["CYP2D6"]
+            "Metoprolol": ["CYP2D6"],
         }
-        self.enzyme_kinetics = {} # Km, Vmax for different CYPs
+        self.enzyme_kinetics = {}  # Km, Vmax for different CYPs
 
     def load_active_prescriptions(self, ehr_medication_list: list[str]):
         """
@@ -32,22 +34,28 @@ class DynamicDDINetwork:
         buildup of current prescriptions.
         """
         mol = Chem.MolFromSmiles(generated_smiles)
-        if not mol: return False
+        if not mol:
+            return False
 
         # Mock prediction of generated drug's primary metabolic pathway
         # (In practice, this would use a deep learning CYP selectivity model)
-        predicted_pathway = "CYP3A4" # Most common
+        predicted_pathway = "CYP3A4"  # Most common
 
         for med in self.active_meds:
             med_pathways = self.cyp_map.get(med, [])
             if predicted_pathway in med_pathways:
                 # Fatal Interaction Potential Detected (e.g. inhibiting CYP2C9 while on Warfarin)
                 if predicted_pathway == "CYP2C9" and "Warfarin" in self.active_meds:
-                    logger.error(f"FATAL DDI: Generated drug inhibits {predicted_pathway} while patient is on Warfarin.")
+                    logger.error(
+                        f"FATAL DDI: Generated drug inhibits {predicted_pathway} while patient is on Warfarin."
+                    )
                     return True
 
                 # Check for CYP3A4 bottleneck
-                if predicted_pathway == "CYP3A4" and len([m for m in self.active_meds if "CYP3A4" in self.cyp_map.get(m, [])]) > 2:
+                if (
+                    predicted_pathway == "CYP3A4"
+                    and len([m for m in self.active_meds if "CYP3A4" in self.cyp_map.get(m, [])]) > 2
+                ):
                     logger.warning("Lethal Polypharmacy Risk: CYP3A4 metabolic bottleneck detected.")
                     return True
 
@@ -63,7 +71,7 @@ class DynamicDDINetwork:
         Km_ex, Vmax_ex = 1.5, 8.0
 
         # Competitive inhibition terms
-        dC_gen = drug_inflow - (Vmax_gen * C_gen) / (Km_gen * (1 + C_ex/Km_ex) + C_gen)
-        dC_ex = - (Vmax_ex * C_ex) / (Km_ex * (1 + C_gen/Km_gen) + C_ex)
+        dC_gen = drug_inflow - (Vmax_gen * C_gen) / (Km_gen * (1 + C_ex / Km_ex) + C_gen)
+        dC_ex = -(Vmax_ex * C_ex) / (Km_ex * (1 + C_gen / Km_gen) + C_ex)
 
         return [dC_gen, dC_ex]

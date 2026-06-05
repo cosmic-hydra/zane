@@ -393,11 +393,7 @@ class RobustnessTester:
                 {"ph": 7.4, "temp": 25.0, "desc": "Storage"},
             ]
 
-        results = {
-            "smiles": smiles,
-            "condition_results": [],
-            "overall_stability_index": 1.0
-        }
+        results = {"smiles": smiles, "condition_results": [], "overall_stability_index": 1.0}
 
         if Chem is None:
             return results
@@ -415,9 +411,9 @@ class RobustnessTester:
             # 1. pH sensitivity (hydrolysis risk)
             # Esters, Amides (some), Anhydrides are sensitive
             hydrolysis_risk = 0.0
-            if mol.HasSubstructMatch(Chem.MolFromSmarts("[C;$(C=O)][O;h0][C,H]")): # Ester
+            if mol.HasSubstructMatch(Chem.MolFromSmarts("[C;$(C=O)][O;h0][C,H]")):  # Ester
                 hydrolysis_risk += 0.3 if abs(ph - 7.0) > 2.0 else 0.1
-            if mol.HasSubstructMatch(Chem.MolFromSmarts("[C;$(C=O)][N;h0,h1][C,H]")): # Amide
+            if mol.HasSubstructMatch(Chem.MolFromSmarts("[C;$(C=O)][N;h0,h1][C,H]")):  # Amide
                 hydrolysis_risk += 0.1 if abs(ph - 7.0) > 4.0 else 0.05
 
             # 2. Temperature sensitivity (thermal degradation)
@@ -428,12 +424,9 @@ class RobustnessTester:
             stability = max(0.0, 1.0 - (hydrolysis_risk + thermal_risk))
             stability_scores.append(stability)
 
-            results["condition_results"].append({
-                "condition": cond["desc"],
-                "ph": ph,
-                "temp": temp,
-                "estimated_stability": stability
-            })
+            results["condition_results"].append(
+                {"condition": cond["desc"], "ph": ph, "temp": temp, "estimated_stability": stability}
+            )
 
         results["overall_stability_index"] = np.mean(stability_scores)
         return results

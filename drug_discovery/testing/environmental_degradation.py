@@ -20,12 +20,7 @@ class EnvironmentalStressSimulator:
         self.A = pre_exponential_factor
         self.R = const.R  # Ideal gas constant in J/(mol*K)
 
-    def calculate_arrhenius_decay(
-        self,
-        activation_energy_kj: float,
-        temp_celsius: float,
-        days: int
-    ) -> float:
+    def calculate_arrhenius_decay(self, activation_energy_kj: float, temp_celsius: float, days: int) -> float:
         """
         Calculates the percentage of API remaining using the Arrhenius equation.
 
@@ -63,7 +58,7 @@ class EnvironmentalStressSimulator:
             "nitro_aromatics": "c1ccccc1[N+](=O)[O-]",
             "phenothiazines": "c1ccc2c(c1)Sc3ccccc3N2",
             "quinolones": "c1ccc2c(c1)nc(cc2=O)C(=O)O",
-            "extended_aromatic_systems": "c1ccc2c(c1)ccc3ccccc32" # Pyrene-like
+            "extended_aromatic_systems": "c1ccc2c(c1)ccc3ccccc32",  # Pyrene-like
         }
 
         for _name, smarts in phototoxicity_alerts.items():
@@ -82,5 +77,5 @@ class EnvironmentalStressSimulator:
             "smiles": smiles,
             "api_remaining_percent": remaining,
             "photostability_risk": photo_risk,
-            "stable_under_conditions": remaining > 90.0 and not photo_risk
+            "stable_under_conditions": remaining > 90.0 and not photo_risk,
         }

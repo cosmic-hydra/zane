@@ -11,6 +11,7 @@ class BBBShuttleResult:
     tm_score: float = 0.0  # Transcytosis Model score
     success: bool = False
 
+
 class BBBShuttleDesigner:
     """Designs BBB-penetrating shuttles (2024 delivery breakthrough).
 

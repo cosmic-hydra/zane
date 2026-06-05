@@ -7,11 +7,13 @@ try:
     from fhir.resources.bundle import Bundle
     from fhir.resources.observation import Observation
     from fhir.resources.patient import Patient
+
     _FHIR_SUPPORT = True
 except ImportError:
     _FHIR_SUPPORT = False
 
 app = FastAPI(title="ZANE FHIR Interoperability Gateway")
+
 
 class FHIRIngestionAPI:
     """
@@ -54,10 +56,11 @@ class FHIRIngestionAPI:
 
                 elif isinstance(resource, Patient):
                     if resource.birthDate:
-                        age = (2024 - resource.birthDate.year) # Simplified age
+                        age = 2024 - resource.birthDate.year  # Simplified age
                         features[0] = float(age)
 
         return torch.tensor([features], dtype=torch.float32)
+
 
 @app.post("/api/v1/fhir/patient_bundle")
 async def ingest_patient_bundle(payload: dict[str, Any] = Body(...)):
@@ -78,10 +81,11 @@ async def ingest_patient_bundle(payload: dict[str, Any] = Body(...)):
             "status": "success",
             "message": "FHIR Bundle validated and tensorized",
             "tensor_shape": list(tensor.shape),
-            "data_preview": tensor.tolist()[0]
+            "data_preview": tensor.tolist()[0],
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid FHIR Bundle: {e!s}")
+
 
 # Placeholder for integration with trial_simulation_engine
 def get_fhir_gateway():

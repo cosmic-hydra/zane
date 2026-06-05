@@ -47,6 +47,7 @@ class TestRetrosynthesisBasics:
         """Test retrosynthesis module has expected attributes"""
         # Module should exist and be importable
         import drug_discovery.synthesis.retrosynthesis as ret_module
+
         assert ret_module is not None
 
 
@@ -60,6 +61,7 @@ class TestReactionPredictionBasics:
     def test_reaction_prediction_classes_exist(self):
         """Test reaction prediction has classes"""
         import drug_discovery.synthesis.reaction_prediction as rp_module
+
         # Module should be importable
         assert rp_module is not None
 
@@ -101,6 +103,7 @@ class TestSynthesisBackends:
     def test_backends_module_attributes(self):
         """Test backends module structure"""
         import drug_discovery.synthesis.backends as backends_module
+
         assert backends_module is not None
 
     @patch("drug_discovery.synthesis.backends.Backend")
@@ -113,6 +116,7 @@ class TestSynthesisBackends:
         """Test multiple synthesis backends are available"""
         # Should be able to import backends
         import drug_discovery.synthesis.backends as backends_module
+
         assert backends_module is not None
 
 
@@ -126,6 +130,7 @@ class TestPistachioDatasets:
     def test_pistachio_dataset_classes(self):
         """Test Pistachio dataset classes exist"""
         import drug_discovery.synthesis.pistachio_datasets as pd_module
+
         assert pd_module is not None
 
     @patch("drug_discovery.synthesis.pistachio_datasets.PistachioDataset")

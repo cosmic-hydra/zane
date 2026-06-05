@@ -182,8 +182,7 @@ class ParametrizedToxicityGate:
             if herg_prob > self.config.herg_threshold:
                 passed = False
                 reasons.append(
-                    f"hERG inhibition too high: {herg_prob:.3f} "
-                    f"(threshold: {self.config.herg_threshold})"
+                    f"hERG inhibition too high: {herg_prob:.3f} " f"(threshold: {self.config.herg_threshold})"
                 )
             elif herg_prob > self.config.herg_warning_threshold:
                 warnings.append(
@@ -194,54 +193,45 @@ class ParametrizedToxicityGate:
         # Check Ames
         if ames_prob is not None and ames_prob > self.config.ames_threshold:
             passed = False
-            reasons.append(
-                f"Ames mutagenicity too high: {ames_prob:.3f} "
-                f"(threshold: {self.config.ames_threshold})"
-            )
+            reasons.append(f"Ames mutagenicity too high: {ames_prob:.3f} " f"(threshold: {self.config.ames_threshold})")
 
         # Check hepatotoxicity
         if hepatotox_prob is not None and hepatotox_prob > self.config.hepatotox_threshold:
             passed = False
             reasons.append(
-                f"Hepatotoxicity too high: {hepatotox_prob:.3f} "
-                f"(threshold: {self.config.hepatotox_threshold})"
+                f"Hepatotoxicity too high: {hepatotox_prob:.3f} " f"(threshold: {self.config.hepatotox_threshold})"
             )
 
         # Check cytotoxicity
         if cytotox_prob is not None and cytotox_prob > self.config.cytotox_threshold:
             passed = False
             reasons.append(
-                f"Cytotoxicity too high: {cytotox_prob:.3f} "
-                f"(threshold: {self.config.cytotox_threshold})"
+                f"Cytotoxicity too high: {cytotox_prob:.3f} " f"(threshold: {self.config.cytotox_threshold})"
             )
 
         # Check physicochemical properties
         if logp is not None and not (self.config.logp_min <= logp <= self.config.logp_max):
             passed = False
             reasons.append(
-                f"LogP out of range: {logp:.2f} "
-                f"(allowed: [{self.config.logp_min}, {self.config.logp_max}])"
+                f"LogP out of range: {logp:.2f} " f"(allowed: [{self.config.logp_min}, {self.config.logp_max}])"
             )
 
         if tpsa is not None and not (self.config.tpsa_min <= tpsa <= self.config.tpsa_max):
             passed = False
             reasons.append(
-                f"TPSA out of range: {tpsa:.1f} "
-                f"(allowed: [{self.config.tpsa_min}, {self.config.tpsa_max}])"
+                f"TPSA out of range: {tpsa:.1f} " f"(allowed: [{self.config.tpsa_min}, {self.config.tpsa_max}])"
             )
 
         if mw is not None and not (self.config.mw_min <= mw <= self.config.mw_max):
             passed = False
             reasons.append(
-                f"Molecular weight out of range: {mw:.1f} "
-                f"(allowed: [{self.config.mw_min}, {self.config.mw_max}])"
+                f"Molecular weight out of range: {mw:.1f} " f"(allowed: [{self.config.mw_min}, {self.config.mw_max}])"
             )
 
         if rotatable_bonds is not None and rotatable_bonds > self.config.rotatable_bonds_max:
             passed = False
             reasons.append(
-                f"Too many rotatable bonds: {rotatable_bonds} "
-                f"(maximum: {self.config.rotatable_bonds_max})"
+                f"Too many rotatable bonds: {rotatable_bonds} " f"(maximum: {self.config.rotatable_bonds_max})"
             )
 
         return {

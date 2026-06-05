@@ -8,11 +8,13 @@ from langchain_community.vectorstores import FAISS
 
 logger = logging.getLogger(__name__)
 
+
 class DynamicTargetContext:
     """
     Dynamically retrieves literature and data to define the biological
     boundaries of a target protein from scratch.
     """
+
     def __init__(self):
         self.embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
         self.vector_db = None
@@ -31,7 +33,7 @@ class DynamicTargetContext:
             f"{target_name} is a kinase involved in cell signaling with a known allosteric pocket near the C-helix.",
             f"Mutations in the gatekeeper residue of {target_name} lead to clinical resistance against Type I inhibitors.",
             f"Effective ligands for {target_name} typically require a donor-acceptor pair for H-bonding with Met123.",
-            f"Over-expression of {target_name} is observed in aggressive metastatic breast cancer."
+            f"Over-expression of {target_name} is observed in aggressive metastatic breast cancer.",
         ]
 
         docs = [Document(page_content=text, metadata={"source": "mock_rag"}) for text in mock_literature]
@@ -59,7 +61,7 @@ class DynamicTargetContext:
             "logp_range": [1.0, 4.5],
             "required_hbd": 2,
             "target_allosteric": True,
-            "rule_of_five_compliant": True
+            "rule_of_five_compliant": True,
         }
 
         logger.info(f"Dynamic constraints extracted: {self.constraints}")

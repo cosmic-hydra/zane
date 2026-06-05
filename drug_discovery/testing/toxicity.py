@@ -366,26 +366,24 @@ class ToxicityPredictor:
             "cardiotoxicity": {
                 "name": "Dexrazoxane",
                 "mechanism": "Iron chelation / Topoisomerase II inhibition",
-                "reduction_factor": 0.8
+                "reduction_factor": 0.8,
             },
             "hepatotoxicity": {
                 "name": "N-acetylcysteine",
                 "mechanism": "Glutathione restoration",
-                "reduction_factor": 0.9
+                "reduction_factor": 0.9,
             },
             "mutagenicity": {
                 "name": "Antioxidant complex (Vitamin C/E/Alpha-lipoic acid)",
                 "mechanism": "ROS scavenging",
-                "reduction_factor": 0.6
+                "reduction_factor": 0.6,
             },
-            "cytotoxicity": {
-                "name": "L-Carnitine",
-                "mechanism": "Mitochondrial support",
-                "reduction_factor": 0.5
-            }
+            "cytotoxicity": {"name": "L-Carnitine", "mechanism": "Mitochondrial support", "reduction_factor": 0.5},
         }
 
-        balancer = balancers.get(worst_ep, {"name": "Generic Cytoprotectant", "mechanism": "Cellular stabilization", "reduction_factor": 0.4})
+        balancer = balancers.get(
+            worst_ep, {"name": "Generic Cytoprotectant", "mechanism": "Cellular stabilization", "reduction_factor": 0.4}
+        )
 
         return {
             "status": "Toxic",
@@ -393,7 +391,7 @@ class ToxicityPredictor:
             "toxicity_score": tox_score,
             "suggested_balancer": balancer["name"],
             "mechanism": balancer["mechanism"],
-            "estimated_balanced_toxicity": tox_score * (1.0 - balancer["reduction_factor"])
+            "estimated_balanced_toxicity": tox_score * (1.0 - balancer["reduction_factor"]),
         }
 
     def batch_predict(

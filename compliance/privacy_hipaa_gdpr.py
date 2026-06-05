@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 
@@ -10,6 +9,7 @@ except ImportError:
     # Fallback for environment without Presidio
     AnalyzerEngine = None
     AnonymizerEngine = None
+
 
 class PHISanitizer:
     """
@@ -36,7 +36,7 @@ class PHISanitizer:
 
         sanitized_df = df.copy()
         if columns_to_scan is None:
-            columns_to_scan = sanitized_df.select_dtypes(include=['object']).columns
+            columns_to_scan = sanitized_df.select_dtypes(include=["object"]).columns
 
         for col in columns_to_scan:
             sanitized_df[col] = sanitized_df[col].apply(lambda x: self._scrub_text(str(x)) if pd.notnull(x) else x)
@@ -45,7 +45,7 @@ class PHISanitizer:
 
     def _scrub_text(self, text: str) -> str:
         """Internal helper to analyze and anonymize a single string."""
-        results = self.analyzer.analyze(text=text, entities=[], language='en')
+        results = self.analyzer.analyze(text=text, entities=[], language="en")
         anonymized_result = self.anonymizer.anonymize(
             text=text,
             analyzer_results=results,
@@ -57,11 +57,13 @@ class PHISanitizer:
                 "EMAIL_ADDRESS": OperatorConfig("replace", {"new_value": "<REDACTED_EMAIL>"}),
                 "US_SSN": OperatorConfig("replace", {"new_value": "<REDACTED_SSN>"}),
                 "US_PASSPORT": OperatorConfig("replace", {"new_value": "<REDACTED_PASSPORT>"}),
-            }
+            },
         )
         return anonymized_result.text
 
-    def inject_differential_privacy(self, df: pd.DataFrame, epsilon: float = 0.1, columns: list[str] | None = None) -> pd.DataFrame:
+    def inject_differential_privacy(
+        self, df: pd.DataFrame, epsilon: float = 0.1, columns: list[str] | None = None
+    ) -> pd.DataFrame:
         """
         Applies epsilon-differential privacy by adding Laplacian noise to numerical columns.
         Compliance: GDPR Requirement for non-reversibility.
@@ -88,7 +90,9 @@ class PHISanitizer:
         df = self.anonymize_cohort_data(df)
 
         # 2. Inject DP noise into phenotypic metrics (Age, Weight, Lab Values)
-        numerical_phenotypes = [c for c in df.columns if any(p in c.lower() for p in ['age', 'weight', 'height', 'level', 'value'])]
+        numerical_phenotypes = [
+            c for c in df.columns if any(p in c.lower() for p in ["age", "weight", "height", "level", "value"])
+        ]
         df = self.inject_differential_privacy(df, columns=numerical_phenotypes)
 
         return df

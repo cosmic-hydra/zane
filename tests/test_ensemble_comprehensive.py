@@ -14,6 +14,7 @@ from drug_discovery.models.ensemble import EnsembleModel, HybridModel, MultiTask
 
 class MockModel(nn.Module):
     """Simple mock model for testing"""
+
     def __init__(self, output_dim=1):
         super().__init__()
         self.output_dim = output_dim
@@ -25,6 +26,7 @@ class MockModel(nn.Module):
 
 class MockGNNModel(nn.Module):
     """Mock GNN model"""
+
     def __init__(self):
         super().__init__()
         self.linear = nn.Linear(10, 32)
@@ -35,6 +37,7 @@ class MockGNNModel(nn.Module):
 
 class MockTransformerModel(nn.Module):
     """Mock Transformer model"""
+
     def __init__(self):
         super().__init__()
         self.linear = nn.Linear(10, 32)

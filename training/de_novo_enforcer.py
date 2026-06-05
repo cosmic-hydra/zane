@@ -6,10 +6,12 @@ from rdkit.Chem import AllChem
 
 logger = logging.getLogger(__name__)
 
+
 class DeNovoStrictEnforcer:
     """
     Ensures that generated molecules are novel and not regurgitations of known drugs.
     """
+
     def __init__(self, threshold: float = 0.45):
         self.threshold = threshold
         self.known_fingerprints = []
@@ -45,7 +47,7 @@ class DeNovoStrictEnforcer:
         """
         mol = Chem.MolFromSmiles(generated_smiles)
         if not mol:
-            return -10.0 # Invalid molecule penalty
+            return -10.0  # Invalid molecule penalty
 
         # Check for exact match first
         if generated_smiles in self.known_smiles:
@@ -63,8 +65,10 @@ class DeNovoStrictEnforcer:
 
         if max_sim > self.threshold:
             # Catastrophic negative reward for minor tweaks of existing drugs
-            penalty = -100.0 * (max_sim / self.threshold)**2
-            logger.info(f"Novelty Veto: Max similarity {max_sim:.4f} exceeds threshold {self.threshold}. Penalty: {penalty:.2f}")
+            penalty = -100.0 * (max_sim / self.threshold) ** 2
+            logger.info(
+                f"Novelty Veto: Max similarity {max_sim:.4f} exceeds threshold {self.threshold}. Penalty: {penalty:.2f}"
+            )
             return penalty
 
         return 0.0

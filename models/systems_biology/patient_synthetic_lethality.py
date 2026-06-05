@@ -5,11 +5,13 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+
 class SyntheticLethalityOptimizer:
     """
     Identifies multi-target (polypharmacology) vulnerabilities in the patient's
     specific dysregulated disease network to guarantee efficacy.
     """
+
     def __init__(self):
         self.patient_network = None
         self.expression_profile = None
@@ -22,7 +24,7 @@ class SyntheticLethalityOptimizer:
         try:
             # Load patient RNA-Seq (normalized vs healthy)
             df = pd.read_csv(patient_rnaseq_path)
-            self.expression_profile = df.set_index('gene_symbol')['fold_change'].to_dict()
+            self.expression_profile = df.set_index("gene_symbol")["fold_change"].to_dict()
 
             # Construct a graph where edges are known PPIs and nodes are weighted by patient expression
             # (In production, this would use BioGRID or STRING databases)
@@ -37,13 +39,13 @@ class SyntheticLethalityOptimizer:
         Returns targets the AI must hit to collapse the disease network.
         """
         if not self.expression_profile:
-            return [("EGFR", 0.9), ("MET", 0.85)] # Default targets
+            return [("EGFR", 0.9), ("MET", 0.85)]  # Default targets
 
         vulnerabilities = []
         # Logic: Find nodes where (high patient expression) AND (few backup pathways)
         # We simulate the network collapse score if node i and node j are inhibited
         for gene, expression in self.expression_profile.items():
-            if expression > 2.0: # Upregulated
+            if expression > 2.0:  # Upregulated
                 # Simplified synthetic lethality score
                 score = expression * np.random.uniform(0.5, 1.0)
                 vulnerabilities.append((gene, score))

@@ -191,14 +191,17 @@ class SafeGenerationPipeline:
 
         # Default: diverse drug-like seed pool
         pool = [
-            "CCO", "c1ccccc1", "CC(=O)O",
+            "CCO",
+            "c1ccccc1",
+            "CC(=O)O",
             "CC(=O)Oc1ccccc1C(=O)O",
             "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
             "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
             "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C",
             "OC(=O)c1ccccc1O",
             "CC(=O)NC1=CC=C(C=C1)O",
-            "C1CCCCC1", "c1ccncc1",
+            "C1CCCCC1",
+            "c1ccncc1",
             "C1=CC=C(C=C1)C(=O)O",
             "OC1=CC=CC=C1",
             "c1ccc(cc1)N",
@@ -230,10 +233,7 @@ class SafeGenerationPipeline:
     def _oracle_score(self, smiles_list: list[str]) -> list[dict[str, Any]]:
         if self._physics_oracle is not None:
             results = self._physics_oracle.score_batch_sync(smiles_list)
-            return [
-                {"smiles": r.smiles, "delta_g": r.delta_g or 0.0}
-                for r in results
-            ]
+            return [{"smiles": r.smiles, "delta_g": r.delta_g or 0.0} for r in results]
         # Mock scoring
         import hashlib
 
