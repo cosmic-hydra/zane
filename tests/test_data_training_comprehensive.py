@@ -107,7 +107,7 @@ class TestMolecularDataset:
 
         dataset = MolecularDataset(smiles_list, targets)
         count = 0
-        for item in dataset:
+        for _item in dataset:
             count += 1
         assert count == 3
 
@@ -377,10 +377,9 @@ class TestDataCaching:
 
     def test_cache_directory_creation(self):
         """Test cache directory is created"""
-        with patch.dict('os.environ', {'HOME': '/tmp'}):
-            with patch("os.makedirs"):
-                collector = DataCollector(cache_dir="/tmp/test_cache")
-                assert collector is not None
+        with patch.dict('os.environ', {'HOME': '/tmp'}), patch("os.makedirs"):
+            collector = DataCollector(cache_dir="/tmp/test_cache")
+            assert collector is not None
 
     def test_cache_file_handling(self):
         """Test cache file handling"""

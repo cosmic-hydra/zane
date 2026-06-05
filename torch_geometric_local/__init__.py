@@ -11,4 +11,4 @@ from .data import Data
 from .loader import DataLoader
 from .nn import GATConv, MessagePassing, global_max_pool, global_mean_pool
 
-__all__ = ["Data", "DataLoader", "GATConv", "MessagePassing", "global_mean_pool", "global_max_pool"]
+__all__ = ["Data", "DataLoader", "GATConv", "MessagePassing", "global_max_pool", "global_mean_pool"]

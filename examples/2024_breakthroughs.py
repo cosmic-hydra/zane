@@ -3,8 +3,10 @@ Examples for 2024 drug discovery breakthroughs integration.
 """
 
 import asyncio
+
 from drug_discovery.alphafold3.alphafold3_docking import AlphaFold3Docking
 from drug_discovery.rfdiffusion.protein_design import RFDiffusionDesigner
+
 # etc.
 
 async def main():

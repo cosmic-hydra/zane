@@ -11,6 +11,7 @@ References:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from dataclasses import dataclass, field
 from typing import Any
@@ -217,10 +218,7 @@ class SingleCellLoader:
             for i, cell_id in enumerate(obs_names):
                 # Gene expression
                 expr = adata.x_data[i] if hasattr(adata.x_data, "__getitem__") else adata.x_data[i, :]
-                if hasattr(expr, "toarray"):
-                    expr = expr.toarray().flatten()
-                else:
-                    expr = np.array(expr).flatten()
+                expr = expr.toarray().flatten() if hasattr(expr, "toarray") else np.array(expr).flatten()
 
                 # Cell type
                 cell_type = "unknown"
@@ -233,10 +231,8 @@ class SingleCellLoader:
                 metadata = {}
                 for col in adata.obs.columns:
                     if col not in ["cell_type", "celltype"]:
-                        try:
+                        with contextlib.suppress(Exception):
                             metadata[col] = adata.obs[col].iloc[i]
-                        except Exception:
-                            pass
 
                 cell = CellData(
                     cell_id=str(cell_id),
@@ -384,10 +380,7 @@ class SpatialTranscriptomicsLoader:
         spatial_key: str,
     ) -> np.ndarray:
         """Build simple k-nearest-neighbor graph."""
-        if spatial_key in adata.obsm:
-            coords = adata.obsm[spatial_key]
-        else:
-            coords = self._generate_spatial_coords(adata.n_obs)
+        coords = adata.obsm[spatial_key] if spatial_key in adata.obsm else self._generate_spatial_coords(adata.n_obs)
 
         n = coords.shape[0]
         distances = np.zeros((n, n))

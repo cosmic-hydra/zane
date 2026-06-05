@@ -30,7 +30,7 @@ def ingest_batch(batch_data: list[dict[str, any]], node_type: str):
 class KGIngestor:
     """Orchestrates large-scale ingestion of data into the knowledge graph."""
 
-    def __init__(self, batch_size: int = 1000, num_workers: int = None):
+    def __init__(self, batch_size: int = 1000, num_workers: int | None = None):
         self.batch_size = batch_size
         self.num_workers = num_workers or multiprocessing.cpu_count()
 

@@ -1,7 +1,9 @@
+from typing import Any
+
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import Descriptors, rdMolDescriptors
-from typing import Dict, Any
+
 
 class BioavailabilityScreener:
     """
@@ -26,7 +28,7 @@ class BioavailabilityScreener:
         mw = Descriptors.MolWt(mol)
         tpsa = rdMolDescriptors.CalcTPSA(mol)
         hbd = rdMolDescriptors.CalcNumHBD(mol)
-        
+
         # pKa estimation (very heuristic for this scaffolding)
         # Bases often have pKa ~9, Acids ~4.
         pka = 8.0 # Default fallback
@@ -38,7 +40,7 @@ class BioavailabilityScreener:
         # Desirability functions (normalized to [0, 1])
         def f_clogp(x): return 1.0 if x <= 3.0 else np.exp(-(x-3.0)**2 / 2.0)
         def f_mw(x): return 1.0 if x <= 360.0 else np.exp(-(x-360.0)**2 / 5000.0)
-        def f_tpsa(x): 
+        def f_tpsa(x):
             if 40 <= x <= 90: return 1.0
             elif x < 40: return x/40.0
             else: return np.exp(-(x-90.0)**2 / 1000.0)
@@ -51,7 +53,7 @@ class BioavailabilityScreener:
     def predict_p_glycoprotein_efflux(self, smiles: str) -> bool:
         """
         Predicts if the drug is a P-gp substrate (active efflux risk).
-        P-gp substrates are typically large (MW > 400), lipophilic, 
+        P-gp substrates are typically large (MW > 400), lipophilic,
         and have many H-bond acceptors.
         """
         mol = Chem.MolFromSmiles(smiles)
@@ -63,16 +65,13 @@ class BioavailabilityScreener:
         hba = Descriptors.NumHAcceptors(mol)
 
         # Heuristic Rule: P-gp Substrate if MW > 400 and (LogP > 3 or HBA > 8)
-        if mw > 400 and (logp > 3.0 or hba > 8):
-            return True
-            
-        return False
+        return bool(mw > 400 and (logp > 3.0 or hba > 8))
 
-    def get_cns_profile(self, smiles: str) -> Dict[str, Any]:
+    def get_cns_profile(self, smiles: str) -> dict[str, Any]:
         """Returns the CNS penetration and efflux profile."""
         mpo_score = self.calculate_cns_mpo(smiles)
         pgp_efflux = self.predict_p_glycoprotein_efflux(smiles)
-        
+
         return {
             "smiles": smiles,
             "cns_mpo_score": mpo_score,

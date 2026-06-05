@@ -34,15 +34,15 @@ from .vae_generator import DeliveryGenerator as DeliveryGenerator
 from .vae_generator import DeliveryVAE as DeliveryVAE
 
 __all__ = [
-    "CustomDrugmakingModule",
-    "CompoundTestResult",
+    "LNP",
     "CandidateResult",
-    "OptimizationConfig",
+    "CompoundTestResult",
     "CounterSubstanceFinder",
     "CounterSubstanceResult",
-    "LNP",
-    "PolymericSystem",
+    "CustomDrugmakingModule",
+    "DeliveryGenerator",
     "DeliverySystem",
     "DeliveryVAE",
-    "DeliveryGenerator",
+    "OptimizationConfig",
+    "PolymericSystem",
 ]

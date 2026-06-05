@@ -1,5 +1,7 @@
-import torch
 import logging
+
+import torch
+
 try:
     import torchdrug as td
     from torchdrug import data, models, tasks, utils
@@ -8,7 +10,7 @@ except ImportError:
     TORCHDRUG_AVAILABLE = False
     td = None
 
-from typing import List, Optional
+
 from ..data.rdkit_utils import smiles_to_sdf
 
 logger = logging.getLogger(__name__)
@@ -38,7 +40,7 @@ class TorchDrugGenerator:
         task = task.to(self.device)
         return task
 
-    def generate(self, num: int = 1000, scaffold: Optional[str] = None) -> List[str]:
+    def generate(self, num: int = 1000, scaffold: str | None = None) -> list[str]:
         if self._fallback_mode or self.task is None:
             logger.warning("TorchDrug unavailable; returning placeholder molecules in fallback mode.")
             if scaffold and scaffold.strip():
@@ -51,5 +53,5 @@ class TorchDrugGenerator:
         smiles_list = [mol.smiles() for mol in generated]
         return smiles_list
 
-    def save_to_sdf(self, smiles_list: List[str], path: str):
+    def save_to_sdf(self, smiles_list: list[str], path: str):
         smiles_to_sdf(smiles_list, path)

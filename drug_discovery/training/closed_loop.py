@@ -104,7 +104,7 @@ class SurrogateModel:
             self._best_y = delta_g
 
     def observe_batch(self, fingerprints: Sequence[np.ndarray], delta_gs: Sequence[float]) -> None:
-        for fp, dg in zip(fingerprints, delta_gs):
+        for fp, dg in zip(fingerprints, delta_gs, strict=False):
             self.observe(fp, dg)
 
     @property
@@ -244,7 +244,7 @@ class SurrogateModel:
         fps = np.array([smiles_to_fingerprint(s, nbits=self.fp_dim) for s in smiles_list])
         ei_values = self.expected_improvement(fps, xi=xi)
 
-        k = max(min_candidates, int(math.ceil(len(smiles_list) * top_fraction)))
+        k = max(min_candidates, math.ceil(len(smiles_list) * top_fraction))
         k = min(k, len(smiles_list))
         top_indices = np.argsort(ei_values)[-k:][::-1]
         return [smiles_list[i] for i in top_indices]

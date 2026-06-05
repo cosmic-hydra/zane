@@ -8,6 +8,7 @@ feasibility, and safety constraints.
 
 from __future__ import annotations
 
+import contextlib
 import math
 import random
 from collections.abc import Sequence
@@ -132,10 +133,8 @@ class PhysicsAwareGenerator:
             mol = Chem.MolFromSmiles(smi)
             if mol is None:
                 continue
-            try:
+            with contextlib.suppress(Exception):
                 fragments.update(BRICS.BRICSDecompose(mol, silent=True))
-            except Exception:
-                pass
             try:
                 recap = rdMolDescriptors.RecapDecompose(mol)
                 if recap:
@@ -236,7 +235,7 @@ class PhysicsAwareGenerator:
         t = 300.0
         weights = [math.exp(-(e - min_e) / (k_b * t)) for e in energies]
         weight_sum = sum(weights) or 1.0
-        boltz_avg = sum(e * w for e, w in zip(energies, weights)) / weight_sum
+        boltz_avg = sum(e * w for e, w in zip(energies, weights, strict=False)) / weight_sum
         ref_conf = int(energies.index(min_e))
         ref_coords = mol.GetConformer(ref_conf).GetPositions()
         for idx, energy in enumerate(energies):

@@ -1,20 +1,19 @@
-import torch
 import logging
-import asyncio
-from typing import Dict, Any, Optional
+from typing import Any
+
+from clinical.digital_twin.epigenetic_profiler import EpigeneticAgeCalculator
+from clinical.digital_twin.microbiome_metabolomics import MicrobiomeToxicityVeto, PharmacobiomiomicEngine
+from models.structural.ph_dependent_protonation import MicroenvironmentIonizationEngine
+from training.de_novo_enforcer import DeNovoStrictEnforcer
 
 # Import previously built modules
 from training.n1_health_condition_optimizer import ConditionAdaptiveRewardFunction
-from training.de_novo_enforcer import DeNovoStrictEnforcer
-from models.structural.ph_dependent_protonation import MicroenvironmentIonizationEngine
-from clinical.digital_twin.microbiome_metabolomics import PharmacobiomiomicEngine, MicrobiomeToxicityVeto
-from clinical.digital_twin.epigenetic_profiler import EpigeneticAgeCalculator
 
 logger = logging.getLogger(__name__)
 
 class PanArchitectureReward:
     """
-    The master orchestrator that integrates every ZANE subsystem into a 
+    The master orchestrator that integrates every ZANE subsystem into a
     single unified reward signal for the Reinforcement Learning agent.
     """
     def __init__(self, patient_state: Any):
@@ -24,7 +23,7 @@ class PanArchitectureReward:
         self.ph_engine = MicroenvironmentIonizationEngine()
         self.microbiome_engine = PharmacobiomiomicEngine()
         self.age_calculator = EpigeneticAgeCalculator()
-        
+
         # Weights for the master equation
         self.weights = {
             "docking_score": 0.30,
@@ -35,7 +34,7 @@ class PanArchitectureReward:
             "solubility": 0.10
         }
 
-    async def calculate_total_reward(self, smiles: str, predicted_properties: Dict[str, float]) -> float:
+    async def calculate_total_reward(self, smiles: str, predicted_properties: dict[str, float]) -> float:
         """
         Executes asynchronous calls to all subsystems to calculate the unified reward.
         R_total = sum(w_i * r_i)
@@ -48,8 +47,8 @@ class PanArchitectureReward:
 
             # 2. Patient-Specific Metabolic Fit (eGFR/AST/ALT)
             n1_reward = self.n1_optimizer.compute_n1_optimized_reward(
-                base_reward=0, 
-                patient_state=self.patient_state, 
+                base_reward=0,
+                patient_state=self.patient_state,
                 predicted_properties=predicted_properties
             )
 
@@ -60,7 +59,7 @@ class PanArchitectureReward:
                 self.microbiome_engine.predict_microbial_cleavage(smiles, microbiome_profile)
                 microbiome_reward = 1.0
             except MicrobiomeToxicityVeto as e:
-                logger.warning(f"Microbiome Veto for {smiles}: {str(e)}")
+                logger.warning(f"Microbiome Veto for {smiles}: {e!s}")
                 microbiome_reward = -100.0
 
             # 4. pH-Dependent Solubility (Localized microenvironment)
@@ -86,5 +85,5 @@ class PanArchitectureReward:
             return float(total_reward)
 
         except Exception as e:
-            logger.error(f"Error in reward orchestration: {str(e)}")
+            logger.error(f"Error in reward orchestration: {e!s}")
             return -10.0

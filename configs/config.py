@@ -1,7 +1,6 @@
 """
 Configuration for Drug Discovery Pipeline
 """
-import sys
 
 # Model Configurations
 MODEL_CONFIGS = {

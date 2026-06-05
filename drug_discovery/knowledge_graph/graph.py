@@ -79,14 +79,14 @@ class DrugKnowledgeGraph:
         if direction in ["outgoing", "both"]:
             for target in self.graph.successors(entity_id):
                 edges = self.graph[entity_id][target]
-                for key, data in edges.items():
+                for _key, data in edges.items():
                     if relation_type is None or data.get("relation") == relation_type:
                         results.append((entity_id, target, data))
 
         if direction in ["incoming", "both"]:
             for source in self.graph.predecessors(entity_id):
                 edges = self.graph[source][entity_id]
-                for key, data in edges.items():
+                for _key, data in edges.items():
                     if relation_type is None or data.get("relation") == relation_type:
                         results.append((source, entity_id, data))
 

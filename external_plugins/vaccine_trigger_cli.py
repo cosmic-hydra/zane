@@ -1,9 +1,8 @@
 import argparse
-import importlib
 import json
 import logging
-import sys
 import os
+import sys
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
@@ -15,14 +14,14 @@ def run_generate_mrna(args):
     Loads heavy modules only when needed.
     """
     logger.info(f"Triggering mRNA generation for {args.viral_fasta}...")
-    
+
     # Dynamic imports to save memory/VRAM
     try:
         from external_plugins.vaccinology.mhc_epitope_mapper import PatientEpitopeMapper
         from external_plugins.vaccinology.mrna_compiler import ThermodynamicmRNACompiler
         from external_plugins.vaccinology.prefusion_stabilizer import PrefusionLockEngine
     except ImportError as e:
-        logger.error(f"Failed to load heavy vaccinology modules: {str(e)}")
+        logger.error(f"Failed to load heavy vaccinology modules: {e!s}")
         sys.exit(1)
 
     # 1. Epitope Mapping
@@ -30,15 +29,15 @@ def run_generate_mrna(args):
     # Mock HLA alleles if not provided
     hla_alleles = ["HLA-A*02:01"]
     if args.patient_hla and os.path.exists(args.patient_hla):
-        with open(args.patient_hla, 'r') as f:
+        with open(args.patient_hla) as f:
             hla_alleles = json.load(f).get("alleles", hla_alleles)
-            
+
     antigen_seq = mapper.select_optimal_antigen_payload(args.viral_fasta, hla_alleles)
-    
+
     # 2. mRNA Compilation
     compiler = ThermodynamicmRNACompiler()
     payload = compiler.compile_full_payload(antigen_seq)
-    
+
     # 3. Structural Stabilization (if PDB is provided)
     stability_report = {}
     if args.viral_pdb:
@@ -59,11 +58,11 @@ def run_generate_mrna(args):
         "structural_validation": stability_report,
         "patient_context": {"hla_alleles": hla_alleles}
     }
-    
+
     output_file = args.output or "vaccine_blueprint.json"
     with open(output_file, 'w') as f:
         json.dump(blueprint, f, indent=4)
-        
+
     logger.info(f"Vaccine design complete. Blueprint saved to {output_file}")
 
 def main():

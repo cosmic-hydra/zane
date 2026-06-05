@@ -6,4 +6,4 @@ from .self_improvement import (
     SelfImprovementOrchestrator,
 )
 
-__all__ = ["HypothesisGenerator", "CodeMutator", "SelfImprovementOrchestrator"]
+__all__ = ["CodeMutator", "HypothesisGenerator", "SelfImprovementOrchestrator"]

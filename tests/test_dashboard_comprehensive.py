@@ -126,7 +126,7 @@ class TestDashboardTheme:
     def test_theme_colors_defined(self):
         """Test each theme has required colors"""
         required_colors = ["primary", "secondary", "accent", "caution", "ok"]
-        for theme_name, theme in _DASHBOARD_THEMES.items():
+        for _theme_name, theme in _DASHBOARD_THEMES.items():
             for color_attr in required_colors:
                 assert hasattr(theme, color_attr)
                 assert isinstance(getattr(theme, color_attr), str)

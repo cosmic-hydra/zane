@@ -19,11 +19,9 @@ is running.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import time
 import uuid
-from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
@@ -54,7 +52,7 @@ except ImportError:
 
 
 try:
-    from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
+    from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 
     _FASTAPI = True
 except ImportError:
@@ -191,7 +189,7 @@ def _execute_generation_task(task_id: str, request_data: dict[str, Any]) -> dict
     t0 = time.monotonic()
 
     try:
-        from drug_discovery.safety.end_to_end_pipeline import SafeGenerationPipeline, PipelineConfig
+        from drug_discovery.safety.end_to_end_pipeline import PipelineConfig, SafeGenerationPipeline
 
         cfg = PipelineConfig(
             num_candidates=request_data.get("num_candidates", 100),

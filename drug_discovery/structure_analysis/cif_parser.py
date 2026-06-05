@@ -6,6 +6,7 @@ except ImportError:
 
 from rdkit import Chem
 
+
 def parse_cif_to_mol(cif_path: str) -> Chem.Mol:
     if not GEMMI_AVAILABLE:
         raise ImportError("gemmi required for CIF parsing")

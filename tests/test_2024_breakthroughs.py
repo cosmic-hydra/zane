@@ -1,10 +1,14 @@
+import asyncio
+
 import pytest
-from drug_discovery.alphafold3.alphafold3_docking import AlphaFold3Docking, AF3Result
-from drug_discovery.rfdiffusion.protein_design import RFDiffusionDesigner
-from models.biologics.crispr_base_editor import CRISPRBaseEditor, BaseEditResult
-from models.nextgen_adcs.adc_optimizer import ADCOptimizer
-from models.delivery.bbb_shuttles import BBBShuttleDesigner
+
+from drug_discovery.alphafold3.alphafold3_docking import AlphaFold3Docking
 from drug_discovery.generation.enhanced_retrosynth import EnhancedRetrosynth
+from drug_discovery.rfdiffusion.protein_design import RFDiffusionDesigner
+from models.biologics.crispr_base_editor import CRISPRBaseEditor
+from models.delivery.bbb_shuttles import BBBShuttleDesigner
+from models.nextgen_adcs.adc_optimizer import ADCOptimizer
+
 
 def test_af3_docking():
     docker = AlphaFold3Docking("MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVAT")

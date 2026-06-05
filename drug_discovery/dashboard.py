@@ -882,7 +882,7 @@ def _compute_combo_rankings(
 def _metric_bar(value: float, min_value: float, max_value: float, width: int = 20) -> str:
     span = max(max_value - min_value, 1e-9)
     ratio = max(0.0, min(1.0, (value - min_value) / span))
-    filled = int(round(ratio * width))
+    filled = round(ratio * width)
     return "[" + ("#" * filled) + ("-" * (width - filled)) + "]"
 
 

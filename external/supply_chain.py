@@ -17,9 +17,9 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -258,7 +258,7 @@ def _brics_decompose(smiles: str) -> list[str]:
         clean = Chem.MolFromSmiles(frag)
         if clean is not None:
             # Replace dummy atoms with H
-            from rdkit.Chem import AllChem, RWMol
+            from rdkit.Chem import RWMol
 
             rw = RWMol(clean)
             atoms_to_remove = []
@@ -381,13 +381,11 @@ class SupplyChainAnalyzer:
                     if result.get("catalog_id"):
                         synthon.catalog_ids[vendor.name] = result["catalog_id"]
                     price = result.get("price_usd")
-                    if price is not None:
-                        if best_price is None or price < best_price:
-                            best_price = price
+                    if price is not None and (best_price is None or price < best_price):
+                        best_price = price
                     lead = result.get("lead_time_days")
-                    if lead is not None:
-                        if best_lead is None or lead < best_lead:
-                            best_lead = lead
+                    if lead is not None and (best_lead is None or lead < best_lead):
+                        best_lead = lead
             except Exception as exc:
                 logger.warning("Vendor %s query failed for %s: %s", vendor.name, fragment_smiles, exc)
 

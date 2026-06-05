@@ -17,7 +17,7 @@ try:
         compliance_log as compliance_log,
     )
 
-    __all__.extend(["AuditLedger", "AuditEntry", "compliance_log"])
+    __all__.extend(["AuditEntry", "AuditLedger", "compliance_log"])
 except ImportError:
     pass
 
@@ -41,6 +41,6 @@ try:
         require_signature as require_signature,
     )
 
-    __all__.extend(["RBACManager", "User", "Role", "Permission", "require_permission", "require_signature"])
+    __all__.extend(["Permission", "RBACManager", "Role", "User", "require_permission", "require_signature"])
 except ImportError:
     pass

@@ -28,13 +28,13 @@ from drug_discovery.intelligence.biomedical_intelligence import (
 from .rag_engine import RAGEngine as RAGEngine
 
 __all__ = [
+    "ArXivIngester",
     "BiomedicalIntelligence",
     "BiomedicalNER",
-    "RelationshipExtractor",
-    "PubMedIngester",
-    "ArXivIngester",
-    "LiteratureDocument",
     "ExtractedEntity",
     "ExtractedRelationship",
+    "LiteratureDocument",
+    "PubMedIngester",
     "RAGEngine",
+    "RelationshipExtractor",
 ]

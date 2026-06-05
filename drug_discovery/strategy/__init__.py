@@ -6,9 +6,9 @@ from .tpp import CandidateProfile, TargetProductProfile, TPPScorer
 
 __all__ = [
     "CandidateProfile",
-    "TargetProductProfile",
-    "TPPScorer",
     "ManufacturingPlan",
     "ManufacturingStrategyPlanner",
     "ProgramStrategyEngine",
+    "TPPScorer",
+    "TargetProductProfile",
 ]

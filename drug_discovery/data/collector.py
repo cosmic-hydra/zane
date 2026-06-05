@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import logging
-import time
 import os
+import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import pandas as pd
+
 try:
     from pymongo import MongoClient
     _PYMONGO = True
@@ -28,7 +30,7 @@ class DataCollector:
         self.cache_dir = cache_dir
         self.api_keys = api_keys or {}
         Path(cache_dir).mkdir(parents=True, exist_ok=True)
-        
+
         self.use_mongodb = use_mongodb and _PYMONGO
         if self.use_mongodb and MongoClient:
             mongodb_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
@@ -151,7 +153,7 @@ class DataCollector:
             return out
         mask = out["smiles"].map(self._is_valid_smiles).astype(bool)
         filtered = cast(pd.DataFrame, out.loc[mask].copy().reset_index(drop=True))
-        
+
         self._set_cache("pubchem", f"{query}_{namespace}_{limit}", filtered)
         return filtered
 
@@ -213,7 +215,7 @@ class DataCollector:
             return out
         mask = out["smiles"].map(self._is_valid_smiles).astype(bool)
         filtered = cast(pd.DataFrame, out.loc[mask].copy().reset_index(drop=True))
-        
+
         self._set_cache("chembl", query_key, filtered)
         return filtered
 

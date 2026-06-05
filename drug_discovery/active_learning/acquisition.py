@@ -137,20 +137,14 @@ class ExpectedImprovement(AcquisitionFunction):
             # Use best observed
             if hasattr(self.surrogate, "y_buffer") and self.surrogate.y_buffer:
                 y_obs = np.concatenate(self.surrogate.y_buffer)
-                if self.minimize:
-                    target = y_obs.min()
-                else:
-                    target = y_obs.max()
+                target = y_obs.min() if self.minimize else y_obs.max()
             else:
                 target = means.mean()
         else:
             target = self.target_value
 
         # EI computation
-        if self.minimize:
-            diff = target - means
-        else:
-            diff = means - target
+        diff = target - means if self.minimize else means - target
 
         # Standard normal PDF and CDF
         z = diff / (stds + 1e-10)
@@ -443,7 +437,7 @@ class KnowledgeGradient(AcquisitionFunction):
         # Compute expected improvement over discretized outcomes
         kg = np.zeros(len(X))
 
-        for i, (mu, sigma) in enumerate(zip(means, stds)):
+        for i, (mu, sigma) in enumerate(zip(means, stds, strict=False)):
             if sigma < 1e-10:
                 continue
 
@@ -452,10 +446,7 @@ class KnowledgeGradient(AcquisitionFunction):
             probs = probs / (probs.sum() + 1e-10)
 
             # Best achievable with this sample
-            if self.minimize:
-                best_future = np.minimum(y_grid, mu)
-            else:
-                best_future = np.maximum(y_grid, mu)
+            best_future = np.minimum(y_grid, mu) if self.minimize else np.maximum(y_grid, mu)
 
             # Expected value
             expected_best = np.dot(probs, best_future)

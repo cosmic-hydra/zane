@@ -1,9 +1,8 @@
-from rdkit import Chem
-from rdkit import DataStructs
-from rdkit.Chem import AllChem
-import numpy as np
 import logging
 import os
+
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ class DeNovoStrictEnforcer:
 
         logger.info(f"Loading public drug archives from {chembl_db_path}...")
         try:
-            with open(chembl_db_path, 'r') as f:
+            with open(chembl_db_path) as f:
                 for line in f:
                     smiles = line.strip().split()[0]
                     mol = Chem.MolFromSmiles(smiles)
@@ -37,7 +36,7 @@ class DeNovoStrictEnforcer:
                         self.known_smiles.add(smiles)
             logger.info(f"Loaded {len(self.known_fingerprints)} molecules into novelty enforcer.")
         except Exception as e:
-            logger.error(f"Failed to load archives: {str(e)}")
+            logger.error(f"Failed to load archives: {e!s}")
 
     def calculate_novelty_penalty(self, generated_smiles: str) -> float:
         """
@@ -54,7 +53,7 @@ class DeNovoStrictEnforcer:
             return -1000.0
 
         fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048)
-        
+
         if not self.known_fingerprints:
             return 0.0
 

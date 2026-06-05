@@ -144,7 +144,7 @@ class SE3EquivariantBlock(nn.Module if TORCH_AVAILABLE else object):
         if not E3NN_AVAILABLE:
             return x
 
-        src, dst = edge_index
+        src, _dst = edge_index
 
         # Message: tensor product of input features with spherical harmonics
         messages = self.tp(x[src], edge_sh)
@@ -309,7 +309,7 @@ class SE3Transformer(nn.Module if TORCH_AVAILABLE else object):
 
         # SE(3)-Equivariant layers
         self.layers = nn.ModuleList()
-        for i in range(self.config.num_layers):
+        for _i in range(self.config.num_layers):
             self.layers.append(
                 SE3EquivariantBlock(
                     irreps_in=f"{hidden_dim}x0e",

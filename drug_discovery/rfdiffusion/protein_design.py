@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Sequence
+
 
 @dataclass
 class RFDesignResult:
@@ -15,7 +16,7 @@ class RFDesignResult:
 
 class RFDiffusionDesigner:
     """Proxy for RFdiffusion protein design using diffusion models.
-    
+
     Falls back to simple helix insertion if deps unavailable.
     Supports Ray batch design.
     """

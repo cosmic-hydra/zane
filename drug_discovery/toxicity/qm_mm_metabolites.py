@@ -20,6 +20,7 @@ conformer embedding fails (e.g., strained macro-cycles).
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import math
 
@@ -81,10 +82,8 @@ def _embed_3d(mol):  # type: ignore[return]
         result = AllChem.EmbedMolecule(mol_h, AllChem.ETKDG())
     if result == -1:
         return None
-    try:
+    with contextlib.suppress(Exception):
         AllChem.MMFFOptimizeMolecule(mol_h, maxIters=200)
-    except Exception:
-        pass
     return mol_h
 
 
@@ -118,7 +117,7 @@ def _heuristic_gap_ev(smiles: str) -> float:
     aromatic_rings = int(rdMolDescriptors.CalcNumAromaticRings(mol))
     ring_count = int(rdMolDescriptors.CalcNumRings(mol))
     tpsa = float(rdMolDescriptors.CalcTPSA(mol))
-    logp = float(Crippen.MolLogP(mol))
+    float(Crippen.MolLogP(mol))
     heavy = int(mol.GetNumHeavyAtoms())
     dbl_bonds = sum(1 for b in mol.GetBonds() if str(b.GetBondTypeAsDouble()) == "2.0")
 

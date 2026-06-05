@@ -55,7 +55,7 @@ class TestDataNormalizer:
     def test_normalize_dataframe(self):
         """Test DataFrame normalization."""
         df = pd.DataFrame({
-            "smiles": self.test_smiles + ["CCO"],  # Include duplicate
+            "smiles": [*self.test_smiles, "CCO"],  # Include duplicate
             "activity": [1.0, 2.0, 3.0, 1.5],
         })
 
@@ -227,7 +227,7 @@ class TestMolecularDataset:
         )
 
         assert len(dataset) > 0
-        feature, target = dataset[0]
+        feature, _target = dataset[0]
         assert feature.shape[0] > 0
 
     def test_descriptor_featurization(self):
@@ -240,7 +240,7 @@ class TestMolecularDataset:
         )
 
         assert len(dataset) > 0
-        feature, target = dataset[0]
+        feature, _target = dataset[0]
         assert feature.shape[0] > 0
 
     def test_graph_featurization(self):
@@ -253,7 +253,7 @@ class TestMolecularDataset:
         )
 
         assert len(dataset) > 0
-        feature, target = dataset[0]
+        feature, _target = dataset[0]
         assert isinstance(feature, dict)
         assert "atom_features" in feature
         assert "adjacency" in feature

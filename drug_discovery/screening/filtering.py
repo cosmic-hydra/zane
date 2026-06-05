@@ -1,4 +1,4 @@
-def filter_admet(predictions: dict, thresholds: dict = None) -> list:
+def filter_admet(predictions: dict, thresholds: dict | None = None) -> list:
     if thresholds is None:
         thresholds = {'herg': 0.3, 'hepatotox': 0.1, 'qed': 0.5}  # Strict hERG CiPA (p<0.3 low risk)
     filtered_indices = []

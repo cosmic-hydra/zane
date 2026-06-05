@@ -255,7 +255,7 @@ class CandidateResult:
 
         # Weighted effectiveness
         effectiveness = 0.0
-        for i, name in enumerate(config.objective_names):
+        for _i, name in enumerate(config.objective_names):
             if name in ["potency", "selectivity", "solubility"]:
                 val = self.objectives.get(name, 0.5)
                 effectiveness += val * config.effectiveness_weight

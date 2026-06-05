@@ -22,10 +22,10 @@ from drug_discovery.diffusion.pocket_generator import (
 )
 
 __all__ = [
-    "EquivariantDiffusionModel",
     "DiffusionConfig",
     "DiffusionResult",
+    "EquivariantDiffusionModel",
+    "GeneratedMolecule",
     "PocketAwareGenerator",
     "PocketContext",
-    "GeneratedMolecule",
 ]

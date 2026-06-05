@@ -5,12 +5,13 @@ Provides version control for datasets to ensure reproducibility and
 track data evolution over time.
 """
 
-import logging
-import json
 import hashlib
-from pathlib import Path
-from typing import Dict, List, Optional, Any
+import json
+import logging
 from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ class DatasetVersioning:
     def _load_manifest(self) -> None:
         """Load the version manifest."""
         if self.manifest_path.exists():
-            with open(self.manifest_path, "r") as f:
+            with open(self.manifest_path) as f:
                 self.manifest = json.load(f)
         else:
             self.manifest = {"versions": []}
@@ -55,8 +56,8 @@ class DatasetVersioning:
         self,
         dataset: pd.DataFrame,
         version_name: str,
-        description: Optional[str] = None,
-        metadata: Optional[Dict] = None,
+        description: str | None = None,
+        metadata: dict | None = None,
     ) -> str:
         """
         Create a new dataset version.
@@ -98,7 +99,7 @@ class DatasetVersioning:
         logger.info(f"Created dataset version: {version_id} ({version_name})")
         return version_id
 
-    def load_version(self, version_id: str) -> Optional[pd.DataFrame]:
+    def load_version(self, version_id: str) -> pd.DataFrame | None:
         """
         Load a specific dataset version.
 
@@ -129,7 +130,7 @@ class DatasetVersioning:
         logger.info(f"Loaded dataset version: {version_id}")
         return dataset
 
-    def list_versions(self) -> List[Dict[str, Any]]:
+    def list_versions(self) -> list[dict[str, Any]]:
         """
         List all available versions.
 
@@ -138,7 +139,7 @@ class DatasetVersioning:
         """
         return self.manifest["versions"]
 
-    def get_latest_version(self) -> Optional[str]:
+    def get_latest_version(self) -> str | None:
         """
         Get the ID of the most recent version.
 
@@ -153,7 +154,7 @@ class DatasetVersioning:
         self,
         version_id_1: str,
         version_id_2: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compare two dataset versions.
 
@@ -215,7 +216,7 @@ class DatasetVersioning:
         logger.error(f"Version not found: {version_id}")
         return False
 
-    def get_versions_by_tag(self, tag: str) -> List[str]:
+    def get_versions_by_tag(self, tag: str) -> list[str]:
         """
         Get all version IDs with a specific tag.
 

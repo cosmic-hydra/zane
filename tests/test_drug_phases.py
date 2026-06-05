@@ -1,7 +1,7 @@
-import pytest
 from drug_discovery.data.rdkit_utils import smiles_to_mols
 from drug_discovery.generation.torchdrug_generator import TorchDrugGenerator
 from drug_discovery.screening.admet_models import ADMETScreen
+
 
 def test_rdkit_utils():
     smiles = ["CCO"]

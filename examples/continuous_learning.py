@@ -2,9 +2,11 @@
 Example: Advanced Usage - Continuous Learning
 """
 
+import time
+
 from drug_discovery import DrugDiscoveryPipeline
 from drug_discovery.training import ContinuousLearner
-import time
+
 
 def main():
     # Initialize pipeline
@@ -54,7 +56,7 @@ def main():
         if not new_data.empty and 'smiles' in new_data.columns:
             sample_smiles = new_data['smiles'].iloc[0]
             properties = pipeline.predict_properties(sample_smiles)
-            print(f"\nPredictions for new molecule:")
+            print("\nPredictions for new molecule:")
             print(f"  SMILES: {sample_smiles}")
             print(f"  QED: {properties.get('qed_score', 'N/A')}")
 

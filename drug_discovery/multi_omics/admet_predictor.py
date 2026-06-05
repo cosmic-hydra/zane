@@ -22,7 +22,6 @@ try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-
     from torch_geometric.data import Data
     from torch_geometric.nn import MessagePassing, global_max_pool, global_mean_pool
 
@@ -282,7 +281,7 @@ class ADMETPredictor(nn.Module if TORCH_AVAILABLE else object):
 
         except Exception as e:
             logger.error(f"ADMET prediction failed: {e}")
-            return ADMETProfile(clinical_risk_flags=[f"Prediction error: {str(e)}"])
+            return ADMETProfile(clinical_risk_flags=[f"Prediction error: {e!s}"])
 
     def _smiles_to_graph(self, mol) -> Data:
         """Convert RDKit molecule to PyTorch Geometric Data."""

@@ -12,10 +12,10 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class AuditEventType(Enum):
 @dataclass
 class ComplianceAuditEntry:
     """Single audit trail entry (immutable).
-    
+
     Follows FDA Part 11 ALCOA+ principles:
     - Attributable: Who performed the action
     - Legible: Readable text
@@ -50,25 +50,25 @@ class ComplianceAuditEntry:
     event_type: AuditEventType
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     user_id: str = "system"
-    
+
     # Event details
-    compound_id: Optional[str] = None
-    smiles: Optional[str] = None
+    compound_id: str | None = None
+    smiles: str | None = None
     details: dict[str, Any] = field(default_factory=dict)
-    
+
     # Integrity verification
     event_hash: str = ""  # SHA256 of event data
-    previous_hash: Optional[str] = None  # Hash chaining for integrity
-    
+    previous_hash: str | None = None  # Hash chaining for integrity
+
     # Regulatory metadata
     audit_id: str = ""  # Unique identifier
-    
-    def compute_hash(self, previous_hash: Optional[str] = None) -> str:
+
+    def compute_hash(self, previous_hash: str | None = None) -> str:
         """Compute cryptographic hash for immutability verification.
-        
+
         Args:
             previous_hash: Hash of previous entry for chain verification
-            
+
         Returns:
             SHA256 hash of this entry
         """
@@ -82,7 +82,7 @@ class ComplianceAuditEntry:
             "details": self.details,
             "previous_hash": previous_hash,
         }
-        
+
         json_str = json.dumps(data, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(json_str.encode()).hexdigest()
 
@@ -90,31 +90,31 @@ class ComplianceAuditEntry:
 @dataclass
 class AuditTrail:
     """Immutable audit trail for compliance.
-    
+
     Maintains hash chain to detect any modification of entries.
     """
 
     entries: list[ComplianceAuditEntry] = field(default_factory=list)
     chain_verified: bool = True
-    last_verification: Optional[datetime] = None
+    last_verification: datetime | None = None
 
     def add_entry(
         self,
         event_type: AuditEventType,
         user_id: str = "system",
-        compound_id: Optional[str] = None,
-        smiles: Optional[str] = None,
-        details: Optional[dict[str, Any]] = None,
+        compound_id: str | None = None,
+        smiles: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> ComplianceAuditEntry:
         """Add new entry to audit trail.
-        
+
         Args:
             event_type: Type of event
             user_id: User performing action
             compound_id: Optional compound identifier
             smiles: Optional SMILES string
             details: Additional event details
-            
+
         Returns:
             The created audit entry
         """
@@ -148,7 +148,7 @@ class AuditTrail:
 
     def verify_chain_integrity(self) -> bool:
         """Verify entire audit chain hasn't been tampered with.
-        
+
         Returns:
             True if chain is valid, False if tampering detected
         """
@@ -188,7 +188,7 @@ class AuditTrail:
     def get_entries_since(
         self,
         start_time: datetime,
-        event_type: Optional[AuditEventType] = None,
+        event_type: AuditEventType | None = None,
     ) -> list[ComplianceAuditEntry]:
         """Get audit entries since a specific time."""
         entries = [e for e in self.entries if e.timestamp >= start_time]
@@ -239,14 +239,14 @@ class AuditTrail:
 class ComplianceAuditLogger:
     """Convenience logger for recording compliance events."""
 
-    def __init__(self, audit_trail: Optional[AuditTrail] = None):
+    def __init__(self, audit_trail: AuditTrail | None = None):
         """Initialize audit logger."""
         self.audit_trail = audit_trail or AuditTrail()
 
     def log_compound_screened(
         self,
         smiles: str,
-        compound_id: Optional[str] = None,
+        compound_id: str | None = None,
         user_id: str = "system",
     ) -> ComplianceAuditEntry:
         """Log compound screening event."""

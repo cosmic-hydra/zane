@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+
 
 @dataclass
 class BBBShuttleResult:
@@ -13,7 +13,7 @@ class BBBShuttleResult:
 
 class BBBShuttleDesigner:
     """Designs BBB-penetrating shuttles (2024 delivery breakthrough).
-    
+
     Uses transferrin receptor binders + heavy chain engineering.
     """
 

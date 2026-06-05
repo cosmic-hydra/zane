@@ -1,7 +1,7 @@
-from vina import Vina
-from rdkit import Chem
-from rdkit.Chem import AllChem
 import os
+
+from vina import Vina
+
 
 class VinaDocker:
     def __init__(self, exhaustiveness: int = 8):

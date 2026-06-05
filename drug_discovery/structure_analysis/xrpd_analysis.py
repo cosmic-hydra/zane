@@ -1,6 +1,7 @@
-from scipy.signal import find_peaks
 import numpy as np
 from rdkit.Chem import Descriptors
+from scipy.signal import find_peaks
+
 
 def simulate_xrpd_pattern(mol):
     # Stub: simple peak simulation based on unit cell guess from descriptors

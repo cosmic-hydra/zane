@@ -1,16 +1,17 @@
+
 import pandas as pd
 from sklearn.cluster import KMeans
-from typing import List, Dict, Any
+
 
 class PatientStratifier:
     """
     Cluster patients based on multi-omics or clinical data.
     """
-    
+
     def __init__(self, data: pd.DataFrame):
         self.data = data
-        
-    def stratify_patients(self, features: List[str], num_clusters: int = 3) -> pd.Series:
+
+    def stratify_patients(self, features: list[str], num_clusters: int = 3) -> pd.Series:
         """
         Group patients into clusters.
         """

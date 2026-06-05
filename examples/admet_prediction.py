@@ -2,8 +2,9 @@
 Example: ADMET Property Prediction
 """
 
-from drug_discovery.evaluation import ADMETPredictor
 import pandas as pd
+
+from drug_discovery.evaluation import ADMETPredictor
 
 
 def main():
@@ -32,7 +33,7 @@ def main():
             print("\nLipinski's Rule of Five:\n  Could not compute properties")
             print("\n" + "=" * 50 + "\n")
             continue
-        print(f"\nLipinski's Rule of Five:")
+        print("\nLipinski's Rule of Five:")
         print(f"  Pass: {lipinski['passes']}")
         print(f"  Violations: {lipinski['num_violations']}")
         if lipinski['violations']:
@@ -58,13 +59,13 @@ def main():
         toxicity = admet.predict_toxicity_flags(smiles)
         if toxicity is None:
             toxicity = {}
-        print(f"\nToxicity Flags:")
+        print("\nToxicity Flags:")
         for flag, value in toxicity.items():
             print(f"  {flag}: {'Yes' if value else 'No'}")
 
         # Calculate properties
         props = lipinski['properties']
-        print(f"\nMolecular Properties:")
+        print("\nMolecular Properties:")
         print(f"  MW: {props['molecular_weight']:.2f}")
         print(f"  LogP: {props['logp']:.2f}")
         print(f"  H-bond donors: {props['h_bond_donors']}")
@@ -89,7 +90,7 @@ def main():
     print(df.to_string(index=False))
 
     # Filter drug-like molecules
-    drug_like = df[(df['lipinski_pass'] == True) & (df['qed'] > 0.5)]
+    drug_like = df[(df['lipinski_pass']) & (df['qed'] > 0.5)]
     print(f"\n✓ Drug-like molecules: {len(drug_like)}/{len(df)}")
     print(drug_like['name'].tolist())
 

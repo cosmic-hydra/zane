@@ -11,10 +11,10 @@ The output is a ranked table intended for simulation/testing only.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from itertools import combinations
 from pathlib import Path
-import sys
 
 import pandas as pd
 

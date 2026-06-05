@@ -1,7 +1,7 @@
 """Tests for strict compliance and parametrized quality gates.
 
 Comprehensive test suite covering:
-- Strict compliance evaluation 
+- Strict compliance evaluation
 - Quality tier classification
 - Data integrity verification
 - Risk factor identification
@@ -11,7 +11,6 @@ Comprehensive test suite covering:
 """
 
 import unittest
-from datetime import datetime
 
 from drug_discovery.safety.parametrized_toxicity_gate import (
     ParametrizedToxicityGate,
@@ -20,7 +19,6 @@ from drug_discovery.safety.parametrized_toxicity_gate import (
 from drug_discovery.safety.strict_compliance_gate import (
     ComplianceLevel,
     QualityTier,
-    RiskFactor,
     StrictComplianceGate,
     evaluate_batch_with_strict_compliance,
 )
@@ -41,7 +39,7 @@ class TestToxicityThresholdConfig(unittest.TestCase):
         """Test invalid thresholds raise ValueError."""
         with self.assertRaises(ValueError):
             ToxicityThresholdConfig(herg_threshold=1.5)
-        
+
         with self.assertRaises(ValueError):
             ToxicityThresholdConfig(logp_min=10, logp_max=5)
 
@@ -245,7 +243,7 @@ class TestStrictComplianceGate(unittest.TestCase):
             compliance_level=ComplianceLevel.HARDENED,
             strict_herg_threshold=0.1,
         )
-        
+
         # Hardened should have lower thresholds
         self.assertLess(hardened.strict_herg_threshold, relaxed.strict_herg_threshold)
 
@@ -292,7 +290,7 @@ class TestBatchEvaluation(unittest.TestCase):
             smiles_list,
             compliance_level=ComplianceLevel.RELAXED,
         )
-        
+
         self.assertEqual(result["total_evaluated"], 3)
         self.assertEqual(result["passed"] + result["rejected"], 3)
         self.assertGreaterEqual(result["pass_rate"], 0)
@@ -302,7 +300,7 @@ class TestBatchEvaluation(unittest.TestCase):
         """Test batch result includes all individual assessments."""
         smiles_list = ["CC(=O)O", "CC(=O)N"]
         result = evaluate_batch_with_strict_compliance(smiles_list)
-        
+
         self.assertEqual(len(result["assessments"]), 2)
         for smiles in smiles_list:
             self.assertIn(smiles, result["assessments"])
@@ -311,7 +309,7 @@ class TestBatchEvaluation(unittest.TestCase):
         """Test batch evaluation tracks critical issues."""
         smiles_list = ["CC(=O)O", "invalid"]  # One valid, one invalid
         result = evaluate_batch_with_strict_compliance(smiles_list)
-        
+
         # Should have at least one critical issue (invalid SMILES)
         self.assertGreater(len(result["critical_issues"]), 0)
 
@@ -323,7 +321,7 @@ class TestComplianceLevelConfiguration(unittest.TestCase):
         """Test compliance level affects hERG thresholds."""
         relaxed = StrictComplianceGate(compliance_level=ComplianceLevel.RELAXED)
         strict = StrictComplianceGate(compliance_level=ComplianceLevel.STRICT)
-        
+
         # Strict should have lower (more restrictive) hERG threshold
         self.assertLess(
             strict.strict_herg_threshold,
@@ -334,7 +332,7 @@ class TestComplianceLevelConfiguration(unittest.TestCase):
         """Test hardened compliance level is most restrictive."""
         relaxed = StrictComplianceGate(compliance_level=ComplianceLevel.RELAXED)
         hardened = StrictComplianceGate(compliance_level=ComplianceLevel.HARDENED)
-        
+
         # Hardened should have strictest threshold
         self.assertLess(
             hardened.strict_herg_threshold,
@@ -354,7 +352,7 @@ class TestPropertyCalculation(unittest.TestCase):
         gate = StrictComplianceGate()
         # Simple SMILES: acetic acid
         props = gate._calculate_properties("CC(=O)O")
-        
+
         self.assertIn("mw", props)
         self.assertIn("logp", props)
         self.assertIn("tpsa", props)

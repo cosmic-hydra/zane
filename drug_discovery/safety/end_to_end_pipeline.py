@@ -122,10 +122,7 @@ class SafeGenerationPipeline:
         # ----------------------------------------------------------
         # Step 1: Generate
         # ----------------------------------------------------------
-        if seed_smiles:
-            raw_smiles = list(seed_smiles)
-        else:
-            raw_smiles = self._generate(n)
+        raw_smiles = list(seed_smiles) if seed_smiles else self._generate(n)
         result.candidates_generated = len(raw_smiles)
         logger.info("Step 1: Generated %d candidates", len(raw_smiles))
 

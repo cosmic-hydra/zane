@@ -24,7 +24,7 @@ class TestProteinStructureBasics:
             "large": {"atoms": 10000, "chains": 5},
         }
 
-        for name, struct in structures.items():
+        for _name, struct in structures.items():
             assert isinstance(struct, dict)
 
     def test_protein_to_graph_conversion(self):

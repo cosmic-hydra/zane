@@ -5,14 +5,15 @@ convergence and identify problematic systems.
 """
 from __future__ import annotations
 
-from typing import Sequence, List, Dict, Any
 import math
+from collections.abc import Sequence
+from typing import Any
 
 
-def compute_residuals(predicted: Sequence[float], observed: Sequence[float]) -> List[float]:
+def compute_residuals(predicted: Sequence[float], observed: Sequence[float]) -> list[float]:
     if len(predicted) != len(observed):
         raise ValueError("predicted and observed length mismatch")
-    return [p - o for p, o in zip(predicted, observed)]
+    return [p - o for p, o in zip(predicted, observed, strict=False)]
 
 
 def rmse(residuals: Sequence[float]) -> float:
@@ -21,7 +22,7 @@ def rmse(residuals: Sequence[float]) -> float:
     return math.sqrt(sum(r * r for r in residuals) / len(residuals))
 
 
-def z_scores(residuals: Sequence[float]) -> List[float]:
+def z_scores(residuals: Sequence[float]) -> list[float]:
     n = len(residuals)
     if n == 0:
         return []
@@ -33,12 +34,12 @@ def z_scores(residuals: Sequence[float]) -> List[float]:
     return [(r - mean) / sd for r in residuals]
 
 
-def identify_outliers(residuals: Sequence[float], threshold_z: float = 2.5) -> List[int]:
+def identify_outliers(residuals: Sequence[float], threshold_z: float = 2.5) -> list[int]:
     zs = z_scores(residuals)
     return [i for i, z in enumerate(zs) if abs(z) >= threshold_z]
 
 
-def summarize_abfe(predicted: Sequence[float], observed: Sequence[float], top_n: int = 5) -> Dict[str, Any]:
+def summarize_abfe(predicted: Sequence[float], observed: Sequence[float], top_n: int = 5) -> dict[str, Any]:
     res = compute_residuals(predicted, observed)
     summary = {
         "n": len(res),

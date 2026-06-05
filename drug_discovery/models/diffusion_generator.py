@@ -134,10 +134,7 @@ class DiffusionMoleculeGenerator:
         batch = torch.arange(num_molecules, device=self.device).repeat_interleave(num_atoms)
         for t_val in reversed(range(self.config.noise_steps)):
             t = torch.full((num_molecules,), t_val, device=self.device, dtype=torch.long)
-            if edge_index_fn:
-                edge_index = edge_index_fn(pos, batch)
-            else:
-                edge_index = self._fully_connected(num_molecules, num_atoms)
+            edge_index = edge_index_fn(pos, batch) if edge_index_fn else self._fully_connected(num_molecules, num_atoms)
             eps_pos, eps_atom = self.model(atom_types, pos, edge_index, t, batch)
             ab = self.alpha_bar[t_val]
             beta = 1 - ab / (self.alpha_bar[t_val - 1] if t_val > 0 else 1.0)

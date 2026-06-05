@@ -345,10 +345,7 @@ class ModelEvaluator:
         # Normalize uncertainty to [0, 1] for comparability across scales.
         unc_min = float(np.min(unc_v))
         unc_max = float(np.max(unc_v))
-        if unc_max - unc_min > 1e-12:
-            unc_norm = (unc_v - unc_min) / (unc_max - unc_min)
-        else:
-            unc_norm = np.zeros_like(unc_v)
+        unc_norm = (unc_v - unc_min) / (unc_max - unc_min) if unc_max - unc_min > 1e-12 else np.zeros_like(unc_v)
 
         abs_err = np.abs(true_v - pred_v)
         err_max = float(np.max(abs_err))

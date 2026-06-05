@@ -381,7 +381,7 @@ class DrugCombinationTester:
     ) -> pd.DataFrame:
         """
         Find molecules that balance the toxicity of a target compound.
-        
+
         A balancer is a molecule that has an antagonistic effect on the toxicity
         of another molecule, effectively 'balancing' it.
         """
@@ -390,7 +390,7 @@ class DrugCombinationTester:
             # We use ML synergy model but look for antagonistic interactions on toxicity
             # In this context, antagonism is good because it reduces the toxic effect.
             prediction = self.predict_synergy_ml(toxic_smiles, balancer_smiles)
-            
+
             # If the interaction is antagonistic, it might be a good balancer
             if prediction["interaction_type"] == "antagonistic":
                 results.append({
@@ -399,7 +399,7 @@ class DrugCombinationTester:
                     "balancing_efficiency": abs(prediction["synergy_score"]),
                     "confidence": prediction["confidence"]
                 })
-        
+
         df = pd.DataFrame(results)
         if not df.empty:
             df = df.sort_values("balancing_efficiency", ascending=False)

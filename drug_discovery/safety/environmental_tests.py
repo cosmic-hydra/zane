@@ -5,11 +5,11 @@ before heavy experimental assays. Intended to be used as part of QA pipelines.
 """
 from __future__ import annotations
 
-from typing import Dict, Any
 import math
+from typing import Any
 
 
-def estimate_ph_stability(smiles: str, ph: float) -> Dict[str, Any]:
+def estimate_ph_stability(smiles: str, ph: float) -> dict[str, Any]:
     """Estimate percent remaining after 24h at given pH using heuristics.
 
     This is a heuristic fallback when experimental data is not available.
@@ -28,7 +28,7 @@ def estimate_ph_stability(smiles: str, ph: float) -> Dict[str, Any]:
     return {"percent_remaining": round(score * 100.0, 1), "confidence": 0.45}
 
 
-def estimate_plasma_binding(smiles: str) -> Dict[str, Any]:
+def estimate_plasma_binding(smiles: str) -> dict[str, Any]:
     """Estimate fraction bound to plasma proteins (heuristic).
 
     Returns {'fraction_bound': 0-1, 'confidence': 0-1}
@@ -37,13 +37,13 @@ def estimate_plasma_binding(smiles: str) -> Dict[str, Any]:
     aromatic = smiles.count('c') + smiles.count('C') // 4
     logp_est = 1.0 + aromatic * 0.4 - smiles.count('N') * 0.3
     # map to 0-1
-    frac = 1.0 - 1.0 / (1.0 + math.exp((logp_est - 2.5)))
+    frac = 1.0 - 1.0 / (1.0 + math.exp(logp_est - 2.5))
     frac = max(0.0, min(0.99, frac))
     confidence = 0.4
     return {"fraction_bound": round(frac, 3), "confidence": confidence}
 
 
-def run_environmental_tests(smiles: str, ph_values: tuple[float, ...] = (1.2, 4.5, 7.4, 9.0)) -> Dict[str, Any]:
+def run_environmental_tests(smiles: str, ph_values: tuple[float, ...] = (1.2, 4.5, 7.4, 9.0)) -> dict[str, Any]:
     results = {"smiles": smiles, "ph_profiles": {}, "plasma_binding": None}
     for ph in ph_values:
         results["ph_profiles"][str(ph)] = estimate_ph_stability(smiles, ph)

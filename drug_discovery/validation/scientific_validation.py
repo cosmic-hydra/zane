@@ -12,9 +12,11 @@ Rigorous statistical evaluation for drug discovery models:
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 import logging
+import operator
 import os
 import random
 from collections import defaultdict
@@ -156,7 +158,7 @@ def scaffold_kfold(smiles_list, n_folds=5, seed=42):
         smallest = min(range(n_folds), key=lambda i: sizes[i])
         folds[smallest].extend(ss)
         sizes[smallest] += len(ss)
-    return [(sum([folds[j] for j in range(n_folds) if j != i], []), folds[i]) for i in range(n_folds)]
+    return [(functools.reduce(operator.iadd, [folds[j] for j in range(n_folds) if j != i], []), folds[i]) for i in range(n_folds)]
 
 
 # --- Statistical tests ---

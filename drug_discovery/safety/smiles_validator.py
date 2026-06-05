@@ -243,7 +243,7 @@ class SmilesValidator:
         res = self.validate(smiles)
         if not res.passed:
             return False
-        
+
         if not _RDKIT:
             return res.is_valid
 
@@ -259,7 +259,7 @@ class SmilesValidator:
         for atom in mol.GetAtoms():
             if atom.GetSymbol() == "C" and atom.GetTotalValence() > 4:
                 return False
-        
+
         # Avoid extremely reactive groups
         reactive_patterns = [
             "[F,Cl,Br,I][F,Cl,Br,I]", # Halogen-halogen
@@ -267,11 +267,7 @@ class SmilesValidator:
             "C#C-C#C",               # Polyynes
             "[S,C]=[O,S]=O",         # Ketenes/Sulfines
         ]
-        for pattern in reactive_patterns:
-            if mol.HasSubstructMatch(Chem.MolFromSmarts(pattern)):
-                return False
-
-        return True
+        return all(not mol.HasSubstructMatch(Chem.MolFromSmarts(pattern)) for pattern in reactive_patterns)
 
     # ------------------------------------------------------------------
     # Heuristic fallback (no RDKit)

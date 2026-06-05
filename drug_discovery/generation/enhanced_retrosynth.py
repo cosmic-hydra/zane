@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Sequence
 
 # Insilico/Exscientia style forward synthesis + retrosynth
 
@@ -15,7 +14,7 @@ class SynthResult:
 
 class EnhancedRetrosynth:
     """Enhanced retrosynthesis with forward synthesis planning (2024 generative breakthrough).
-    
+
     Integrates rxnmapper + yield prediction.
     """
 

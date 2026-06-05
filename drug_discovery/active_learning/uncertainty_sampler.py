@@ -1,8 +1,8 @@
 """Active learning utilities: uncertainty-based sampling and batch selection."""
 from __future__ import annotations
 
-from typing import List, Sequence, Tuple, Dict, Any
 import heapq
+from collections.abc import Sequence
 
 
 class UncertaintySampler:
@@ -16,7 +16,7 @@ class UncertaintySampler:
     def __init__(self, diversity_dedup: bool = True):
         self.diversity_dedup = diversity_dedup
 
-    def _dedupe(self, items: Sequence[str], max_keep: int) -> List[str]:
+    def _dedupe(self, items: Sequence[str], max_keep: int) -> list[str]:
         seen = set()
         out = []
         for s in items:
@@ -33,7 +33,7 @@ class UncertaintySampler:
         candidates: Sequence[str],
         uncertainties: Sequence[float],
         batch_size: int = 16,
-    ) -> List[str]:
+    ) -> list[str]:
         """Return batch of SMILES selected by highest uncertainty.
 
         candidates and uncertainties must be same length.
@@ -41,7 +41,7 @@ class UncertaintySampler:
         if len(candidates) != len(uncertainties):
             raise ValueError("candidates and uncertainties must be same length")
         # Use a max-heap of uncertainties
-        heap: List[Tuple[float, int]] = []
+        heap: list[tuple[float, int]] = []
         for i, u in enumerate(uncertainties):
             heap.append((-float(u), i))
         heapq.heapify(heap)
@@ -56,7 +56,7 @@ class UncertaintySampler:
             selected = self._dedupe(selected, batch_size)
         return selected
 
-    def select_top_k_by_entropy(self, probs: Sequence[Sequence[float]], k: int) -> List[int]:
+    def select_top_k_by_entropy(self, probs: Sequence[Sequence[float]], k: int) -> list[int]:
         """Select top-k indices by predictive entropy.
 
         probs: list of probability vectors per candidate

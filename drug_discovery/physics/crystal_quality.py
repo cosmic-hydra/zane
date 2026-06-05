@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+
 
 @dataclass
 class CrystalResult:
@@ -13,7 +13,7 @@ class CrystalResult:
 
 class CrystalEnhancer:
     """Crystal quality enhancement with photo-NMR (2025 FBDD breakthrough).
-    
+
     Simulates hyperpolarization, XRPD/Raman polymorph analysis.
     """
 

@@ -1,6 +1,8 @@
+from typing import Any
+
 import numpy as np
 from scipy.integrate import odeint
-from typing import List, Dict, Any
+
 
 class HumanPKPDEngine:
     """
@@ -29,19 +31,19 @@ class HumanPKPDEngine:
         y[3]: Amount in peripheral 2 (mg)
         """
         A_depot, A_central, A_peri1, A_peri2 = y
-        
+
         # dA/dt
         dy0 = -ka * A_depot
         dy1 = ka * A_depot - (ke + k12 + k13) * A_central + k21 * A_peri1 + k31 * A_peri2
         dy2 = k12 * A_central - k21 * A_peri1
         dy3 = k13 * A_central - k31 * A_peri2
-        
+
         return [dy0, dy1, dy2, dy3]
 
     def simulate_plasma_concentration(
-        self, 
-        dose_mg: float, 
-        duration_hrs: int = 48, 
+        self,
+        dose_mg: float,
+        duration_hrs: int = 48,
         points: int = 100
     ) -> np.ndarray:
         """
@@ -50,25 +52,25 @@ class HumanPKPDEngine:
         """
         t = np.linspace(0, duration_hrs, points)
         y0 = [dose_mg, 0.0, 0.0, 0.0]  # Initial state
-        
+
         args = (
-            self.params["ka"], self.params["ke"], 
-            self.params["k12"], self.params["k21"], 
-            self.params["k13"], self.params["k31"], 
+            self.params["ka"], self.params["ke"],
+            self.params["k12"], self.params["k21"],
+            self.params["k13"], self.params["k31"],
             self.params["Vc"]
         )
-        
+
         sol = odeint(self._model_3comp, y0, t, args=args)
-        
+
         # Concentration C = Amount / Volume
         c_central = sol[:, 1] / self.params["Vc"]
         return t, c_central
 
     def evaluate_pd_efficacy(
-        self, 
-        concentrations: np.ndarray, 
-        emax: float = 100.0, 
-        ec50: float = 1.5, 
+        self,
+        concentrations: np.ndarray,
+        emax: float = 100.0,
+        ec50: float = 1.5,
         gamma: float = 2.0
     ) -> np.ndarray:
         """
@@ -78,11 +80,11 @@ class HumanPKPDEngine:
         effect = (emax * np.power(concentrations, gamma)) / (np.power(ec50, gamma) + np.power(concentrations, gamma))
         return np.nan_to_num(effect)
 
-    def run_full_simulation(self, dose_mg: float) -> Dict[str, Any]:
+    def run_full_simulation(self, dose_mg: float) -> dict[str, Any]:
         """Runs end-to-end PK/PD validation."""
         t, c_central = self.simulate_plasma_concentration(dose_mg)
         effects = self.evaluate_pd_efficacy(c_central)
-        
+
         return {
             "time_points": t.tolist(),
             "plasma_concentrations": c_central.tolist(),

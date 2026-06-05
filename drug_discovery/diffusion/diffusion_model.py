@@ -409,7 +409,7 @@ class EquivariantDiffusionModel(nn.Module if TORCH_AVAILABLE else object):
                 generated_coords=generated_coords,
                 binding_scores=binding_scores,
                 sa_scores=sa_scores,
-                quality_scores=[sa - abs(b - 0.5) for sa, b in zip(sa_scores, binding_scores)],
+                quality_scores=[sa - abs(b - 0.5) for sa, b in zip(sa_scores, binding_scores, strict=False)],
                 n_valid=len(valid_smiles),
                 n_unique=len(unique_smiles),
                 success=True,

@@ -1,7 +1,9 @@
+from typing import Any
+
 import numpy as np
 import scipy.constants as const
 from rdkit import Chem
-from typing import Dict, Any
+
 
 class EnvironmentalStressSimulator:
     """
@@ -19,30 +21,30 @@ class EnvironmentalStressSimulator:
         self.R = const.R  # Ideal gas constant in J/(mol*K)
 
     def calculate_arrhenius_decay(
-        self, 
-        activation_energy_kj: float, 
-        temp_celsius: float, 
+        self,
+        activation_energy_kj: float,
+        temp_celsius: float,
         days: int
     ) -> float:
         """
         Calculates the percentage of API remaining using the Arrhenius equation.
-        
+
         k = A * exp(-Ea / RT)
         """
         # Convert T to Kelvin
         T = temp_celsius + 273.15
         # Convert Ea to Joules
         Ea = activation_energy_kj * 1000.0
-        
+
         # Calculate rate constant k (1/sec)
         k = self.A * np.exp(-Ea / (self.R * T))
-        
+
         # Total seconds of exposure
         seconds = days * 24 * 3600
-        
+
         # Concentration remaining (First order: C = C0 * exp(-kt))
         percent_remaining = np.exp(-k * seconds) * 100.0
-        
+
         return float(np.clip(percent_remaining, 0.0, 100.0))
 
     def check_photostability(self, smiles: str) -> bool:
@@ -64,18 +66,18 @@ class EnvironmentalStressSimulator:
             "extended_aromatic_systems": "c1ccc2c(c1)ccc3ccccc32" # Pyrene-like
         }
 
-        for name, smarts in phototoxicity_alerts.items():
+        for _name, smarts in phototoxicity_alerts.items():
             pattern = Chem.MolFromSmarts(smarts)
             if pattern and mol.HasSubstructMatch(pattern):
                 return True
-        
+
         return False
 
-    def simulate_stress_report(self, smiles: str, Ea: float, temp: float, days: int) -> Dict[str, Any]:
+    def simulate_stress_report(self, smiles: str, Ea: float, temp: float, days: int) -> dict[str, Any]:
         """Comprehensive environmental validation report."""
         remaining = self.calculate_arrhenius_decay(Ea, temp, days)
         photo_risk = self.check_photostability(smiles)
-        
+
         return {
             "smiles": smiles,
             "api_remaining_percent": remaining,

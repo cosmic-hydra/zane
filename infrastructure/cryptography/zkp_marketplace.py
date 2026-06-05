@@ -46,7 +46,7 @@ class ZKPMarketplace:
             print("PySyft not available, using mock federation")
             return {"status": "mock_federated", "data_hash": hash(str(data))}
 
-    def prove_zk_training(self, model_state: dict, circuit_id: str, inputs: dict = None) -> str:
+    def prove_zk_training(self, model_state: dict, circuit_id: str, inputs: dict | None = None) -> str:
         "Generate ZK proof for model training, offload to FPGA/ASIC if available"
         if self.has_fpga:
             print(f"Offloading ZK proof generation to {self.fpga_device or 'detected FPGA/ASIC'}")

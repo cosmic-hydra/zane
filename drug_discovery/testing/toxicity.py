@@ -352,16 +352,16 @@ class ToxicityPredictor:
     def suggest_toxicity_balancer(self, smiles: str) -> dict[str, Any]:
         """
         Suggest a companion molecule (balancer) to mitigate toxicity.
-        
+
         50000x lesser toxic compounds by balancing toxic substances.
         """
         tox_results = self.predict_all_toxicity_endpoints(smiles)
         worst_ep = tox_results["overall"]["worst_endpoint"]
         tox_score = tox_results["overall"]["toxicity_score"]
-        
+
         if tox_score < 0.3:
             return {"status": "Already safe", "balancer": None}
-            
+
         balancers = {
             "cardiotoxicity": {
                 "name": "Dexrazoxane",
@@ -384,9 +384,9 @@ class ToxicityPredictor:
                 "reduction_factor": 0.5
             }
         }
-        
+
         balancer = balancers.get(worst_ep, {"name": "Generic Cytoprotectant", "mechanism": "Cellular stabilization", "reduction_factor": 0.4})
-        
+
         return {
             "status": "Toxic",
             "worst_endpoint": worst_ep,

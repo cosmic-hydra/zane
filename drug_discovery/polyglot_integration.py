@@ -321,7 +321,7 @@ class PhysicsOracle:
         if to_compute:
             uncached_smiles = [smi for _, smi in to_compute]
             computed = await self._compute_with_retry(uncached_smiles)
-            for (idx, smi), result in zip(to_compute, computed):
+            for (idx, smi), result in zip(to_compute, computed, strict=False):
                 results[idx] = result
                 if self._cache is not None and result.success:
                     self._cache[self._cache_key(smi)] = result
@@ -359,7 +359,7 @@ class PhysicsOracle:
             )
             retry_smiles = [smiles_list[i] for i in failed_indices]
             retry_results = await self._dispatch(retry_smiles)
-            for fi, rr in zip(failed_indices, retry_results):
+            for fi, rr in zip(failed_indices, retry_results, strict=False):
                 if rr.success:
                     results[fi] = rr
 

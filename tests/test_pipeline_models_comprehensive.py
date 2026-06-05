@@ -336,7 +336,7 @@ class TestPipelineWorkflow:
         x = torch.randn(32, 10)
         y = torch.randn(32, 1)
 
-        for epoch in range(3):
+        for _epoch in range(3):
             optimizer.zero_grad()
             output = model(x)
             loss = criterion(output, y)
@@ -389,7 +389,7 @@ class TestModelCheckpointing:
         model2.load_state_dict(state_dict)
 
         # Models should have same parameters
-        for p1, p2 in zip(model1.parameters(), model2.parameters()):
+        for p1, p2 in zip(model1.parameters(), model2.parameters(), strict=False):
             assert torch.allclose(p1, p2)
 
     def test_optimizer_state_dict(self):
@@ -474,7 +474,7 @@ class TestHyperparameterTuning:
         model = nn.Linear(10, 1)
         optimizer = torch.optim.SGD(model.parameters())
 
-        for epoch in range(10):
+        for _epoch in range(10):
             x = torch.randn(4, 10)
             y = torch.randn(4, 1)
             optimizer.zero_grad()
@@ -514,5 +514,5 @@ class TestEarlyStoppingPatterns:
         train_losses = [1.0, 0.9, 0.8, 0.7, 0.6]
         val_losses = [1.1, 1.0, 0.95, 0.92, 0.91]
 
-        for train_loss, val_loss in zip(train_losses, val_losses):
+        for train_loss, val_loss in zip(train_losses, val_losses, strict=False):
             assert val_loss >= train_loss * 0.9  # Validation typically higher

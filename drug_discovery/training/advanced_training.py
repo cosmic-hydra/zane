@@ -62,7 +62,7 @@ class WarmupScheduler:
         self.current_epoch = epoch if epoch is not None else self.current_epoch + 1
         if self.current_epoch <= self.warmup_epochs:
             factor = self.current_epoch / max(1, self.warmup_epochs)
-            for pg, blr in zip(self.optimizer.param_groups, self.base_lrs):
+            for pg, blr in zip(self.optimizer.param_groups, self.base_lrs, strict=False):
                 pg["lr"] = blr * factor
         else:
             if isinstance(self.base_scheduler, ReduceLROnPlateau) and metrics is not None:

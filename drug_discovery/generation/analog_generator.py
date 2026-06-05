@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Sequence
+
 from rdkit import Chem
+
 
 @dataclass
 class AnalogResult:
@@ -13,7 +14,7 @@ class AnalogResult:
 
 class DeepGraphAnalogGenerator:
     """Deep graph networks for low-tox analog generation (2025).
-    
+
     Generates analogs optimizing tox/potency.
     """
 

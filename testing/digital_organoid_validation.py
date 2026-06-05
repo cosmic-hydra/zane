@@ -1,20 +1,19 @@
+import logging
+
+import numpy as np
 import scanpy as sc
 import torch
 import torch.nn as nn
-from typing import Any, Dict, Optional
-import pandas as pd
-import numpy as np
-import logging
 
 logger = logging.getLogger(__name__)
 
 class DigitalPatientOrganoid:
     """
-    Final N=1 simulation that predicts the transcriptomic shift of a patient's 
+    Final N=1 simulation that predicts the transcriptomic shift of a patient's
     cells after drug exposure before physical synthesis.
     """
     def __init__(self):
-        self.biopsy_data: Optional[sc.AnnData] = None
+        self.biopsy_data: sc.AnnData | None = None
         # Deep generative model (e.g. scGen or CPA variant)
         self.perturbation_predictor = nn.Sequential(
             nn.Linear(1000 + 128, 512), # Gene space (top 1000) + drug embedding
@@ -32,7 +31,7 @@ class DigitalPatientOrganoid:
             self.biopsy_data = sc.read_h5ad(single_cell_rna_path)
             logger.info(f"Digital biopsy loaded: {self.biopsy_data.n_obs} cells, {self.biopsy_data.n_vars} genes.")
         except Exception as e:
-            logger.error(f"Failed to load single-cell data: {str(e)}")
+            logger.error(f"Failed to load single-cell data: {e!s}")
             # Fallback to random initialization for scaffolding demonstration
             self.biopsy_data = sc.AnnData(X=np.random.rand(100, 1000))
 
@@ -45,20 +44,20 @@ class DigitalPatientOrganoid:
 
         # Extract baseline expression for top 1000 genes
         baseline = torch.tensor(self.biopsy_data.X.mean(axis=0), dtype=torch.float32)
-        
+
         # Predict shift
         combined_input = torch.cat([baseline, drug_embedding])
         predicted_shift = self.perturbation_predictor(combined_input)
-        
+
         post_treatment_profile = baseline + predicted_shift
-        
+
         # Calculate Efficacy Score: Similarity to Healthy Baseline
         # (Mock healthy baseline for comparison)
         healthy_baseline = torch.zeros_like(baseline)
-        
+
         # Euclidean distance as an inverse measure of recovery
         distance = torch.norm(post_treatment_profile - healthy_baseline).item()
         recovery_score = 1.0 / (1.0 + distance)
-        
+
         logger.info(f"Digital Organoid Simulation: Efficacy Recovery Score = {recovery_score:.4f}")
         return recovery_score

@@ -58,7 +58,7 @@ class AugmentedChemistInterface:
             return None
 
         molecular_features.requires_grad_()
-        attributions, delta = self.integrated_gradients.attribute(
+        attributions, _delta = self.integrated_gradients.attribute(
             molecular_features, target=0, return_convergence_delta=True
         )
         return attributions

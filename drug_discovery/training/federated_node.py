@@ -28,7 +28,7 @@ class FederatedClient(fl.client.NumPyClient):
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
 
     def set_parameters(self, parameters: list[torch.Tensor]):
-        params_dict = zip(self.model.state_dict().keys(), parameters)
+        params_dict = zip(self.model.state_dict().keys(), parameters, strict=False)
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
         self.model.load_state_dict(state_dict, strict=True)
 

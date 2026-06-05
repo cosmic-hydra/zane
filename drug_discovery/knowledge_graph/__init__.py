@@ -23,21 +23,21 @@ from .knowledge_graph import (
 )
 from .link_prediction import LinkPredictionService as LinkPredictionService
 from .link_prediction import LinkPredictorGNN as LinkPredictorGNN
-from .reasoning import KnowledgeGraphReasoner as KnowledgeGraphReasoner
 from .neo4j_adapter import Neo4jAdapter as Neo4jAdapter
+from .reasoning import KnowledgeGraphReasoner as KnowledgeGraphReasoner
 
 __all__ = [
     "DrugKnowledgeGraph",
-    "KnowledgeGraphBuilder",
-    "KnowledgeGraph",
-    "VectorDatabase",
-    "KGNode",
-    "KGEdge",
-    "NodeType",
     "EdgeType",
-    "Neo4jAdapter",
-    "LinkPredictorGNN",
-    "LinkPredictionService",
-    "KnowledgeGraphReasoner",
+    "KGEdge",
     "KGIngestor",
+    "KGNode",
+    "KnowledgeGraph",
+    "KnowledgeGraphBuilder",
+    "KnowledgeGraphReasoner",
+    "LinkPredictionService",
+    "LinkPredictorGNN",
+    "Neo4jAdapter",
+    "NodeType",
+    "VectorDatabase",
 ]

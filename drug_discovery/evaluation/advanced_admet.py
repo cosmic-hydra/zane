@@ -15,13 +15,12 @@ References:
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass, field
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 
 logger = logging.getLogger(__name__)
 

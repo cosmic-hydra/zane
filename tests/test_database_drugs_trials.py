@@ -7,15 +7,12 @@ All external-network calls are mocked so the suite runs offline.
 
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 
 from drug_discovery.data.collector import DataCollector
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -153,7 +150,7 @@ class TestPubChemDatabase:
         return compound
 
     def test_returns_dataframe_on_success(self, collector):
-        compound = self._make_pubchem_compound(ASPIRIN_SMILES, "aspirin")
+        self._make_pubchem_compound(ASPIRIN_SMILES, "aspirin")
         with patch("drug_discovery.data.collector.DataCollector.collect_from_pubchem") as mock:
             mock.return_value = pd.DataFrame(
                 [{"smiles": ASPIRIN_SMILES, "name": "aspirin", "source": "pubchem"}]
@@ -211,7 +208,7 @@ class TestChEMBLDatabase:
                 "pref_name": "aspirin",
             }
         ]
-        mock_new_client = self._mock_chembl(records)
+        self._mock_chembl(records)
         with patch("drug_discovery.data.collector.DataCollector.collect_from_chembl") as mock:
             mock.return_value = pd.DataFrame(
                 [{"smiles": ASPIRIN_SMILES, "name": "aspirin", "source": "chembl"}]
@@ -274,9 +271,8 @@ class TestPDBDatabase:
         entry_resp = MagicMock()
         entry_resp.json.return_value = self._pdb_entry("2XYZ")
         entry_resp.raise_for_status = MagicMock()
-        with patch("requests.get", return_value=entry_resp):
-            with patch("requests.post", return_value=search_resp):
-                df = collector.collect_from_pdb(query="drug", limit=1)
+        with patch("requests.get", return_value=entry_resp), patch("requests.post", return_value=search_resp):
+            df = collector.collect_from_pdb(query="drug", limit=1)
         assert isinstance(df, pd.DataFrame)
 
     def test_empty_on_network_failure(self, collector):

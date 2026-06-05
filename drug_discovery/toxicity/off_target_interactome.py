@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 import math
-import os
 from typing import Any
 
 import torch
@@ -186,10 +185,10 @@ class ToxPanelScorer:
         self.raise_on_first = raise_on_first
         self.use_advanced_models = use_advanced_models
         self._admet_predictor = None
-        
+
         if self.use_advanced_models:
             try:
-                from drug_discovery.evaluation.advanced_admet import AdvancedADMETPredictor, ADMETConfig
+                from drug_discovery.evaluation.advanced_admet import ADMETConfig, AdvancedADMETPredictor
                 self._admet_predictor = AdvancedADMETPredictor(ADMETConfig())
                 # In a real scenario, we'd load weights here.
             except ImportError:
@@ -230,7 +229,7 @@ class ToxPanelScorer:
                     dummy_pos = torch.randn(3, 3)
                     dummy_edge = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
                     dummy_tokens = torch.randint(0, 10, (1, 10))
-                    
+
                     preds = self._admet_predictor(dummy_z, dummy_pos, dummy_edge, dummy_tokens)
                     if endpoint in preds:
                         probs = F.softmax(preds[endpoint], dim=-1)

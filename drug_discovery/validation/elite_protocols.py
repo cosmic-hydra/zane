@@ -344,7 +344,7 @@ class EliteValidationSuite:
         scores += scores[:1]
         angles += angles[:1]
 
-        fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+        _fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
         ax.fill(angles, scores, color="teal", alpha=0.25)
         ax.plot(angles, scores, color="teal", linewidth=2)
         ax.set_theta_offset(np.pi / 2)

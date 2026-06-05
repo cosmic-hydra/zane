@@ -261,7 +261,7 @@ class NvidiaLlmBackend(BaseGeneratorBackend):
             )
 
         except Exception as e:
-            return GenerationResult.failure(self.name, f"NVIDIA LLM generation failed: {str(e)}")
+            return GenerationResult.failure(self.name, f"NVIDIA LLM generation failed: {e!s}")
 
 
 class GenerationManager:

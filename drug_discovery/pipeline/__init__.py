@@ -32,11 +32,11 @@ else:
     DrugDiscoveryPipeline = None
 
 __all__ = [
-    "DrugDiscoveryPipeline",
-    "StreamingDataPipeline",
-    "PipelineOrchestrator",
-    "DataQualityMonitor",
-    "FaultTolerantExecutor",
     "DataBatch",
+    "DataQualityMonitor",
+    "DrugDiscoveryPipeline",
+    "FaultTolerantExecutor",
     "PipelineCheckpoint",
+    "PipelineOrchestrator",
+    "StreamingDataPipeline",
 ]

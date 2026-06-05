@@ -1,9 +1,9 @@
-import pandas as pd
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
-import pdfplumber
-import re
 import logging
+import re
+from typing import Any
+
+import pdfplumber
+from pydantic import BaseModel, Field
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -19,16 +19,16 @@ class PatientHealthState(BaseModel):
     alt: float = Field(..., description="Alanine Aminotransferase (U/L)")
     blood_ph: float = Field(default=7.4, description="Systemic blood pH")
     sodium_level: float = Field(..., description="Serum sodium level (mmol/L)")
-    allergies: List[str] = Field(default_factory=list)
-    conditions: List[str] = Field(default_factory=list)
-    organ_viability: Dict[str, str] = Field(default_factory=dict)
+    allergies: list[str] = Field(default_factory=list)
+    conditions: list[str] = Field(default_factory=list)
+    organ_viability: dict[str, str] = Field(default_factory=dict)
 
 class LabReportIngestor:
     """
     Ingests and parses unstructured health reports to extract biological constraints.
     """
     def __init__(self):
-        self.constraints: Dict[str, Any] = {}
+        self.constraints: dict[str, Any] = {}
 
     def parse_metabolic_panel(self, pdf_path: str) -> PatientHealthState:
         """
@@ -40,8 +40,8 @@ class LabReportIngestor:
                 for page in pdf.pages:
                     text += page.extract_text() or ""
         except Exception as e:
-            logger.error(f"Failed to parse PDF {pdf_path}: {str(e)}")
-            raise ValueError(f"Could not read PDF: {str(e)}")
+            logger.error(f"Failed to parse PDF {pdf_path}: {e!s}")
+            raise ValueError(f"Could not read PDF: {e!s}")
 
         # Extract biomarkers using regex
         egfr = self._extract_value(text, r"eGFR[:\s]+(\d+\.?\d*)")
@@ -64,7 +64,7 @@ class LabReportIngestor:
             conditions=re.findall(r"Condition[:\s]+(\w+)", text, re.I)
         )
 
-    def _extract_value(self, text: str, pattern: str) -> Optional[float]:
+    def _extract_value(self, text: str, pattern: str) -> float | None:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
             try:
@@ -73,7 +73,7 @@ class LabReportIngestor:
                 return None
         return None
 
-    def evaluate_organ_viability(self, state: PatientHealthState) -> Dict[str, Any]:
+    def evaluate_organ_viability(self, state: PatientHealthState) -> dict[str, Any]:
         """
         Flags severe organ impairment and locks parameters into a constraint dictionary.
         """

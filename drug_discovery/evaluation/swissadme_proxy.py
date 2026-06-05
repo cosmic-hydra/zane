@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import re
+from dataclasses import dataclass, field
+
 
 @dataclass
 class SwissADMEResult:

@@ -78,9 +78,9 @@ except ImportError:
     pass
 
 try:
+    from drug_discovery.models.gnn import MolecularGIN as MolecularGIN
     from drug_discovery.models.gnn import MolecularGNN as MolecularGNN
     from drug_discovery.models.gnn import MolecularMPNN as MolecularMPNN
-    from drug_discovery.models.gnn import MolecularGIN as MolecularGIN
     from drug_discovery.models.hetero_gnn import HeteroGNN as HeteroGNN
 
     MODEL_REGISTRY["gnn"] = {"class": MolecularGNN, "config": None, "variant": None}
@@ -90,8 +90,8 @@ except ImportError:
     pass
 
 try:
-    from drug_discovery.models.transformer import MolecularTransformer as MolecularTransformer
     from drug_discovery.models.transformer import ModernMolecularTransformer as ModernMolecularTransformer
+    from drug_discovery.models.transformer import MolecularTransformer as MolecularTransformer
 
     MODEL_REGISTRY["transformer"] = {
         "class": MolecularTransformer,
@@ -121,27 +121,27 @@ except ImportError:
 
 __all__ = [
     "MODEL_REGISTRY",
-    "MolecularGNN",
-    "MolecularMPNN",
-    "MolecularGIN",
-    "HeteroGNN",
-    "MolecularTransformer",
-    "EnsembleModel",
-    "HybridModel",
-    "MultiTaskModel",
-    "EquivariantGNN",
-    "EquivariantGNNConfig",
-    "EGNNLayer",
-    "SchNetLayer",
-    "GaussianRBF",
     "CosineCutoff",
-    "build_radius_graph",
-    "MolecularDiffusionModel",
     "DiffusionConfig",
     "DiffusionMoleculeGenerator",
-    "GFlowNetPolicy",
+    "EGNNLayer",
+    "EnsembleModel",
+    "EquivariantGNN",
+    "EquivariantGNNConfig",
     "GFlowNetConfig",
+    "GFlowNetPolicy",
     "GFlowNetTrainer",
-    "PhysicsRewardFunction",
+    "GaussianRBF",
+    "HeteroGNN",
+    "HybridModel",
+    "MolecularDiffusionModel",
+    "MolecularGIN",
+    "MolecularGNN",
+    "MolecularMPNN",
+    "MolecularTransformer",
+    "MultiTaskModel",
     "PhysicsRewardConfig",
+    "PhysicsRewardFunction",
+    "SchNetLayer",
+    "build_radius_graph",
 ]

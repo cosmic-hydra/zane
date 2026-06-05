@@ -1,6 +1,7 @@
+
 from rdkit import Chem
-from rdkit.Chem import Descriptors, AllChem
-from typing import List, Optional
+from rdkit.Chem import Descriptors
+
 try:
     from dimorphite_dl import DimorphiteDL
 except ImportError:
@@ -33,8 +34,8 @@ class MicroenvironmentIonizationEngine:
                 # Dimorphite returns a list of possible states; we take the most dominant
                 return protonated_smiles_list[0]
         except Exception as e:
-            logger.error(f"Error predicting ionization for {smiles} at pH {target_ph}: {str(e)}")
-        
+            logger.error(f"Error predicting ionization for {smiles} at pH {target_ph}: {e!s}")
+
         return smiles
 
     def calculate_ph_dependent_solubility(self, smiles: str, target_ph: float) -> float:
@@ -44,33 +45,33 @@ class MicroenvironmentIonizationEngine:
         """
         protonated_smiles = self.predict_ionization_state(smiles, target_ph)
         mol = Chem.MolFromSmiles(protonated_smiles)
-        
+
         if not mol:
             return 0.0
 
         # LogP as a proxy for lipophilicity/solubility
         logp = Descriptors.MolLogP(mol)
-        
+
         # Basic Henderson-Hasselbalch inspired solubility heuristic:
         # Ionized forms (charged) are generally more soluble.
         # We check for charges in the molecule.
         num_charges = sum(abs(atom.GetFormalCharge()) for atom in mol.GetAtoms())
-        
+
         # If the molecule is neutral and has high LogP, it might precipitate in aqueous environment
         # Solubility score: higher is better
         solubility_score = 1.0 / (1.0 + 10**(logp - 2.0))
-        
+
         # Increase solubility score if ionized
         if num_charges > 0:
             solubility_score *= (1.5 * num_charges)
 
         return min(solubility_score, 1.0)
 
-    def get_pka_values(self, smiles: str) -> List[float]:
+    def get_pka_values(self, smiles: str) -> list[float]:
         """
-        Placeholder for pKa prediction. In a full implementation, this would 
+        Placeholder for pKa prediction. In a full implementation, this would
         interface with a dedicated pKa model.
         """
-        # Dimorphite-DL handles pH distribution, but we can't easily extract exact pKa 
+        # Dimorphite-DL handles pH distribution, but we can't easily extract exact pKa
         # without running a range. This is a simplified proxy.
         return [7.0] # Mock pKa

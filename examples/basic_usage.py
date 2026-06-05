@@ -4,6 +4,7 @@ Example: Basic Usage of Drug Discovery Pipeline
 
 from drug_discovery import DrugDiscoveryPipeline
 
+
 def main():
     # Initialize pipeline
     print("Initializing Drug Discovery Pipeline...")
@@ -34,7 +35,7 @@ def main():
 
     # Step 3: Build and train model
     print("\nStep 3: Training model...")
-    history = pipeline.train(
+    pipeline.train(
         train_loader=train_loader,
         val_loader=test_loader,
         num_epochs=10,  # Use more epochs in production
@@ -62,7 +63,7 @@ def main():
 
     # Step 6: Evaluate model
     print("\nStep 6: Evaluating model...")
-    metrics = pipeline.evaluate(test_loader)
+    pipeline.evaluate(test_loader)
 
     # Save pipeline
     print("\nSaving pipeline...")

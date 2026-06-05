@@ -36,24 +36,24 @@ class CGSimulator:
         In reality, this would interface with GROMACS or OpenMM using Martini forcefield.
         """
         logger.info(f"Running CG simulation for {system_name} for {steps} steps")
-        
+
         # Heuristic potential energy based on system size and steps
         # Larger systems and more steps -> more relaxation -> lower potential energy
         base_energy = -1000.0
         system_factor = len(system_name) * 10  # System complexity factor
         convergence_factor = -1.0 * np.sqrt(steps / 1000)  # Energy relaxation over time
         potential_energy = base_energy - system_factor + convergence_factor * np.random.normal(0, 50)
-        
+
         # Diffusion coefficient decreases with larger/more ordered systems
         # Ranges from 1e-8 to 1e-6 m^2/s (typical biological scales)
         base_diffusion = 0.1 * np.exp(-len(system_name) / 20)
         diffusion_coefficient = base_diffusion * (1.0 + 0.1 * np.random.normal(0, 1))
-        
+
         # Convergence check: did we reach reasonable stability?
         # Systems with fewer atoms and more steps converge better
         convergence_score = min(0.95, (steps / 10000) * (1.0 / (1.0 + len(system_name) / 100)))
         converged = convergence_score > 0.7
-        
+
         return {
             "status": "completed",
             "final_potential_energy": float(potential_energy),
@@ -72,7 +72,7 @@ class CGSimulator:
         # When full MDAnalysis is available:
         # contacts_analysis = contacts.Contacts(...)
         # aggregation_index = contacts_analysis.count()
-        
+
         try:
             # If we have trajectory data, estimate aggregation from Rg changes
             rg_values = self.calculate_radius_of_gyration()
@@ -87,7 +87,7 @@ class CGSimulator:
                     return float(aggregation_index)
         except Exception:
             pass
-        
+
         # Fallback: estimate from number of atoms (more atoms -> higher aggregation potential)
         try:
             if self.universe:
@@ -97,7 +97,7 @@ class CGSimulator:
                 return float(aggregation_index)
         except Exception:
             pass
-        
+
         # Default heuristic
         return 0.65
 

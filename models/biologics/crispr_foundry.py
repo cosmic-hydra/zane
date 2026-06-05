@@ -1,7 +1,7 @@
-import torch
 import random
-from typing import Dict
-from transformers import AutoTokenizer, AutoModelForCausalLM
+
+from transformers import AutoModelForCausalLM
+
 
 class MockESM3:
     def generate(self, prompt: str) -> str:

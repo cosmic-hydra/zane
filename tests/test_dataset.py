@@ -118,7 +118,7 @@ class TestMolecularDataset:
         folds_b = murcko_scaffold_kfold_split_molecular(dataset, n_splits=3, seed=7)
 
         assert len(folds_a) == len(folds_b)
-        for (tr_a, te_a), (tr_b, te_b) in zip(folds_a, folds_b):
+        for (tr_a, te_a), (tr_b, te_b) in zip(folds_a, folds_b, strict=False):
             assert list(tr_a.indices) == list(tr_b.indices)
             assert list(te_a.indices) == list(te_b.indices)
 

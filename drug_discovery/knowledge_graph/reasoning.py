@@ -1,16 +1,16 @@
-from typing import List, Dict, Tuple, Set, Any
 import networkx as nx
+
 
 class KnowledgeGraphReasoner:
     """
     Symbolic and path-based reasoning for Drug Discovery Knowledge Graphs.
     Can answer queries like "Find all proteins regulated by genes associated with disease X".
     """
-    
+
     def __init__(self, nx_graph: nx.MultiDiGraph):
         self.graph = nx_graph
-        
-    def find_causal_paths(self, start_node: str, end_node: str, max_length: int = 3) -> List[List[Tuple[str, str, str]]]:
+
+    def find_causal_paths(self, start_node: str, end_node: str, max_length: int = 3) -> list[list[tuple[str, str, str]]]:
         """
         Find all directed paths between two nodes up to a certain length.
         Returns paths as list of (u, v, edge_type) tuples.
@@ -18,7 +18,7 @@ class KnowledgeGraphReasoner:
         paths = []
         if start_node not in self.graph or end_node not in self.graph:
             return []
-            
+
         for path in nx.all_simple_paths(self.graph, start_node, end_node, cutoff=max_length):
             path_with_types = []
             for i in range(len(path) - 1):
@@ -29,14 +29,14 @@ class KnowledgeGraphReasoner:
                 etype = "unknown"
                 if edge_data:
                     # Just take the first one for simplicity
-                    key = list(edge_data.keys())[0]
+                    key = next(iter(edge_data.keys()))
                     etype = edge_data[key].get('edge_type', 'unknown')
                 path_with_types.append((u, v, etype))
             paths.append(path_with_types)
-            
+
         return paths
 
-    def query_by_relation_chain(self, start_node: str, relations: List[str]) -> Set[str]:
+    def query_by_relation_chain(self, start_node: str, relations: list[str]) -> set[str]:
         """
         Multi-hop query: Start at start_node, follow the sequence of relations.
         Example: relations=['ASSOCIATED_WITH_GENE', 'CODES_FOR_PROTEIN']
@@ -55,7 +55,7 @@ class KnowledgeGraphReasoner:
                 break
         return current_nodes
 
-    def check_consistency(self) -> List[str]:
+    def check_consistency(self) -> list[str]:
         """
         Check for logical inconsistencies in the KG.
         Example: A drug cannot both inhibit and activate the same protein simultaneously.

@@ -23,7 +23,7 @@ class AlphaFold3Mock:
         """
         # Heuristic binding affinity estimation
         # Assume protein_struct is a distance matrix or representation
-        
+
         if protein_struct is None or len(protein_struct) == 0:
             base_affinity = -7.0
         else:
@@ -38,9 +38,9 @@ class AlphaFold3Mock:
                     structure_penalty = 0.0
             except Exception:
                 structure_penalty = 0.0
-            
+
             base_affinity = -9.0 + structure_penalty
-        
+
         # Molecule complexity factor
         if molecule:
             # Count heavy atoms (approximation from molecule string)
@@ -50,16 +50,16 @@ class AlphaFold3Mock:
             mol_factor = max(-2.0, min(2.0, mol_factor))
         else:
             mol_factor = 0.0
-        
+
         # Total affinity with small noise (docking uncertainty)
         affinity = base_affinity + mol_factor
         # Add noise scaled to affinity strength
         noise = np.random.normal(0, 0.5)
         affinity += noise
-        
+
         # Realistic bounds: [-15, -4] kcal/mol
         affinity = np.clip(affinity, -15.0, -4.0)
-        
+
         return float(affinity)
 
 
@@ -100,7 +100,7 @@ class PathogenMutationEnv:
 
         # Pathogen reward: break binding affinity (weaker binding -> less negative/more positive)
         # while keeping fitness
-        fitness_penalty = sum(1 for a, b in zip(seq_str, self.wild_type_seq) if a != b) * 0.1
+        fitness_penalty = sum(1 for a, b in zip(seq_str, self.wild_type_seq, strict=False) if a != b) * 0.1
 
         reward = binding_affinity - fitness_penalty
 

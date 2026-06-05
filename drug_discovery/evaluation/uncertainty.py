@@ -140,8 +140,8 @@ def regression_calibration_error(preds, true_vals, uncertainties, bins=10):
     for lev in levels:
         z = 1.96 * lev  # Simplified z-score
         coverages.append(float((errors <= z * uncertainties).mean()))
-    cal_errs = [abs(o - e) for o, e in zip(coverages, levels)]
+    cal_errs = [abs(o - e) for o, e in zip(coverages, levels, strict=False)]
     return {
         "mean_calibration_error": float(np.mean(cal_errs)),
-        "interval_coverages": dict(zip([f"{level_val:.1f}" for level_val in levels], coverages)),
+        "interval_coverages": dict(zip([f"{level_val:.1f}" for level_val in levels], coverages, strict=False)),
     }
