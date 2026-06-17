@@ -32,15 +32,15 @@ except ImportError:
 class ToxicityGateConfig:
     """Thresholds for the toxicity gate.  Lower = stricter."""
 
-    herg_threshold: float = 0.3  # hERG inhibition probability
-    ames_threshold: float = 0.3  # Ames mutagenicity probability
-    hepatotox_threshold: float = 0.4  # Hepatotoxicity probability
-    cytotox_threshold: float = 0.4  # Cytotoxicity probability
-    max_logp: float = 5.0  # Lipinski upper bound
-    min_logp: float = -1.0
-    max_tpsa: float = 140.0  # Topological polar surface area
-    max_mw: float = 500.0  # Molecular weight
-    max_rotatable_bonds: int = 10
+    herg_threshold: float = 0.25  # hERG inhibition probability
+    ames_threshold: float = 0.15  # Ames mutagenicity probability
+    hepatotox_threshold: float = 0.2  # Hepatotoxicity probability
+    cytotox_threshold: float = 0.3  # Cytotoxicity probability
+    max_logp: float = 3.5  # Lipinski upper bound
+    min_logp: float = 0.0
+    max_tpsa: float = 130.0  # Topological polar surface area
+    max_mw: float = 400.0  # Molecular weight
+    max_rotatable_bonds: int = 8
     require_all_pass: bool = True  # Candidate must pass every endpoint
 
 
