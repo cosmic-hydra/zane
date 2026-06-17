@@ -156,9 +156,9 @@ class PreClinicalToxPanel:
 
     def __init__(
         self,
-        herg_threshold: float = 0.4,
-        cyp_threshold: float = 0.5,
-        ames_threshold: float = 0.3,
+        herg_threshold: float = 0.25,
+        cyp_threshold: float = 0.4,
+        ames_threshold: float = 0.15,
         herg_predictor: HERGPredictor | None = None,
     ):
         self.herg_threshold = herg_threshold

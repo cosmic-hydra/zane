@@ -32,10 +32,10 @@ class TestToxicityThresholdConfig(unittest.TestCase):
     def test_default_config(self):
         """Test default thresholds are initialized."""
         config = ToxicityThresholdConfig()
-        self.assertEqual(config.herg_threshold, 0.3)
-        self.assertEqual(config.ames_threshold, 0.3)
-        self.assertEqual(config.hepatotox_threshold, 0.4)
-        self.assertEqual(config.logp_max, 5.0)
+        self.assertEqual(config.herg_threshold, 0.25)
+        self.assertEqual(config.ames_threshold, 0.15)
+        self.assertEqual(config.hepatotox_threshold, 0.2)
+        self.assertEqual(config.logp_max, 3.5)
 
     def test_config_validation(self):
         """Test invalid thresholds raise ValueError."""
@@ -129,20 +129,20 @@ class TestParametrizedToxicityGate(unittest.TestCase):
     def test_logp_range_check(self):
         """Test LogP is within configured range."""
         gate = ParametrizedToxicityGate()
-        result = gate.evaluate(logp=6.0)  # Above default max of 5.0
+        result = gate.evaluate(logp=6.0)  # Above default max of 3.5
         self.assertFalse(result["passed"])
         self.assertTrue(any("LogP" in r for r in result["reasons"]))
 
     def test_mw_bounds_check(self):
         """Test molecular weight respects bounds."""
         gate = ParametrizedToxicityGate()
-        result = gate.evaluate(mw=600.0)  # Above default max of 500
+        result = gate.evaluate(mw=600.0)  # Above default max of 400
         self.assertFalse(result["passed"])
 
     def test_tpsa_range_check(self):
         """Test TPSA within configured range."""
         gate = ParametrizedToxicityGate()
-        result = gate.evaluate(tpsa=150.0)  # Above default max of 140
+        result = gate.evaluate(tpsa=150.0)  # Above default max of 130
         self.assertFalse(result["passed"])
 
     def test_confidence_requirement(self):
@@ -202,8 +202,8 @@ class TestStrictComplianceGate(unittest.TestCase):
     def test_risk_factor_identification(self):
         """Test risk factors are identified."""
         gate = StrictComplianceGate()
-        assessment = gate.evaluate("CC(=O)Oc1ccccc1C(=O)O")  # Aspirin
-        # Aspirin has aromatic ring
+        assessment = gate.evaluate("Clc1ccccc1")  # Chlorobenzene
+        # Chlorobenzene has halogen and aromatic ring
         self.assertGreater(len(assessment.risk_factors), 0)
 
     def test_data_integrity_verification(self):

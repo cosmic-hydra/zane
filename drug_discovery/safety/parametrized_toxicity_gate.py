@@ -15,29 +15,29 @@ class ToxicityThresholdConfig:
     """Parametrized toxicity thresholds (no hardcoding)."""
     
     # hERG-related thresholds
-    herg_threshold: float = 0.3  # hERG inhibition probability
-    herg_warning_threshold: float = 0.2  # Trigger additional scrutiny
-    cyp3a4_inhibition_threshold: float = 0.5  # CYP3A4 substrate probability
-    cyp2d6_inhibition_threshold: float = 0.4  # CYP2D6 inhibition
+    herg_threshold: float = 0.25  # hERG inhibition probability
+    herg_warning_threshold: float = 0.15  # Trigger additional scrutiny
+    cyp3a4_inhibition_threshold: float = 0.4  # CYP3A4 substrate probability
+    cyp2d6_inhibition_threshold: float = 0.3  # CYP2D6 inhibition
     
     # Mutagenicity thresholds
-    ames_threshold: float = 0.3  # Ames mutagenicity
+    ames_threshold: float = 0.15  # Ames mutagenicity
     
     # Hepatotoxicity thresholds
-    hepatotox_threshold: float = 0.4  # Hepatotoxicity probable
-    drug_induced_liver_injury_threshold: float = 0.35  # DILI risk
+    hepatotox_threshold: float = 0.2  # Hepatotoxicity probable
+    drug_induced_liver_injury_threshold: float = 0.25  # DILI risk
     
     # Cytotoxicity thresholds
-    cytotox_threshold: float = 0.4  # General cytotoxicity
+    cytotox_threshold: float = 0.3  # General cytotoxicity
     
     # Physicochemical thresholds
-    logp_max: float = 5.0
-    logp_min: float = -1.0
-    tpsa_max: float = 140.0
+    logp_max: float = 3.5
+    logp_min: float = 0.0
+    tpsa_max: float = 130.0
     tpsa_min: float = 0.0
-    mw_max: float = 500.0
+    mw_max: float = 400.0
     mw_min: float = 50.0
-    rotatable_bonds_max: int = 10
+    rotatable_bonds_max: int = 8
     
     # Bioavailability flags
     require_lipinski_compliance: bool = True
