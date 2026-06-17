@@ -6,30 +6,30 @@ allowing regulatory tier adjustment without code changes.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
 class ToxicityThresholdConfig:
     """Parametrized toxicity thresholds (no hardcoding)."""
-    
+
     # hERG-related thresholds
     herg_threshold: float = 0.25  # hERG inhibition probability
     herg_warning_threshold: float = 0.15  # Trigger additional scrutiny
     cyp3a4_inhibition_threshold: float = 0.4  # CYP3A4 substrate probability
     cyp2d6_inhibition_threshold: float = 0.3  # CYP2D6 inhibition
-    
+
     # Mutagenicity thresholds
     ames_threshold: float = 0.15  # Ames mutagenicity
-    
+
     # Hepatotoxicity thresholds
     hepatotox_threshold: float = 0.2  # Hepatotoxicity probable
     drug_induced_liver_injury_threshold: float = 0.25  # DILI risk
-    
+
     # Cytotoxicity thresholds
     cytotox_threshold: float = 0.3  # General cytotoxicity
-    
+
     # Physicochemical thresholds
     logp_max: float = 3.5
     logp_min: float = 0.0
@@ -38,19 +38,19 @@ class ToxicityThresholdConfig:
     mw_max: float = 400.0
     mw_min: float = 50.0
     rotatable_bonds_max: int = 8
-    
+
     # Bioavailability flags
     require_lipinski_compliance: bool = True
     lipinski_violations_max: int = 1  # Allow up to 1 violation
-    
+
     # Regulatory flags
     require_no_known_toxicophores: bool = True
     allow_experimental_optimization: bool = False
-    
+
     # Quality flags
     min_prediction_confidence: float = 0.5  # 0-1 scale
     require_vendor_approval: bool = False
-    
+
     def __post_init__(self):
         """Validate threshold ranges."""
         if not (0 <= self.herg_threshold <= 1):
@@ -63,11 +63,11 @@ class ToxicityThresholdConfig:
             raise ValueError("logp_min must be < logp_max")
         if self.mw_min >= self.mw_max:
             raise ValueError("mw_min must be < mw_max")
-    
+
     @classmethod
     def from_regulatory_tier(cls, tier: str) -> ToxicityThresholdConfig:
         """Create thresholds for regulatory submission tier.
-        
+
         Args:
             tier: One of ['discovery', 'lead_optimization', 'ind', 'nda']
         """
@@ -105,23 +105,23 @@ class ToxicityThresholdConfig:
 
 class ParametrizedToxicityGate:
     """Toxicity gate with configurable thresholds.
-    
+
     Usage::
-    
+
         # Standard thresholds
         gate = ParametrizedToxicityGate()
-        
+
         # IND submission thresholds (stricter)
         config = ToxicityThresholdConfig.from_regulatory_tier("ind")
         gate = ParametrizedToxicityGate(config)
-        
+
         # Custom thresholds
         config = ToxicityThresholdConfig(
             herg_threshold=0.2,
             ames_threshold=0.1,
         )
         gate = ParametrizedToxicityGate(config)
-        
+
         result = gate.evaluate(
             herg_prob=0.1,
             ames_prob=0.05,
@@ -130,26 +130,26 @@ class ParametrizedToxicityGate:
         if not result['passed']:
             print(f"Rejected: {result['reasons']}")
     """
-    
-    def __init__(self, config: Optional[ToxicityThresholdConfig] = None):
+
+    def __init__(self, config: ToxicityThresholdConfig | None = None):
         """Initialize with thresholds (no hardcoding)."""
         self.config = config or ToxicityThresholdConfig()
-    
+
     def evaluate(
         self,
-        herg_prob: Optional[float] = None,
-        ames_prob: Optional[float] = None,
-        hepatotox_prob: Optional[float] = None,
-        cytotox_prob: Optional[float] = None,
-        logp: Optional[float] = None,
-        tpsa: Optional[float] = None,
-        mw: Optional[float] = None,
-        rotatable_bonds: Optional[int] = None,
-        confidence: Optional[float] = None,
+        herg_prob: float | None = None,
+        ames_prob: float | None = None,
+        hepatotox_prob: float | None = None,
+        cytotox_prob: float | None = None,
+        logp: float | None = None,
+        tpsa: float | None = None,
+        mw: float | None = None,
+        rotatable_bonds: int | None = None,
+        confidence: float | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Evaluate molecule against configured thresholds.
-        
+
         Args:
             herg_prob: hERG inhibition probability [0-1]
             ames_prob: Ames mutagenicity probability [0-1]
@@ -161,23 +161,22 @@ class ParametrizedToxicityGate:
             rotatable_bonds: Number of rotatable bonds
             confidence: Model prediction confidence [0-1]
             **kwargs: Additional properties
-            
+
         Returns:
             Dictionary with 'passed' (bool) and 'reasons' (list of rejection reasons)
         """
         passed = True
         reasons = []
         warnings = []
-        
+
         # Check confidence
-        if confidence is not None:
-            if confidence < self.config.min_prediction_confidence:
-                passed = False
-                reasons.append(
-                    f"Prediction confidence too low: {confidence:.2f} "
-                    f"(minimum: {self.config.min_prediction_confidence})"
-                )
-        
+        if confidence is not None and confidence < self.config.min_prediction_confidence:
+            passed = False
+            reasons.append(
+                f"Prediction confidence too low: {confidence:.2f} "
+                f"(minimum: {self.config.min_prediction_confidence})"
+            )
+
         # Check hERG
         if herg_prob is not None:
             if herg_prob > self.config.herg_threshold:
@@ -191,67 +190,60 @@ class ParametrizedToxicityGate:
                     f"hERG inhibition warning: {herg_prob:.3f} "
                     f"(caution threshold: {self.config.herg_warning_threshold})"
                 )
-        
+
         # Check Ames
-        if ames_prob is not None:
-            if ames_prob > self.config.ames_threshold:
-                passed = False
-                reasons.append(
-                    f"Ames mutagenicity too high: {ames_prob:.3f} "
-                    f"(threshold: {self.config.ames_threshold})"
-                )
-        
+        if ames_prob is not None and ames_prob > self.config.ames_threshold:
+            passed = False
+            reasons.append(
+                f"Ames mutagenicity too high: {ames_prob:.3f} "
+                f"(threshold: {self.config.ames_threshold})"
+            )
+
         # Check hepatotoxicity
-        if hepatotox_prob is not None:
-            if hepatotox_prob > self.config.hepatotox_threshold:
-                passed = False
-                reasons.append(
-                    f"Hepatotoxicity too high: {hepatotox_prob:.3f} "
-                    f"(threshold: {self.config.hepatotox_threshold})"
-                )
-        
+        if hepatotox_prob is not None and hepatotox_prob > self.config.hepatotox_threshold:
+            passed = False
+            reasons.append(
+                f"Hepatotoxicity too high: {hepatotox_prob:.3f} "
+                f"(threshold: {self.config.hepatotox_threshold})"
+            )
+
         # Check cytotoxicity
-        if cytotox_prob is not None:
-            if cytotox_prob > self.config.cytotox_threshold:
-                passed = False
-                reasons.append(
-                    f"Cytotoxicity too high: {cytotox_prob:.3f} "
-                    f"(threshold: {self.config.cytotox_threshold})"
-                )
-        
+        if cytotox_prob is not None and cytotox_prob > self.config.cytotox_threshold:
+            passed = False
+            reasons.append(
+                f"Cytotoxicity too high: {cytotox_prob:.3f} "
+                f"(threshold: {self.config.cytotox_threshold})"
+            )
+
         # Check physicochemical properties
-        if logp is not None:
-            if not (self.config.logp_min <= logp <= self.config.logp_max):
-                passed = False
-                reasons.append(
-                    f"LogP out of range: {logp:.2f} "
-                    f"(allowed: [{self.config.logp_min}, {self.config.logp_max}])"
-                )
-        
-        if tpsa is not None:
-            if not (self.config.tpsa_min <= tpsa <= self.config.tpsa_max):
-                passed = False
-                reasons.append(
-                    f"TPSA out of range: {tpsa:.1f} "
-                    f"(allowed: [{self.config.tpsa_min}, {self.config.tpsa_max}])"
-                )
-        
-        if mw is not None:
-            if not (self.config.mw_min <= mw <= self.config.mw_max):
-                passed = False
-                reasons.append(
-                    f"Molecular weight out of range: {mw:.1f} "
-                    f"(allowed: [{self.config.mw_min}, {self.config.mw_max}])"
-                )
-        
-        if rotatable_bonds is not None:
-            if rotatable_bonds > self.config.rotatable_bonds_max:
-                passed = False
-                reasons.append(
-                    f"Too many rotatable bonds: {rotatable_bonds} "
-                    f"(maximum: {self.config.rotatable_bonds_max})"
-                )
-        
+        if logp is not None and not (self.config.logp_min <= logp <= self.config.logp_max):
+            passed = False
+            reasons.append(
+                f"LogP out of range: {logp:.2f} "
+                f"(allowed: [{self.config.logp_min}, {self.config.logp_max}])"
+            )
+
+        if tpsa is not None and not (self.config.tpsa_min <= tpsa <= self.config.tpsa_max):
+            passed = False
+            reasons.append(
+                f"TPSA out of range: {tpsa:.1f} "
+                f"(allowed: [{self.config.tpsa_min}, {self.config.tpsa_max}])"
+            )
+
+        if mw is not None and not (self.config.mw_min <= mw <= self.config.mw_max):
+            passed = False
+            reasons.append(
+                f"Molecular weight out of range: {mw:.1f} "
+                f"(allowed: [{self.config.mw_min}, {self.config.mw_max}])"
+            )
+
+        if rotatable_bonds is not None and rotatable_bonds > self.config.rotatable_bonds_max:
+            passed = False
+            reasons.append(
+                f"Too many rotatable bonds: {rotatable_bonds} "
+                f"(maximum: {self.config.rotatable_bonds_max})"
+            )
+
         return {
             "passed": passed,
             "reasons": reasons,
@@ -262,10 +254,10 @@ class ParametrizedToxicityGate:
                 "hepatotox": self.config.hepatotox_threshold,
             },
         }
-    
+
     def update_thresholds(self, **kwargs: Any) -> None:
         """Update threshold values without recreating object.
-        
+
         Args:
             **kwargs: Threshold parameters to update
         """
